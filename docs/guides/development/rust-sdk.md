@@ -47,9 +47,9 @@ serde = ["rgb-std/serde"]
 
 ## Core Types and Concepts
 
-### Contract<S, P>
+### Contract Type
 
-The central type for working with RGB contracts:
+The central type for working with RGB contracts is `Contract<S, P>`:
 
 ```rust
 use rgb::{Contract, Stock, Pile, RgbSeal};

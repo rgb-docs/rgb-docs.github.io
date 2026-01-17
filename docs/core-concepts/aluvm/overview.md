@@ -1301,7 +1301,7 @@ routine ERROR:
 ### Execution Speed
 
 **Typical performance**:
-- Simple validation: **<1 ms**
+- Simple validation: **Less than 1 ms**
 - Token transfer: **1-5 ms**
 - Signature verification: **10-50 ms** (depends on count)
 - Complex contract: **50-500 ms**

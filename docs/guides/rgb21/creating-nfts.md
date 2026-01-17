@@ -832,7 +832,7 @@ pub struct RoyaltyEnforcedNft {
 
 **DO:**
 - Use standard field names (name, description, image, attributes)
-- Embed small thumbnails (<64KB) for quick preview
+- Embed small thumbnails (less than 64KB) for quick preview
 - Reference large files via content hash
 - Include license information
 - Provide creator attribution

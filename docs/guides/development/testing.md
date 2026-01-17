@@ -1270,137 +1270,1558 @@ describe('Network Condition Testing', () => {
 });
 ```
 
-## Test Utilities
+## Test Utilities and Mocking
 
-### Mocking
-
-```typescript
-import { MockRgbNode } from '@rgbjs/testing';
-
-const mockNode = new MockRgbNode({
-  contracts: [mockContract],
-  utxos: [mockUtxo]
-});
-
-const wallet = new RgbWallet({
-  node: mockNode
-});
-```
-
-*Mocking to be expanded*
-
-### Fixtures
+### Mock RGB Node
 
 ```typescript
-// Test fixtures
-export const testContract = {
-  contractId: 'rgb:test123...',
-  ticker: 'TEST',
-  totalSupply: 1000000n
-};
+import { MockRgbNode, MockBitcoinNode } from '@rgbjs/testing';
 
-export const testUtxo = {
-  txid: 'abc123...',
-  vout: 0,
-  amount: 10000n
-};
-```
+class MockedTestEnvironment {
+  private mockRgbNode: MockRgbNode;
+  private mockBitcoinNode: MockBitcoinNode;
 
-*Fixtures to be expanded*
+  constructor() {
+    // Create mock Bitcoin node
+    this.mockBitcoinNode = new MockBitcoinNode({
+      network: 'regtest',
+      blockHeight: 100,
+      feeRate: 5
+    });
 
-## Performance Testing
+    // Create mock RGB node
+    this.mockRgbNode = new MockRgbNode({
+      bitcoinNode: this.mockBitcoinNode,
+      contracts: [],
+      autoValidate: true
+    });
+  }
 
-### Load Testing
+  // Mock contract creation
+  async createMockContract(params: any): Promise<MockContract> {
+    const contract = new MockContract({
+      contractId: generateMockContractId(),
+      schema: params.schema || 'RGB20',
+      ticker: params.ticker,
+      totalSupply: params.totalSupply,
+      genesis: this.createMockGenesis(params)
+    });
 
-```typescript
-describe('Performance', () => {
-  it('should handle 1000 transfers', async () => {
-    const kit = new RgbTestkit();
-    const wallet = await kit.createWallet();
+    this.mockRgbNode.addContract(contract);
 
-    const start = Date.now();
+    return contract;
+  }
 
-    for (let i = 0; i < 1000; i++) {
-      await wallet.transfer({
-        amount: 1n,
-        recipient: kit.randomInvoice()
-      });
+  // Mock transfer
+  async createMockTransfer(params: {
+    from: string;
+    to: string;
+    amount: bigint;
+  }): Promise<MockTransfer> {
+    const transfer = new MockTransfer({
+      txid: generateMockTxid(),
+      amount: params.amount,
+      confirmations: 0,
+      valid: true
+    });
+
+    // Add to mock mempool
+    this.mockBitcoinNode.addToMempool(transfer);
+
+    return transfer;
+  }
+
+  // Simulate block mining
+  async mineBlocks(count: number): Promise<void> {
+    for (let i = 0; i < count; i++) {
+      const block = this.mockBitcoinNode.mineBlock();
+
+      // Update confirmations for all transactions
+      this.mockBitcoinNode.updateConfirmations();
     }
+  }
 
-    const duration = Date.now() - start;
-    expect(duration).toBeLessThan(60000); // 1 minute
+  // Inject errors for testing error handling
+  injectError(type: 'validation' | 'network' | 'consensus', error: Error): void {
+    this.mockRgbNode.setNextError(type, error);
+  }
+
+  private createMockGenesis(params: any): MockGenesis {
+    return {
+      schemaId: params.schema,
+      globalState: {
+        ticker: params.ticker,
+        name: params.name || params.ticker,
+        precision: params.precision || 8,
+        totalSupply: params.totalSupply
+      },
+      allocations: params.allocations || []
+    };
+  }
+}
+
+// Usage in tests
+describe('Mocked RGB Tests', () => {
+  let env: MockedTestEnvironment;
+
+  beforeEach(() => {
+    env = new MockedTestEnvironment();
+  });
+
+  it('should handle contract creation without real blockchain', async () => {
+    const contract = await env.createMockContract({
+      ticker: 'MOCK',
+      totalSupply: 1000n
+    });
+
+    expect(contract.contractId).toBeDefined();
+    expect(contract.ticker).toBe('MOCK');
+  });
+
+  it('should simulate network errors', async () => {
+    const contract = await env.createMockContract({
+      ticker: 'TEST',
+      totalSupply: 1000n
+    });
+
+    // Inject network error
+    env.injectError('network', new Error('Connection timeout'));
+
+    await expect(
+      env.createMockTransfer({
+        from: 'alice',
+        to: 'bob',
+        amount: 100n
+      })
+    ).rejects.toThrow('Connection timeout');
   });
 });
 ```
 
-*Performance testing to be expanded*
+### Test Fixtures
+
+```typescript
+// fixtures/contracts.ts
+export const testContracts = {
+  rgb20Basic: {
+    contractId: 'rgb:qz3k5l2m...',
+    ticker: 'TEST',
+    name: 'Test Token',
+    precision: 8,
+    totalSupply: 1000000n,
+    schema: 'RGB20'
+  },
+
+  rgb20WithMetadata: {
+    contractId: 'rgb:7x9p4n8q...',
+    ticker: 'META',
+    name: 'Metadata Token',
+    precision: 8,
+    totalSupply: 500000n,
+    metadata: {
+      website: 'https://example.com',
+      description: 'A token with rich metadata'
+    }
+  },
+
+  rgb21NFT: {
+    contractId: 'rgb:5r2m8k9l...',
+    name: 'Test NFT Collection',
+    schema: 'RGB21',
+    totalSupply: 100n
+  }
+};
+
+// fixtures/utxos.ts
+export const testUtxos = {
+  funded: {
+    txid: 'abc123def456...',
+    vout: 0,
+    amount: 100000,
+    script: Buffer.from('76a914...', 'hex'),
+    confirmed: true,
+    confirmations: 6
+  },
+
+  unconfirmed: {
+    txid: 'xyz789uvw012...',
+    vout: 1,
+    amount: 50000,
+    script: Buffer.from('76a914...', 'hex'),
+    confirmed: false,
+    confirmations: 0
+  }
+};
+
+// fixtures/invoices.ts
+export const testInvoices = {
+  valid: 'rgb:qz3k5l2m.../100000/...',
+  expired: 'rgb:qz3k5l2m.../100000/expired...',
+  invalidFormat: 'invalid-invoice-string',
+  zeroAmount: 'rgb:qz3k5l2m.../0/...'
+};
+
+// fixtures/consignments.ts
+export const testConsignments = {
+  valid: Buffer.from('...', 'base64'),
+  invalidSignature: Buffer.from('...', 'base64'),
+  missingHistory: Buffer.from('...', 'base64')
+};
+
+// Test fixture loader
+class FixtureLoader {
+  static loadContract(name: keyof typeof testContracts) {
+    return testContracts[name];
+  }
+
+  static loadUtxo(name: keyof typeof testUtxos) {
+    return testUtxos[name];
+  }
+
+  static loadInvoice(name: keyof typeof testInvoices) {
+    return testInvoices[name];
+  }
+
+  static async createTestWalletWithFixtures(testkit: RgbTestkit) {
+    const wallet = await testkit.createWallet();
+
+    // Fund with test UTXOs
+    await testkit.fundWallet(wallet, 10);
+
+    // Create test contracts
+    for (const contract of Object.values(testContracts).filter(c => c.schema === 'RGB20')) {
+      await wallet.importContract(contract);
+    }
+
+    return wallet;
+  }
+}
+```
+
+### Property-Based Testing
+
+```typescript
+import fc from 'fast-check';
+
+describe('Property-Based RGB Tests', () => {
+  it('amount conservation holds for any valid transfer', async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        // Generate random amounts
+        fc.bigUintN(64),  // total supply
+        fc.array(fc.bigUintN(64), { minLength: 1, maxLength: 10 }),  // transfer amounts
+
+        async (totalSupply, transferAmounts) => {
+          // Ensure transfers don't exceed total supply
+          const total = transferAmounts.reduce((sum, amount) => sum + amount, 0n);
+          fc.pre(total <= totalSupply);
+
+          const testkit = await RgbTestkit.create();
+          const wallet = await testkit.createWallet();
+
+          await testkit.fundWallet(wallet, 5);
+
+          const token = await wallet.createToken({
+            ticker: 'PROP',
+            totalSupply: totalSupply
+          });
+
+          let remaining = totalSupply;
+
+          for (const amount of transferAmounts) {
+            if (amount === 0n || amount > remaining) continue;
+
+            const recipient = await testkit.createWallet();
+            await testkit.fundWallet(recipient, 0.1);
+
+            const invoice = await recipient.createInvoice({
+              contractId: token.contractId,
+              amount: amount
+            });
+
+            const transfer = await wallet.transfer({
+              invoice: invoice.toString()
+            });
+
+            await recipient.acceptTransfer(transfer.consignment);
+            await testkit.mineBlocks(1);
+
+            remaining -= amount;
+          }
+
+          // Verify total supply is conserved
+          const finalBalance = await wallet.getBalance(token.contractId);
+
+          // Total supply = remaining in original wallet + sum of all transfers
+          expect(finalBalance).toBe(remaining);
+
+          await testkit.cleanup();
+        }
+      ),
+      { numRuns: 20 }  // Run 20 random test cases
+    );
+  });
+
+  it('invoice parsing is bijective (parse . toString = id)', () => {
+    fc.assert(
+      fc.property(
+        fc.string({ minLength: 10, maxLength: 100 }),  // contract ID
+        fc.bigUintN(64),  // amount
+        fc.date(),  // expiry
+
+        (contractId, amount, expiry) => {
+          const invoice = new Invoice({
+            contractId: contractId,
+            amount: amount,
+            beneficiary: 'blinded-utxo',
+            expiry: expiry.getTime()
+          });
+
+          const str = invoice.toString();
+          const parsed = Invoice.fromString(str);
+
+          return (
+            parsed.contractId === invoice.contractId &&
+            parsed.amount === invoice.amount &&
+            parsed.expiry === invoice.expiry
+          );
+        }
+      )
+    );
+  });
+});
+```
+
+### Fuzzing for Validation
+
+```typescript
+import { Fuzzer } from '@rgbjs/fuzzer';
+
+describe('Fuzz Testing', () => {
+  it('should reject all invalid genesis structures', async () => {
+    const fuzzer = new Fuzzer();
+
+    for (let i = 0; i < 1000; i++) {
+      // Generate random (likely invalid) genesis
+      const fuzzedGenesis = fuzzer.generateGenesis({
+        mutationRate: 0.8  // 80% chance to mutate each field
+      });
+
+      try {
+        const validation = await validateGenesis(fuzzedGenesis);
+
+        // If it passes validation, it must be structurally valid
+        if (validation.valid) {
+          expect(fuzzedGenesis).toMatchSchema(RGB20Schema);
+        }
+      } catch (error) {
+        // Invalid structures should throw or fail validation
+        expect(error).toBeDefined();
+      }
+    }
+  });
+
+  it('should handle malformed consignments gracefully', async () => {
+    const fuzzer = new Fuzzer();
+
+    for (let i = 0; i < 500; i++) {
+      const fuzzedConsignment = fuzzer.generateConsignment({
+        corruptionRate: 0.5
+      });
+
+      // Should not crash, even with malformed input
+      await expect(async () => {
+        try {
+          await validateConsignment(fuzzedConsignment);
+        } catch (error) {
+          // Errors are OK, crashes are not
+          expect(error).toBeInstanceOf(Error);
+        }
+      }).not.toThrow('Segmentation fault');
+    }
+  });
+});
+```
+
+## Performance Testing
+
+### Load and Stress Testing
+
+```typescript
+import { performance } from 'perf_hooks';
+
+describe('RGB Performance Tests', () => {
+  let testkit: RgbTestkit;
+
+  beforeAll(async () => {
+    testkit = await RgbTestkit.create({
+      network: 'regtest',
+      autoMine: true
+    });
+  });
+
+  afterAll(async () => {
+    await testkit.cleanup();
+  });
+
+  it('should handle 1000 sequential transfers', async () => {
+    const sender = await testkit.createWallet();
+    const receiver = await testkit.createWallet();
+
+    await testkit.fundWallet(sender, 100);  // Plenty of Bitcoin for fees
+    await testkit.fundWallet(receiver, 10);
+
+    const token = await sender.createToken({
+      ticker: 'PERF',
+      totalSupply: 1000000n
+    });
+
+    const startTime = performance.now();
+    const transferCount = 1000;
+    const amountPerTransfer = 100n;
+
+    for (let i = 0; i < transferCount; i++) {
+      const invoice = await receiver.createInvoice({
+        contractId: token.contractId,
+        amount: amountPerTransfer
+      });
+
+      const transfer = await sender.transfer({
+        invoice: invoice.toString(),
+        feeRate: 1
+      });
+
+      await receiver.acceptTransfer(transfer.consignment);
+
+      // Mine every 10 transfers
+      if (i % 10 === 0) {
+        await testkit.mineBlocks(1);
+      }
+    }
+
+    const duration = performance.now() - startTime;
+    const avgTimePerTransfer = duration / transferCount;
+
+    console.log(`Total time: ${duration}ms`);
+    console.log(`Avg per transfer: ${avgTimePerTransfer}ms`);
+
+    expect(duration).toBeLessThan(120000);  // 2 minutes total
+    expect(avgTimePerTransfer).toBeLessThan(120);  // 120ms per transfer
+
+    // Verify final balances
+    const senderBalance = await sender.getBalance(token.contractId);
+    const receiverBalance = await receiver.getBalance(token.contractId);
+
+    expect(senderBalance).toBe(1000000n - (BigInt(transferCount) * amountPerTransfer));
+    expect(receiverBalance).toBe(BigInt(transferCount) * amountPerTransfer);
+  });
+
+  it('should handle concurrent transfers efficiently', async () => {
+    const sender = await testkit.createWallet();
+    await testkit.fundWallet(sender, 100);
+
+    const token = await sender.createToken({
+      ticker: 'CONC',
+      totalSupply: 100000n
+    });
+
+    // Create 10 recipients
+    const recipients = await Promise.all(
+      Array(10).fill(0).map(async () => {
+        const w = await testkit.createWallet();
+        await testkit.fundWallet(w, 1);
+        return w;
+      })
+    );
+
+    const startTime = performance.now();
+
+    // Create all invoices concurrently
+    const invoices = await Promise.all(
+      recipients.map(r => r.createInvoice({
+        contractId: token.contractId,
+        amount: 1000n
+      }))
+    );
+
+    // Send all transfers concurrently
+    const transfers = await Promise.all(
+      invoices.map(invoice => sender.transfer({
+        invoice: invoice.toString(),
+        feeRate: 5
+      }))
+    );
+
+    // Accept all transfers concurrently
+    await Promise.all(
+      transfers.map((transfer, i) =>
+        recipients[i].acceptTransfer(transfer.consignment)
+      )
+    );
+
+    const duration = performance.now() - startTime;
+
+    console.log(`Concurrent transfers time: ${duration}ms`);
+
+    expect(duration).toBeLessThan(10000);  // 10 seconds
+
+    // Verify all balances
+    for (const recipient of recipients) {
+      const balance = await recipient.getBalance(token.contractId);
+      expect(balance).toBe(1000n);
+    }
+  });
+
+  it('should measure consignment validation performance', async () => {
+    const sender = await testkit.createWallet();
+    const receiver = await testkit.createWallet();
+
+    await testkit.fundWallet(sender, 10);
+    await testkit.fundWallet(receiver, 1);
+
+    const token = await sender.createToken({
+      totalSupply: 100000n
+    });
+
+    // Create a chain of transfers
+    let currentOwner = sender;
+    const chainLength = 50;
+
+    for (let i = 0; i < chainLength; i++) {
+      const nextOwner = await testkit.createWallet();
+      await testkit.fundWallet(nextOwner, 0.1);
+
+      const invoice = await nextOwner.createInvoice({
+        contractId: token.contractId,
+        amount: 1000n
+      });
+
+      const transfer = await currentOwner.transfer({
+        invoice: invoice.toString()
+      });
+
+      await nextOwner.acceptTransfer(transfer.consignment);
+      await testkit.mineBlocks(1);
+
+      currentOwner = nextOwner;
+    }
+
+    // Now measure validation time for final consignment
+    const invoice = await receiver.createInvoice({
+      contractId: token.contractId,
+      amount: 500n
+    });
+
+    const transfer = await currentOwner.transfer({
+      invoice: invoice.toString()
+    });
+
+    const startValidation = performance.now();
+    const validation = await testkit.validateConsignment(transfer.consignment);
+    const validationTime = performance.now() - startValidation;
+
+    console.log(`Validation time for ${chainLength}-deep history: ${validationTime}ms`);
+
+    expect(validation.valid).toBe(true);
+    expect(validationTime).toBeLessThan(5000);  // 5 seconds even for long chain
+  });
+
+  it('should benchmark UTXO selection performance', async () => {
+    const wallet = await testkit.createWallet();
+    await testkit.fundWallet(wallet, 100);
+
+    const token = await wallet.createToken({
+      totalSupply: 1000000n
+    });
+
+    // Create many small allocations
+    for (let i = 0; i < 100; i++) {
+      const recipient = await testkit.createWallet();
+      await testkit.fundWallet(recipient, 0.1);
+
+      const invoice = await recipient.createInvoice({
+        contractId: token.contractId,
+        amount: 100n
+      });
+
+      await wallet.transfer({
+        invoice: invoice.toString()
+      });
+
+      // Send back to create many UTXOs
+      const returnInvoice = await wallet.createInvoice({
+        contractId: token.contractId,
+        amount: 50n
+      });
+
+      await recipient.transfer({
+        invoice: returnInvoice.toString()
+      });
+    }
+
+    await testkit.mineBlocks(1);
+
+    // Now benchmark UTXO selection
+    const recipient = await testkit.createWallet();
+    const invoice = await recipient.createInvoice({
+      contractId: token.contractId,
+      amount: 5000n
+    });
+
+    const startSelection = performance.now();
+    const transfer = await wallet.transfer({
+      invoice: invoice.toString()
+    });
+    const selectionTime = performance.now() - startSelection;
+
+    console.log(`UTXO selection time with 100+ UTXOs: ${selectionTime}ms`);
+
+    expect(selectionTime).toBeLessThan(1000);  // 1 second
+  });
+});
+```
+
+### Memory Profiling
+
+```typescript
+describe('Memory Usage Tests', () => {
+  it('should not leak memory during repeated operations', async () => {
+    const testkit = await RgbTestkit.create();
+    const wallet = await testkit.createWallet();
+    await testkit.fundWallet(wallet, 10);
+
+    const token = await wallet.createToken({
+      totalSupply: 100000n
+    });
+
+    // Measure initial memory
+    if (global.gc) global.gc();
+    const initialMemory = process.memoryUsage().heapUsed;
+
+    // Perform many operations
+    for (let i = 0; i < 100; i++) {
+      const recipient = await testkit.createWallet();
+      const invoice = await recipient.createInvoice({
+        contractId: token.contractId,
+        amount: 100n
+      });
+
+      await wallet.transfer({
+        invoice: invoice.toString()
+      });
+
+      // Force garbage collection
+      if (global.gc && i % 10 === 0) global.gc();
+    }
+
+    // Measure final memory
+    if (global.gc) global.gc();
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    const finalMemory = process.memoryUsage().heapUsed;
+
+    const memoryIncrease = (finalMemory - initialMemory) / 1024 / 1024;  // MB
+
+    console.log(`Memory increase: ${memoryIncrease.toFixed(2)} MB`);
+
+    // Memory should not grow excessively
+    expect(memoryIncrease).toBeLessThan(100);  // Less than 100MB growth
+
+    await testkit.cleanup();
+  });
+});
+```
 
 ## Security Testing
 
-### Vulnerability Checks
+### Vulnerability and Attack Testing
+
+```typescript
+describe('Security Tests', () => {
+  let testkit: RgbTestkit;
+
+  beforeEach(async () => {
+    testkit = await RgbTestkit.create();
+  });
+
+  afterEach(async () => {
+    await testkit.cleanup();
+  });
+
+  describe('Amount Overflow Protection', () => {
+    it('should prevent integer overflow in token supply', async () => {
+      const wallet = await testkit.createWallet();
+
+      await expect(
+        wallet.createToken({
+          ticker: 'OVER',
+          totalSupply: BigInt('0xFFFFFFFFFFFFFFFF') + 1n  // u64::MAX + 1
+        })
+      ).rejects.toThrow('Integer overflow');
+    });
+
+    it('should prevent overflow in transfers', async () => {
+      const wallet = await testkit.createWallet();
+      await testkit.fundWallet(wallet, 10);
+
+      const token = await wallet.createToken({
+        totalSupply: 1000n
+      });
+
+      const recipient = await testkit.createWallet();
+      const invoice = await recipient.createInvoice({
+        contractId: token.contractId,
+        amount: BigInt('0xFFFFFFFFFFFFFFFF')  // Huge amount
+      });
+
+      await expect(
+        wallet.transfer({
+          invoice: invoice.toString()
+        })
+      ).rejects.toThrow();
+    });
+  });
+
+  describe('Double-Spend Protection', () => {
+    it('should prevent RGB double-spend', async () => {
+      const alice = await testkit.createWallet();
+      const bob1 = await testkit.createWallet();
+      const bob2 = await testkit.createWallet();
+
+      await testkit.fundWallet(alice, 10);
+
+      const token = await alice.createToken({
+        totalSupply: 1000n
+      });
+
+      // Create two invoices for same amount
+      const invoice1 = await bob1.createInvoice({
+        contractId: token.contractId,
+        amount: 800n
+      });
+
+      const invoice2 = await bob2.createInvoice({
+        contractId: token.contractId,
+        amount: 800n
+      });
+
+      // First transfer should succeed
+      const transfer1 = await alice.transfer({
+        invoice: invoice1.toString()
+      });
+
+      await bob1.acceptTransfer(transfer1.consignment);
+      await testkit.mineBlocks(1);
+
+      // Second transfer should fail (insufficient balance)
+      await expect(
+        alice.transfer({
+          invoice: invoice2.toString()
+        })
+      ).rejects.toThrow('Insufficient balance');
+    });
+  });
+
+  describe('Seal Reuse Detection', () => {
+    it('should reject transitions reusing seals', async () => {
+      const seal = await testkit.createSeal();
+
+      const transition1 = await testkit.createTransition({
+        inputs: [{ seal: seal, amount: 100n }],
+        outputs: [{ amount: 100n }]
+      });
+
+      const transition2 = await testkit.createTransition({
+        inputs: [{ seal: seal, amount: 100n }],  // Same seal!
+        outputs: [{ amount: 100n }]
+      });
+
+      const validation = await testkit.validateStateSequence([
+        transition1,
+        transition2
+      ]);
+
+      expect(validation.valid).toBe(false);
+      expect(validation.errors).toContainEqual(
+        expect.objectContaining({ type: 'SealReuse' })
+      );
+    });
+  });
+
+  describe('Consignment Tampering Detection', () => {
+    it('should detect modified consignments', async () => {
+      const alice = await testkit.createWallet();
+      const bob = await testkit.createWallet();
+
+      await testkit.fundWallet(alice, 10);
+
+      const token = await alice.createToken({
+        totalSupply: 1000n
+      });
+
+      const invoice = await bob.createInvoice({
+        contractId: token.contractId,
+        amount: 100n
+      });
+
+      const transfer = await alice.transfer({
+        invoice: invoice.toString()
+      });
+
+      // Tamper with consignment
+      const tamperedConsignment = testkit.tamperConsignment(
+        transfer.consignment,
+        { modifyAmount: true }
+      );
+
+      // Validation should fail
+      const validation = await testkit.validateConsignment(tamperedConsignment);
+
+      expect(validation.valid).toBe(false);
+      expect(validation.errors.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Replay Attack Protection', () => {
+    it('should prevent consignment replay', async () => {
+      const alice = await testkit.createWallet();
+      const bob = await testkit.createWallet();
+
+      await testkit.fundWallet(alice, 10);
+
+      const token = await alice.createToken({
+        totalSupply: 1000n
+      });
+
+      const invoice = await bob.createInvoice({
+        contractId: token.contractId,
+        amount: 100n
+      });
+
+      const transfer = await alice.transfer({
+        invoice: invoice.toString()
+      });
+
+      // Accept once
+      await bob.acceptTransfer(transfer.consignment);
+      await testkit.mineBlocks(1);
+
+      // Try to accept again (replay)
+      await expect(
+        bob.acceptTransfer(transfer.consignment)
+      ).rejects.toThrow('Consignment already processed');
+    });
+  });
+});
+```
+
+### Rust Security Tests
 
 ```rust
-#[test]
-fn test_overflow_protection() {
-    let max = u64::MAX;
-    let result = safe_add(max, 1);
-    assert!(result.is_err());
-}
+#[cfg(test)]
+mod security_tests {
+    use super::*;
 
-#[test]
-fn test_amount_conservation() {
-    let inputs = vec![100, 200];
-    let outputs = vec![150, 151];
-    assert!(validate_amounts(inputs, outputs).is_err());
+    #[test]
+    fn test_overflow_protection() {
+        let max = Amount::MAX;
+        let result = max.checked_add(Amount::from(1));
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_underflow_protection() {
+        let zero = Amount::ZERO;
+        let result = zero.checked_sub(Amount::from(1));
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_amount_conservation_strict() {
+        let inputs = vec![Amount::from(100), Amount::from(200)];
+        let outputs = vec![Amount::from(150), Amount::from(151)];
+
+        let result = validate_amount_conservation(&inputs, &outputs);
+        assert!(result.is_err());
+
+        match result.unwrap_err() {
+            ValidationError::AmountMismatch { input_sum, output_sum } => {
+                assert_eq!(input_sum, Amount::from(300));
+                assert_eq!(output_sum, Amount::from(301));
+            }
+            _ => panic!("Wrong error type"),
+        }
+    }
+
+    #[test]
+    fn test_seal_uniqueness() {
+        let mut used_seals = HashSet::new();
+        let seal = Seal::new(Txid::from_slice(&[0; 32]), 0);
+
+        assert!(used_seals.insert(seal.clone()));
+        assert!(!used_seals.insert(seal.clone()));  // Second insert fails
+    }
+
+    #[test]
+    fn test_schema_validation_strict() {
+        let schema = Schema::rgb20();
+
+        // Missing required field
+        let mut genesis = Genesis::builder()
+            .with_schema(schema.schema_id())
+            .add_global_state("ticker", "TEST")
+            // Missing "name" and "precision"
+            .build();
+
+        let result = validate_schema_compliance(&genesis, &schema);
+        assert!(result.is_err());
+    }
 }
 ```
 
-*Security testing to be expanded*
+## Continuous Integration & Deployment
 
-## Continuous Integration
-
-### GitHub Actions
+### Complete GitHub Actions Workflow
 
 ```yaml
+# .github/workflows/rgb-tests.yml
 name: RGB Tests
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  BITCOIN_VERSION: '25.0'
+  RUST_VERSION: '1.75.0'
+  NODE_VERSION: '20.x'
 
 jobs:
-  test:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run Prettier
+        run: npm run format:check
+
+      - name: TypeScript check
+        run: npm run type-check
+
+  test-unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/unit/lcov.info
+          flags: unit
+
+  test-integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+
+    services:
+      bitcoind:
+        image: ruimarinho/bitcoin-core:${{ env.BITCOIN_VERSION }}
+        ports:
+          - 18443:18443
+        options: >-
+          --health-cmd "bitcoin-cli -regtest getblockchaininfo"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          override: true
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Wait for Bitcoin
+        run: |
+          timeout 60 sh -c 'until bitcoin-cli -regtest -rpcuser=test -rpcpassword=test getblockchaininfo 2>/dev/null; do sleep 1; done'
+
+      - name: Setup Bitcoin wallet
+        run: |
+          bitcoin-cli -regtest -rpcuser=test -rpcpassword=test createwallet "test"
+          bitcoin-cli -regtest -rpcuser=test -rpcpassword=test generatetoaddress 101 $(bitcoin-cli -regtest -rpcuser=test -rpcpassword=test getnewaddress)
+
+      - name: Run integration tests
+        run: npm run test:integration
+        env:
+          BITCOIN_RPC_URL: http://localhost:18443
+          BITCOIN_RPC_USER: test
+          BITCOIN_RPC_PASSWORD: test
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/integration/lcov.info
+          flags: integration
+
+  test-e2e:
+    name: End-to-End Tests
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - name: Setup Bitcoin
-        run: |
-          # Install bitcoind
-          # Start regtest
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
-      - name: Setup RGB
-        run: |
-          cargo install rgb-node
-          rgbd --network regtest &
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Run Tests
+      - name: Start test environment
         run: |
-          npm test
+          docker-compose -f docker-compose.test.yml up -d
+          sleep 10
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+      - name: Collect logs on failure
+        if: failure()
+        run: |
+          docker-compose -f docker-compose.test.yml logs > test-logs.txt
+
+      - name: Upload logs
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-logs
+          path: test-logs.txt
+
+      - name: Cleanup
+        if: always()
+        run: docker-compose -f docker-compose.test.yml down -v
+
+  test-rust:
+    name: Rust Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          override: true
+          components: rustfmt, clippy
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run Clippy
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: --all-targets --all-features -- -D warnings
+
+      - name: Run tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --all-features --no-fail-fast
+
+      - name: Generate coverage
+        uses: actions-rs/tarpaulin@v0.1
+        with:
+          args: '--out Xml --all-features'
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./cobertura.xml
+          flags: rust
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: npm audit
+        run: npm audit --audit-level=moderate
+
+      - name: Rust audit
+        uses: actions-rs/audit-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [lint, test-unit, test-integration]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: dist/
 ```
 
-*CI setup to be expanded*
+### GitLab CI/CD Pipeline
 
-## Test Coverage
+```yaml
+# .gitlab-ci.yml
+image: node:20
+
+stages:
+  - setup
+  - test
+  - build
+  - deploy
+
+variables:
+  BITCOIN_VERSION: '25.0'
+  DOCKER_DRIVER: overlay2
+
+cache:
+  paths:
+    - node_modules/
+    - .npm/
+
+setup:
+  stage: setup
+  script:
+    - npm ci
+  artifacts:
+    paths:
+      - node_modules/
+
+lint:
+  stage: test
+  needs: [setup]
+  script:
+    - npm run lint
+    - npm run format:check
+    - npm run type-check
+
+test:unit:
+  stage: test
+  needs: [setup]
+  script:
+    - npm run test:unit
+  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/unit/cobertura-coverage.xml
+
+test:integration:
+  stage: test
+  needs: [setup]
+  services:
+    - name: ruimarinho/bitcoin-core:${BITCOIN_VERSION}
+      alias: bitcoind
+  variables:
+    BITCOIN_RPC_URL: http://bitcoind:18443
+    BITCOIN_RPC_USER: test
+    BITCOIN_RPC_PASSWORD: test
+  before_script:
+    - apt-get update && apt-get install -y curl
+    - |
+      timeout 60 sh -c '
+        until curl -u test:test --data-binary "{\"jsonrpc\":\"1.0\",\"id\":\"test\",\"method\":\"getblockchaininfo\",\"params\":[]}" -H "content-type: text/plain;" http://bitcoind:18443/ 2>/dev/null; do
+          sleep 1
+        done
+      '
+  script:
+    - npm run test:integration
+
+build:
+  stage: build
+  needs: [lint, test:unit, test:integration]
+  script:
+    - npm run build
+  artifacts:
+    paths:
+      - dist/
+```
+
+## Test Coverage Reporting
+
+### Coverage Configuration
+
+```javascript
+// jest.config.js
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/**/*.test.{ts,tsx}',
+    '!src/**/index.{ts,tsx}'
+  ],
+
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80
+    },
+    './src/core/': {
+      branches: 90,
+      functions: 90,
+      lines: 90,
+      statements: 90
+    }
+  },
+
+  coverageReporters: [
+    'text',
+    'text-summary',
+    'html',
+    'lcov',
+    'cobertura'
+  ],
+
+  coverageDirectory: 'coverage'
+};
+```
+
+### Generating Coverage Reports
 
 ```bash
-# Rust coverage
-cargo tarpaulin --out Html
-
-# TypeScript coverage
+# Generate coverage for TypeScript/JavaScript
 npm run test:coverage
+
+# View HTML report
+open coverage/index.html
+
+# Generate coverage for Rust
+cargo tarpaulin --out Html --out Xml --all-features
+
+# View Rust HTML report
+open tarpaulin-report.html
+
+# Combined coverage script
+#!/bin/bash
+# scripts/coverage.sh
+
+echo "Running TypeScript coverage..."
+npm run test:coverage
+
+echo "Running Rust coverage..."
+cd rust && cargo tarpaulin --out Xml --all-features && cd ..
+
+echo "Uploading to Codecov..."
+bash <(curl -s https://codecov.io/bash)
+
+echo "Coverage reports generated!"
 ```
 
-*Coverage reporting to be expanded*
+## Debugging Techniques
+
+### Debug Logging
+
+```typescript
+import debug from 'debug';
+
+const log = debug('rgb:tests');
+const logWallet = debug('rgb:tests:wallet');
+const logTransfer = debug('rgb:tests:transfer');
+
+describe('Debug Logging Example', () => {
+  it('should debug transfer flow', async () => {
+    log('Starting test');
+
+    const testkit = await RgbTestkit.create();
+    logWallet('Testkit created');
+
+    const wallet = await testkit.createWallet();
+    logWallet('Wallet created: %o', wallet.address);
+
+    await testkit.fundWallet(wallet, 10);
+    logWallet('Wallet funded: %d BTC', 10);
+
+    const token = await wallet.createToken({
+      ticker: 'DBG',
+      totalSupply: 1000n
+    });
+    logTransfer('Token created: %s', token.contractId);
+
+    // Enable with: DEBUG=rgb:tests:* npm test
+  });
+});
+```
+
+### Snapshot Testing
+
+```typescript
+describe('Snapshot Tests', () => {
+  it('should match contract structure snapshot', async () => {
+    const testkit = await RgbTestkit.create();
+    const wallet = await testkit.createWallet();
+
+    const token = await wallet.createToken({
+      ticker: 'SNAP',
+      name: 'Snapshot Token',
+      precision: 8,
+      totalSupply: 1000000n
+    });
+
+    const contractState = await wallet.getContractState(token.contractId);
+
+    // Redact non-deterministic fields
+    const sanitized = {
+      ...contractState,
+      contractId: '<CONTRACT_ID>',
+      genesis: {
+        ...contractState.genesis,
+        timestamp: '<TIMESTAMP>'
+      }
+    };
+
+    expect(sanitized).toMatchSnapshot();
+  });
+});
+```
+
+### Visual Debugging with State Inspector
+
+```typescript
+class StateInspector {
+  static async inspect(wallet: RgbWallet, contractId: ContractId) {
+    console.log('\n=== Contract State Inspector ===\n');
+
+    const state = await wallet.getContractState(contractId);
+
+    console.log('Contract ID:', contractId);
+    console.log('Schema:', state.schema);
+    console.log('\nGlobal State:');
+    for (const [key, value] of Object.entries(state.globalState)) {
+      console.log(`  ${key}: ${value}`);
+    }
+
+    console.log('\nTransitions:', state.transitions.length);
+    for (const [i, transition] of state.transitions.entries()) {
+      console.log(`  ${i}: ${transition.txid} (${transition.inputs.length} -> ${transition.outputs.length})`);
+    }
+
+    console.log('\nOwned States:');
+    for (const [seal, ownedState] of state.ownedStates) {
+      console.log(`  ${seal}: ${ownedState.amount}`);
+    }
+
+    console.log('\n===========================\n');
+  }
+}
+
+// Usage in tests
+it('should debug state', async () => {
+  await StateInspector.inspect(wallet, token.contractId);
+});
+```
+
+## Testing Best Practices
+
+### Test Organization
+
+```typescript
+// Good test organization
+describe('RgbWallet', () => {
+  describe('Token Operations', () => {
+    describe('createToken', () => {
+      it('should create token with valid parameters', async () => {
+        // Test implementation
+      });
+
+      it('should reject invalid ticker', async () => {
+        // Test implementation
+      });
+    });
+
+    describe('transfer', () => {
+      it('should transfer tokens successfully', async () => {
+        // Test implementation
+      });
+
+      it('should fail with insufficient balance', async () => {
+        // Test implementation
+      });
+    });
+  });
+
+  describe('Invoice Operations', () => {
+    // Invoice tests
+  });
+});
+```
+
+### Test Data Builders
+
+```typescript
+class TokenBuilder {
+  private params: Partial<TokenParams> = {};
+
+  withTicker(ticker: string): this {
+    this.params.ticker = ticker;
+    return this;
+  }
+
+  withTotalSupply(supply: bigint): this {
+    this.params.totalSupply = supply;
+    return this;
+  }
+
+  withPrecision(precision: number): this {
+    this.params.precision = precision;
+    return this;
+  }
+
+  async build(wallet: TestWallet): Promise<Rgb20Contract> {
+    const defaults = {
+      ticker: 'TEST',
+      name: 'Test Token',
+      precision: 8,
+      totalSupply: 1000000n
+    };
+
+    return await wallet.createToken({
+      ...defaults,
+      ...this.params
+    });
+  }
+}
+
+// Usage
+it('should create custom token', async () => {
+  const token = await new TokenBuilder()
+    .withTicker('CUSTOM')
+    .withTotalSupply(500000n)
+    .build(wallet);
+
+  expect(token.ticker).toBe('CUSTOM');
+});
+```
+
+### Cleanup and Teardown
+
+```typescript
+describe('Proper Cleanup', () => {
+  let testkit: RgbTestkit;
+  let wallets: TestWallet[] = [];
+
+  beforeEach(async () => {
+    testkit = await RgbTestkit.create();
+  });
+
+  afterEach(async () => {
+    // Cleanup all wallets
+    for (const wallet of wallets) {
+      await wallet.close();
+    }
+    wallets = [];
+
+    // Cleanup testkit
+    await testkit.cleanup();
+  });
+
+  it('should track all created wallets', async () => {
+    const wallet1 = await testkit.createWallet();
+    const wallet2 = await testkit.createWallet();
+
+    wallets.push(wallet1, wallet2);
+
+    // Test logic...
+  });
+});
+```
+
+## Related Documentation
+
+- [RGB.js SDK](./rgbjs.md) - JavaScript/TypeScript development
+- [Rust SDK](./rust-sdk.md) - Rust RGB implementation
+- [Wallet Integration](./wallet-integration.md) - Building RGB wallets
+- [RGB20 Tokens](../rgb20/creating-tokens.md) - Fungible token testing
+- [RGB21 NFTs](../rgb21/nft-basics.md) - NFT testing
+
+---
+
+*Last updated: 2025-01-17*
 
 ## Best Practices
 

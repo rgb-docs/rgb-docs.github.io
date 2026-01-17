@@ -16,7 +16,7 @@ RGB21 metadata is structured data describing the NFT's properties, appearance, a
 
 **Metadata**: Structured data defining the NFT
 - Token index (unique ID)
-- Preview image (embedded, <64KB)
+- Preview image (embedded, less than 64KB)
 - Media reference (external, unlimited size)
 - Additional attachments
 - Proof of reserves
