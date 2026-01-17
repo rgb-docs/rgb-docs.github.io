@@ -45,7 +45,9 @@ description: Learn about RGB Protocol v0.12 - Smart contracts for Bitcoin and Li
     marginTop: '2rem'
   }}>
     <a href="/getting-started/quick-start" style={{
-      display: 'inline-block',
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
       padding: '1rem 2.5rem',
       background: 'white',
       color: '#667eea',
@@ -53,13 +55,16 @@ description: Learn about RGB Protocol v0.12 - Smart contracts for Bitcoin and Li
       textDecoration: 'none',
       fontWeight: '600',
       fontSize: '1.1rem',
+      lineHeight: '1',
       boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
       transition: 'all 0.2s ease'
     }}>
       Get Started →
     </a>
     <a href="https://github.com/RGB-WG" style={{
-      display: 'inline-block',
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
       padding: '1rem 2.5rem',
       background: 'transparent',
       color: 'white',
@@ -68,6 +73,7 @@ description: Learn about RGB Protocol v0.12 - Smart contracts for Bitcoin and Li
       textDecoration: 'none',
       fontWeight: '600',
       fontSize: '1.1rem',
+      lineHeight: '1',
       transition: 'all 0.2s ease'
     }}>
       View on GitHub
@@ -478,7 +484,9 @@ rgb issue --schema RGB20 --ticker TKN --supply 1000000
 
 <div style={{marginTop: '2rem'}}>
   <a href="/getting-started/quick-start" style={{
-    display: 'inline-block',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: '1.2rem 3rem',
     background: 'white',
     color: '#667eea',
@@ -486,6 +494,7 @@ rgb issue --schema RGB20 --ticker TKN --supply 1000000
     textDecoration: 'none',
     fontWeight: '600',
     fontSize: '1.3rem',
+    lineHeight: '1',
     boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
     marginRight: '1rem',
     transition: 'all 0.2s ease'
@@ -493,7 +502,9 @@ rgb issue --schema RGB20 --ticker TKN --supply 1000000
     Start Building Now →
   </a>
   <a href="/core-concepts/overview" style={{
-    display: 'inline-block',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: '1.2rem 3rem',
     background: 'transparent',
     color: 'white',
@@ -502,6 +513,7 @@ rgb issue --schema RGB20 --ticker TKN --supply 1000000
     textDecoration: 'none',
     fontWeight: '600',
     fontSize: '1.3rem',
+    lineHeight: '1',
     transition: 'all 0.2s ease'
   }}>
     Learn More
@@ -537,7 +549,7 @@ RGB is under active development. Always test on testnet first.
 ## Join the RGB Community
 
 - **[GitHub](https://github.com/RGB-WG)** - 2000+ stars, actively developed
-- **[Telegram](https://t.me/rgbtelegram)** - 5000+ developers
+- **[Telegram](https://t.me/rgbtelegram)** - Community discussion
 - **[Twitter](https://twitter.com/rgb_protocol)** - Latest updates
 - **[RGB.tech](https://rgb.tech)** - Official website & blog
 - **[FAQ](https://www.rgbfaq.com)** - Common questions answered
@@ -594,7 +606,9 @@ RGB is under active development. Always test on testnet first.
 
 <div style={{textAlign: 'center', margin: '3rem 0'}}>
   <a href="/getting-started/quick-start" style={{
-    display: 'inline-block',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: '1rem 2.5rem',
     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     color: 'white',
@@ -602,6 +616,7 @@ RGB is under active development. Always test on testnet first.
     textDecoration: 'none',
     fontWeight: '600',
     fontSize: '1.2rem',
+    lineHeight: '1',
     boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
     transition: 'all 0.2s ease'
   }}>

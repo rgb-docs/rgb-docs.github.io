@@ -52,13 +52,16 @@ function HomepageHeader() {
           <Link
             to="/getting-started/introduction"
             style={{
-              display: 'inline-block',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               padding: '1rem 2.5rem',
               background: 'white',
               color: '#667eea',
               border: 'none',
               fontSize: '1.1rem',
               fontWeight: '600',
+              lineHeight: '1',
               boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
               borderRadius: '8px',
               textDecoration: 'none',
@@ -69,13 +72,16 @@ function HomepageHeader() {
           <Link
             to="/playground"
             style={{
-              display: 'inline-block',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               padding: '1rem 2.5rem',
               background: 'rgba(255,255,255,0.15)',
               color: 'white',
               border: '2px solid rgba(255,255,255,0.5)',
               fontSize: '1.1rem',
               fontWeight: '600',
+              lineHeight: '1',
               borderRadius: '8px',
               textDecoration: 'none',
               transition: 'all 0.2s ease'
@@ -85,13 +91,16 @@ function HomepageHeader() {
           <Link
             to="https://github.com/RGB-WG"
             style={{
-              display: 'inline-block',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               padding: '1rem 2.5rem',
               background: 'transparent',
               color: 'white',
               border: '2px solid white',
               fontSize: '1.1rem',
               fontWeight: '600',
+              lineHeight: '1',
               borderRadius: '8px',
               textDecoration: 'none',
               transition: 'all 0.2s ease'
@@ -272,13 +281,16 @@ function CTASection() {
           <Link
             to="/getting-started/installation"
             style={{
-              display: 'inline-block',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               padding: '1rem 2.5rem',
               background: 'white',
               color: '#667eea',
               border: 'none',
               fontSize: '1.1rem',
               fontWeight: '600',
+              lineHeight: '1',
               boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
               borderRadius: '8px',
               textDecoration: 'none',
@@ -289,13 +301,16 @@ function CTASection() {
           <Link
             to="/getting-started/quick-start"
             style={{
-              display: 'inline-block',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               padding: '1rem 2.5rem',
               background: 'transparent',
               color: 'white',
               border: '2px solid white',
               fontSize: '1.1rem',
               fontWeight: '600',
+              lineHeight: '1',
               borderRadius: '8px',
               textDecoration: 'none',
               transition: 'all 0.2s ease'
