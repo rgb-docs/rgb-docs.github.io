@@ -156,18 +156,15 @@ You only validate what affects you → Fast, cheap, private
 
 ```bash
 # Create a fungible token with complete privacy
-rgb issue \
-  --schema RGB20 \
-  --ticker "USDT" \
-  --name "Tether USD" \
-  --precision 8 \
-  --supply 1000000 \
-  --seal "bc1q...#0"
+# (using params file - see Quick Start for details)
+rgb issue --wallet my-wallet token-params.yaml
 
 # ✓ Issued in seconds
 # ✓ Zero blockchain footprint
 # ✓ Lightning Network compatible
 ```
+
+The params file defines your token specifications (ticker, name, precision, supply, etc.)
 
 ### Create an NFT (RGB21)
 
@@ -304,17 +301,15 @@ const dex = await RGB.create({
 ### ⚡ Lightning Network Assets
 **Instant, low-cost transfers**
 
-```bash
-# Open RGB-enabled channel
-rgb lightning open \
-  --capacity 1000000 \
-  --asset USDT
+RGB assets can be transferred over Lightning Network channels for instant settlement with minimal fees. Implementation varies by Lightning node software.
 
-# Route multi-hop payments
-rgb lightning pay lnrgb1...
+```bash
 # ✓ Millisecond settlement
 # ✓ Satoshi-level fees
+# ✓ Multi-hop routing
 ```
+
+See [RGB Lightning](/guides/lightning/overview) for integration details.
 
 </div>
 
@@ -360,12 +355,12 @@ const auditLog = await RGB23.create({
 :::tip **Developer Experience**
 ```bash
 # Install CLI
-cargo install rgb-cli
+cargo install rgb-wallet
 
-# Issue token in 3 commands
+# Issue token in a few commands
 rgb init
-rgb create-wallet
-rgb issue --schema RGB20 --ticker TKN --supply 1000000
+rgb create my-wallet "xpub..."
+rgb issue --wallet my-wallet token-params.yaml
 
 # Deploy to production immediately
 # No blockchain fees • No gas • No waiting

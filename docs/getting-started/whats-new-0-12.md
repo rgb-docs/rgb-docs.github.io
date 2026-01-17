@@ -69,14 +69,13 @@ Introduced a revolutionary VM with just **40 instructions**:
 
 ### 3. Enhanced Invoicing System
 
-Invoices now support complex scenarios:
+Invoices now support more flexible seal types and better integration with payment workflows:
 
 ```bash
-# Multiple assets in one invoice
-rgb invoice create \
-  --contract <CONTRACT_ID_1> --amount 100 \
-  --contract <CONTRACT_ID_2> --amount 50 \
-  --output multi-asset-invoice.txt
+# Generate invoice for receiving tokens
+rgb invoice --wallet my-wallet <CONTRACT_ID> 100
+
+# The invoice encodes: contract, amount, and destination seal
 ```
 
 ### 4. Payment Scripts
@@ -235,7 +234,8 @@ Formal mathematical model for blockchain reorganization attacks:
 
 ```rust
 // Configurable re-org depth protection
-rgb config set reorg-depth 6
+// Set via --min-confirmations global option
+rgb --min-confirmations 6 <command>
 ```
 
 ### Deterministic Bitcoin Commitments (DBC)
@@ -274,19 +274,14 @@ pub struct PedersenCommitment   // Removed
 
 ### Lightning Network Integration
 
-Enhanced Lightning Network support:
+Enhanced Lightning Network support for RGB assets:
 
-```bash
-# Open RGB-enabled channel
-rgb lightning open \
-  --contract <CONTRACT_ID> \
-  --capacity 1000000 \
-  --peer <NODE_PUBKEY>
+- RGB-enabled Lightning channels
+- Multi-hop routing for RGB assets
+- Atomic swaps between Bitcoin and RGB assets
+- Instant settlement with minimal fees
 
-# Route RGB payments
-rgb lightning pay \
-  --invoice <LN_RGB_INVOICE>
-```
+RGB Lightning integration is provided through compatible Lightning node implementations. See [RGB Lightning guide](/guides/lightning/overview) for details.
 
 ### Multiple Token Standards
 
@@ -338,10 +333,8 @@ rgb-v0.11 export --contract <ID> --output old-data.json
 cargo install rgb-cli@0.12
 
 # 3. Re-issue contract
-rgb issue \
-  --schema RGB20 \
-  --from-export old-data.json \
-  --output new-contract.rgb
+# Create new params file with your token specs
+rgb issue --wallet my-wallet token-params.yaml
 
 # 4. Announce to users
 ```
