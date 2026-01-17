@@ -29,7 +29,7 @@ Error: unrecognized option '--schema'
 rgb --version
 ```
 
-2. **If you see an RC version** (e.g., `0.12.0-rc.1`, `0.12.0-rc.2`, `0.12.0-rc.3`):
+2. **If you see an RC version** (e.g., with `-rc` suffix):
    - **Option A:** Install the stable release that matches this documentation:
      ```bash
      cargo install rgb-cli
@@ -72,13 +72,13 @@ error[E0308]: mismatched types
 - Ensure you're using stable crate versions in `Cargo.toml`:
   ```toml
   [dependencies]
-  rgb-core = "0.12"     # Not "0.12.0-rc.3"
+  rgb-core = "0.12"     # Use stable version
   rgb-std = "0.12"
   ```
 - Or use the exact RC version in your dependencies if needed:
   ```toml
   [dependencies]
-  rgb-core = { git = "https://github.com/RGB-WG/rgb-core", tag = "v0.12.0-rc.3" }
+  rgb-core = { git = "https://github.com/RGB-WG/rgb-core", tag = "<your-rc-version>" }
   ```
 
 ### Breaking Changes Between Versions
