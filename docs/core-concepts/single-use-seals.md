@@ -94,35 +94,63 @@ verify_seal_closure(seal, closure)?; // ✓ Valid
 
 ### The Problem (Without Bitcoin)
 
-```
-Alice has 100 RGB tokens
-├── Creates transfer to Bob: -100 tokens
-└── Creates transfer to Charlie: -100 tokens
-    ├── Both look valid!
-    └── Double-spend ❌
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#f5576c','primaryTextColor':'#fff','primaryBorderColor':'#c92a2a','lineColor':'#c92a2a','secondaryColor':'#fee','tertiaryColor':'#fff'}}}%%
+graph TB
+    A["Alice has 100 RGB tokens"] --> B["Transfer to Bob: -100 tokens ✓"]
+    A --> C["Transfer to Charlie: -100 tokens ✓"]
+    B --> D["Both look valid!"]
+    C --> D
+    D --> E["❌ Double-spend!"]
+
+    style A fill:#f5576c,stroke:#c92a2a,stroke-width:2px,color:#fff
+    style B fill:#fa5252,stroke:#c92a2a,stroke-width:2px,color:#fff
+    style C fill:#fa5252,stroke:#c92a2a,stroke-width:2px,color:#fff
+    style D fill:#ff6b6b,stroke:#c92a2a,stroke-width:2px,color:#fff
+    style E fill:#c92a2a,stroke:#c92a2a,stroke-width:3px,color:#fff
 ```
 
 ### The Solution (Using Bitcoin UTXOs)
 
 RGB binds state to Bitcoin UTXOs, so **Bitcoin's existing double-spend prevention** protects RGB state:
 
-```
-Alice has 100 tokens (bound to Bitcoin UTXO #1)
-├── Transfer to Bob: Spend UTXO #1 + RGB commitment
-└── Transfer to Charlie: Tries to spend UTXO #1 again
-    └── Bitcoin rejects! ❌ UTXO already spent
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#43e97b','primaryTextColor':'#fff','primaryBorderColor':'#2b8a3e','lineColor':'#2b8a3e','secondaryColor':'#e6fcf5','tertiaryColor':'#fff'}}}%%
+graph TB
+    A["Alice has 100 tokens<br/>(bound to Bitcoin UTXO #1)"]
+    B["Transfer to Bob<br/>Spend UTXO #1 + RGB commitment"]
+    C["Transfer to Charlie<br/>Try to spend UTXO #1 again"]
+    D["Bitcoin accepts! ✓<br/>UTXO spent once"]
+    E["❌ Bitcoin rejects!<br/>UTXO already spent"]
+
+    A --> B
+    A --> C
+    B --> D
+    C --> E
+
+    style A fill:#43e97b,stroke:#2b8a3e,stroke-width:2px,color:#fff
+    style B fill:#51cf66,stroke:#2b8a3e,stroke-width:2px,color:#fff
+    style C fill:#ff8787,stroke:#c92a2a,stroke-width:2px,color:#fff
+    style D fill:#2b8a3e,stroke:#2b8a3e,stroke-width:3px,color:#fff
+    style E fill:#c92a2a,stroke:#c92a2a,stroke-width:3px,color:#fff
 ```
 
 ### Bitcoin Does the Heavy Lifting
 
-```
-RGB doesn't prevent double-spending itself
-↓
-RGB binds state to Bitcoin UTXOs
-↓
-Bitcoin consensus prevents double-spending UTXOs
-↓
-Therefore: RGB state can't be double-spent ✓
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#667eea','primaryTextColor':'#fff','primaryBorderColor':'#764ba2','lineColor':'#764ba2','secondaryColor':'#f8f9fa','tertiaryColor':'#fff'}}}%%
+graph TB
+    A["RGB doesn't prevent<br/>double-spending itself"]
+    B["RGB binds state to<br/>Bitcoin UTXOs"]
+    C["Bitcoin consensus prevents<br/>double-spending UTXOs"]
+    D["✓ Therefore: RGB state<br/>can't be double-spent"]
+
+    A --> B --> C --> D
+
+    style A fill:#667eea,stroke:#764ba2,stroke-width:2px,color:#fff
+    style B fill:#7c8ff0,stroke:#764ba2,stroke-width:2px,color:#fff
+    style C fill:#92a0f3,stroke:#764ba2,stroke-width:2px,color:#fff
+    style D fill:#43e97b,stroke:#2b8a3e,stroke-width:3px,color:#fff
 ```
 
 **Key Insight**: RGB gets double-spend prevention "for free" by using Bitcoin's UTXO model. The "single-use seal" terminology is just a way to describe this property.

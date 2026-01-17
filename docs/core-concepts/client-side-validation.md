@@ -217,30 +217,36 @@ fn verify_utxos_spent(consignment: &Consignment) -> Result<()> {
 
 ### Example: Token Transfer
 
-```
-1. Recipient generates invoice
-   ├── Creates blinded UTXO
-   └── Shares invoice with sender
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#667eea','primaryTextColor':'#fff','primaryBorderColor':'#764ba2','lineColor':'#764ba2','secondaryColor':'#f8f9fa','tertiaryColor':'#fff','actorBkg':'#667eea','actorBorder':'#764ba2','actorTextColor':'#fff','signalColor':'#764ba2','signalTextColor':'#333','sequenceNumberColor':'white'}}}%%
+sequenceDiagram
+    participant R as Recipient
+    participant S as Sender
+    participant B as Bitcoin
 
-2. Sender creates transfer
-   ├── Selects own tokens to spend
-   ├── Creates state transition
-   ├── Commits to Bitcoin transaction
-   └── Creates consignment
+    Note over R: 1. Generate Invoice
+    R->>R: Create blinded UTXO
+    R->>S: Share invoice
 
-3. Sender delivers consignment
-   ├── Off-chain (email, QR, etc.)
-   └── Along with Bitcoin tx
+    Note over S: 2. Create Transfer
+    S->>S: Select tokens to spend
+    S->>S: Create state transition
+    S->>S: Create consignment
 
-4. Recipient validates
-   ├── Checks full history
-   ├── Verifies Bitcoin commitments
-   ├── Verifies UTXOs spent
-   └── Accepts if valid
+    Note over S: 3. Deliver Consignment
+    S->>R: Send consignment (off-chain)
+    S->>B: Broadcast Bitcoin tx
 
-5. Bitcoin transaction confirms
-   ├── UTXOs are spent
-   └── Transfer is final
+    Note over R: 4. Validate
+    R->>R: Check full history
+    R->>R: Verify Bitcoin commitments
+    R->>R: Verify UTXOs spent
+    R->>R: Accept if valid
+
+    Note over B: 5. Confirmation
+    B->>B: Confirm transaction
+    B-->>R: UTXOs spent (finalized)
+    B-->>S: Transfer complete
 ```
 
 ## Comparison with On-Chain Validation

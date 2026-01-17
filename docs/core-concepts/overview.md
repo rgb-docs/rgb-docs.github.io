@@ -48,27 +48,47 @@ RGB implements **Partially-Replicated Infinite State Machines** (PRISM):
 
 ## RGB Architecture Layers
 
-```
-┌─────────────────────────────────────────┐
-│  Contractum Smart Contract Language     │  High-level contract definition
-├─────────────────────────────────────────┤
-│  RGB Schema & Interfaces                │  Contract templates & APIs
-│  (RGB20, RGB21, RGB22, ...)             │
-├─────────────────────────────────────────┤
-│  zk-AluVM Virtual Machine               │  Contract execution & validation
-│  (40 instructions, non-von-Neumann)     │
-├─────────────────────────────────────────┤
-│  Client-Side Validation                 │  State validation logic
-│  (Consignments, State Transitions)      │
-├─────────────────────────────────────────┤
-│  UTXO Binding                           │  Ownership & double-spend prevention
-│  (Bitcoin UTXOs)                        │
-├─────────────────────────────────────────┤
-│  Deterministic Bitcoin Commitments      │  Commitment layer
-│  (Tapret, Opret, MPC)                   │
-├─────────────────────────────────────────┤
-│  Bitcoin & Lightning Network            │  Settlement & publication layer
-└─────────────────────────────────────────┘
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#667eea','primaryTextColor':'#fff','primaryBorderColor':'#764ba2','lineColor':'#764ba2','secondaryColor':'#f8f9fa','tertiaryColor':'#fff'}}}%%
+graph TB
+    subgraph layer7[" "]
+        A["<b>Contractum Smart Contract Language</b><br/>High-level contract definition"]
+    end
+    subgraph layer6[" "]
+        B["<b>RGB Schema & Interfaces</b><br/>Contract templates & APIs<br/>(RGB20, RGB21, RGB22, ...)"]
+    end
+    subgraph layer5[" "]
+        C["<b>zk-AluVM Virtual Machine</b><br/>Contract execution & validation<br/>(40 instructions, non-von-Neumann)"]
+    end
+    subgraph layer4[" "]
+        D["<b>Client-Side Validation</b><br/>State validation logic<br/>(Consignments, State Transitions)"]
+    end
+    subgraph layer3[" "]
+        E["<b>UTXO Binding</b><br/>Ownership & double-spend prevention<br/>(Bitcoin UTXOs)"]
+    end
+    subgraph layer2[" "]
+        F["<b>Deterministic Bitcoin Commitments</b><br/>Commitment layer<br/>(Tapret, Opret, MPC)"]
+    end
+    subgraph layer1[" "]
+        G["<b>Bitcoin & Lightning Network</b><br/>Settlement & publication layer"]
+    end
+
+    A --> B --> C --> D --> E --> F --> G
+
+    style layer7 fill:#667eea,stroke:#764ba2,stroke-width:2px,color:#fff
+    style layer6 fill:#7c8ff0,stroke:#764ba2,stroke-width:2px,color:#fff
+    style layer5 fill:#92a0f3,stroke:#764ba2,stroke-width:2px,color:#fff
+    style layer4 fill:#a8b1f6,stroke:#764ba2,stroke-width:2px,color:#fff
+    style layer3 fill:#bec2f9,stroke:#764ba2,stroke-width:2px,color:#fff
+    style layer2 fill:#d4d3fc,stroke:#764ba2,stroke-width:2px,color:#333
+    style layer1 fill:#eae4ff,stroke:#764ba2,stroke-width:2px,color:#333
+    style A fill:transparent,stroke:none,color:#fff
+    style B fill:transparent,stroke:none,color:#fff
+    style C fill:transparent,stroke:none,color:#fff
+    style D fill:transparent,stroke:none,color:#fff
+    style E fill:transparent,stroke:none,color:#333
+    style F fill:transparent,stroke:none,color:#333
+    style G fill:transparent,stroke:none,color:#333
 ```
 
 ## Key Components
