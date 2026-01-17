@@ -67,6 +67,22 @@ function HomepageHeader() {
             Get Started →
           </Link>
           <Link
+            to="/playground"
+            style={{
+              display: 'inline-block',
+              padding: '1rem 2.5rem',
+              background: 'rgba(255,255,255,0.15)',
+              color: 'white',
+              border: '2px solid rgba(255,255,255,0.5)',
+              fontSize: '1.1rem',
+              fontWeight: '600',
+              borderRadius: '8px',
+              textDecoration: 'none',
+              transition: 'all 0.2s ease'
+            }}>
+            🎮 Try Playground
+          </Link>
+          <Link
             to="https://github.com/RGB-WG"
             style={{
               display: 'inline-block',
