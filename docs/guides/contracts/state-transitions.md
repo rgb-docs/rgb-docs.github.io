@@ -202,27 +202,47 @@ validation_script: |
 
 ## Creating Transitions
 
-### Using RGB CLI
+### Using RGB CLI (v0.12.0-rc.3)
+
+State transitions are created through the invoice/pay workflow:
 
 ```bash
-# Create transfer
-rgb transfer \
-  --contract-id <contract-id> \
-  --from <my-seal> \
-  --to <recipient-invoice> \
-  --amount 1000 \
-  --change-to <change-seal>
+# Step 1: Recipient generates invoice
+rgb invoice --wallet recipient-wallet \
+  <CONTRACT_ID> \
+  1000
 
-# Validate transition
-rgb validate-transition transition.rgb
+# Step 2: Sender pays invoice (creates transition + PSBT)
+rgb pay --wallet sender-wallet \
+  <INVOICE> \
+  transfer.consignment \
+  transfer.psbt
 
-# Anchor to Bitcoin
-rgb anchor-transition \
-  --transition transition.rgb \
-  --bitcoin-tx <tx-hex>
+# Step 3: Sender signs PSBT (using Bitcoin wallet)
+# ... sign PSBT with Bitcoin signing tool ...
+
+# Step 4: Sender completes the operation
+rgb complete --wallet sender-wallet \
+  transfer.bundle \
+  signed.psbt
+
+# Step 5: Sender shares consignment with recipient
+
+# Step 6: Recipient validates and accepts the transition
+rgb accept --wallet recipient-wallet \
+  transfer.consignment
+
+# Step 7: Sender finalizes and broadcasts Bitcoin transaction
+rgb finalize --wallet sender-wallet \
+  --broadcast \
+  signed.psbt
 ```
 
-*CLI workflow to be expanded*
+The transition is created automatically as part of the `pay` command, which:
+- Selects appropriate inputs
+- Constructs state transition
+- Creates Bitcoin PSBT
+- Generates consignment with validation proofs
 
 ### Using RGB.js SDK
 
