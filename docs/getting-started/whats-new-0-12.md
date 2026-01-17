@@ -19,6 +19,19 @@ The complete protocol redesign with stability guarantees
 RGB v0.12 includes **consensus-breaking changes**. All v0.11 contracts must be re-issued. See [Migration Guide](#-migration-guide) below.
 :::
 
+:::caution **Pre-Release vs Stable Versions**
+This document describes **RGB v0.12 stable release** features. If you're working with pre-release versions from git branches (e.g., `v0.12.0-rc.1`, `v0.12.0-rc.2`, `v0.12.0-rc.3`):
+
+- **Command syntax may differ** between RC versions and the stable release
+- **APIs are subject to change** until the stable release
+- **Documentation may not match** RC implementations exactly
+
+**For best results:**
+- Use the stable v0.12.0 release (or later) from crates.io: `cargo install rgb-cli`
+- Or consult the README/docs in the specific branch if you must use an RC version
+- Always verify your version: `rgb --version`
+:::
+
 <div style={{background: 'var(--ifm-color-info-contrast-background)', padding: '1.5rem', borderRadius: '8px', margin: '2rem 0', border: '2px solid var(--ifm-color-info)'}}>
 
 ### 🔒 Forward Compatibility Guarantee

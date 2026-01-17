@@ -8,6 +8,10 @@ description: Build your first RGB asset in 5 minutes
 
 This quick start guide will walk you through creating your first RGB fungible asset (RGB20 token) in just a few minutes.
 
+:::info Documentation Version
+This documentation targets **RGB v0.12.0 (stable release)**. If you're using pre-release versions like `v0.12.0-rc.3`, command syntax and APIs may differ. For RC versions, refer to the [version compatibility notes](#version-compatibility-notes) at the bottom of this page.
+:::
+
 ## Prerequisites
 
 - RGB CLI installed ([Installation Guide](/getting-started/installation))
@@ -225,3 +229,36 @@ Check out these complete examples:
 - [FAQ](/technical-reference/faq) - Common questions
 - [Troubleshooting](/technical-reference/troubleshooting) - Debug issues
 - [Telegram](https://t.me/rgbtelegram) - Community support
+
+## Version Compatibility Notes
+
+:::warning Working with Pre-Release Versions
+If you're using RGB from development branches (e.g., `v0.12.0-rc.1`, `v0.12.0-rc.2`, `v0.12.0-rc.3`), be aware that:
+
+1. **Command syntax may differ** - CLI commands in release candidates may use different flags or parameters
+2. **APIs may be unstable** - Function signatures and module structures can change between RC versions
+3. **Breaking changes are possible** - Pre-release versions don't guarantee backward compatibility
+
+**Recommended Actions:**
+- **For Learning**: Use the stable v0.12.0 release (or later) that matches this documentation
+- **For Development**: If using an RC version, consult the specific branch documentation:
+  ```bash
+  # Clone the RGB repository at the specific version
+  git clone --branch v0.12.0-rc.3 https://github.com/RGB-WG/rgb
+  
+  # Check the README and examples in that branch
+  cd rgb && cat README.md
+  ```
+- **For Production**: Always use stable releases with the forward compatibility guarantee
+
+**Version Identification:**
+```bash
+# Check your RGB CLI version
+rgb --version
+
+# For cargo installations, check the exact version
+cargo install --list | grep rgb
+```
+
+If you encounter command mismatches, verify you're using a stable v0.12.x release that matches this documentation, or refer to the documentation in the specific branch you're working with.
+:::

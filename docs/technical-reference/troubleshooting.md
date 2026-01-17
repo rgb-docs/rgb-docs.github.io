@@ -8,6 +8,85 @@ description: Common RGB issues and solutions
 
 Solutions to common RGB problems and error messages.
 
+## Version Compatibility Issues
+
+### Commands Don't Match Documentation
+
+**Problem:** Commands shown in tutorials don't work with your RGB installation.
+
+**Example Error:**
+```bash
+$ rgb issue --schema RGB20 --ticker TEST ...
+Error: unrecognized option '--schema'
+```
+
+**Root Cause:** You're using a pre-release version (like `v0.12.0-rc.3`) that has different command syntax than the stable release documented here.
+
+**Solution:**
+
+1. **Check your installed version:**
+```bash
+rgb --version
+```
+
+2. **If you see an RC version** (e.g., `0.12.0-rc.3`, `0.12.0-rc.2`):
+   - **Option A:** Install the stable release that matches this documentation:
+     ```bash
+     cargo install rgb-cli
+     rgb --version  # Should show stable version without -rc
+     ```
+   
+   - **Option B:** Use documentation from the specific branch you're working with:
+     ```bash
+     # Clone the repository at your RC version
+     git clone --branch v0.12.0-rc.3 https://github.com/RGB-WG/rgb
+     cd rgb
+     
+     # Read the README and examples from that specific version
+     cat README.md
+     ls examples/
+     ```
+
+3. **For development work**, use stable releases:
+   ```bash
+   # Remove RC version
+   cargo uninstall rgb-cli
+   
+   # Install latest stable
+   cargo install rgb-cli
+   ```
+
+### API Function Signatures Don't Match
+
+**Problem:** Rust code examples fail to compile with type mismatches.
+
+**Example Error:**
+```rust
+error[E0308]: mismatched types
+  expected `ContractId`, found `ContractIface`
+```
+
+**Root Cause:** Pre-release versions may have different API structures.
+
+**Solution:**
+- Ensure you're using stable crate versions in `Cargo.toml`:
+  ```toml
+  [dependencies]
+  rgb-core = "0.12"     # Not "0.12.0-rc.3"
+  rgb-std = "0.12"
+  ```
+- Or use the exact RC version in your dependencies if needed:
+  ```toml
+  [dependencies]
+  rgb-core = { git = "https://github.com/RGB-WG/rgb-core", tag = "v0.12.0-rc.3" }
+  ```
+
+### Breaking Changes Between Versions
+
+**Problem:** Code that worked in v0.11 doesn't work in v0.12.
+
+**Solution:** Review the [Migration Guide](/getting-started/whats-new-0-12#-migration-guide) for breaking changes and update your code accordingly.
+
 ## Installation Issues
 
 ### Rust Build Failures
