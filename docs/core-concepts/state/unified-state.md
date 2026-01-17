@@ -12,7 +12,7 @@ RGB v0.12 introduces a unified state model that elegantly combines owned and glo
 
 The unified state model in RGB allows contracts to manage:
 
-- **Owned state**: State attached to specific UTXOs (single-use seals)
+- **Owned state**: State attached to specific UTXOs
 - **Global state**: State shared across all contract instances
 - **Hybrid state**: Combinations of owned and global state
 

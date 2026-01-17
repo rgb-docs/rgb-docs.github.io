@@ -8,6 +8,29 @@ description: Install RGB Protocol tools and SDKs for development
 
 This guide covers installing RGB tools and SDKs for different development environments.
 
+## Available Implementations
+
+RGB has several implementations under active development:
+
+### End-User Wallets
+
+- **[BitMask](https://bitmask.app/)** - Browser extension wallet supporting RGB20 tokens and RGB21 NFTs on Bitcoin and Lightning
+- **[MyCitadel](https://mycitadel.io/)** - Desktop wallet with RGB asset management
+
+### Node Implementations
+
+- **[rgb-node](https://github.com/RGB-WG/rgb-node)** - Reference RGB node implementation in Rust
+- **[RGB Lightning Node](https://github.com/RGB-WG/rgb-lightning-node)** - Lightning Network node with RGB support
+
+### Developer Tools
+
+- **[rgb-cli](https://crates.io/crates/rgb-cli)** - Command-line interface for RGB operations
+- **[rgbjs](https://www.npmjs.com/package/rgbjs)** - JavaScript/TypeScript SDK for web and Node.js
+
+:::info Development Status
+RGB is under active development. Test thoroughly on testnet before using on mainnet.
+:::
+
 ## Prerequisites
 
 Before installing RGB, ensure you have:

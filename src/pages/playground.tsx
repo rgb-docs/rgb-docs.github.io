@@ -110,7 +110,7 @@ export default function Playground(): ReactNode {
               marginBottom: '2rem',
               opacity: 0.9
             }}>
-              Install RGB and start building production applications
+              Explore RGB implementations and start building on testnet
             </p>
             <a
               href="/getting-started/installation"
@@ -244,7 +244,7 @@ function PlaygroundModules() {
                 marginBottom: '2rem',
                 lineHeight: '1.6'
               }}>
-                Visualize how RGB state transitions work with single-use seals and client-side validation.
+                Visualize how RGB state transitions work using Bitcoin's UTXO model and client-side validation.
               </p>
               <TransferSimulator />
             </>

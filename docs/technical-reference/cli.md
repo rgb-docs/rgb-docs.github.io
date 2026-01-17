@@ -685,7 +685,7 @@ Arguments:
 ```
 
 **Description:**
-Creates an RGB invoice for receiving assets. The invoice encodes the contract, amount, and a single-use seal where the assets will be received.
+Creates an RGB invoice for receiving assets. The invoice encodes the contract, amount, and a UTXO identifier where the assets will be received.
 
 **Examples:**
 
@@ -1634,7 +1634,7 @@ rgb:<contract>/<api>/<method>+<state>/<value>@<seal>
 - **method**: Method to invoke (e.g., transfer)
 - **state**: State name being transferred (e.g., balance)
 - **value**: Amount or data value
-- **seal**: Single-use seal for receiving
+- **seal**: UTXO identifier for receiving
 
 ### Examples
 

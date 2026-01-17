@@ -116,9 +116,9 @@ Your token was created entirely **off-chain**. The Bitcoin blockchain only conta
 
 The `consignment.rgb` file contains all validation data needed for the recipient to verify ownership. This is RGB's client-side validation in action.
 
-### Single-Use Seals
+### Bitcoin UTXO Binding
 
-Each transfer "closes" a single-use seal (Bitcoin UTXO) and "opens" a new one for the recipient, preventing double-spending.
+Each transfer spends a Bitcoin UTXO (binding old state) and creates new UTXOs for the recipient (binding new state), leveraging Bitcoin's existing double-spend prevention.
 
 ## Next Steps with JavaScript
 

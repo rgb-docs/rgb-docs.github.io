@@ -8,10 +8,10 @@ description: Major changes and improvements in RGB Protocol version 0.12
 
 <div style={{textAlign: 'center', margin: '2rem 0'}}>
 <div style={{fontSize: '3rem', fontWeight: 'bold', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '1rem'}}>
-100x Faster • 75% Less Code • Production Ready
+100x Faster • 75% Less Code • Forward Compatible
 </div>
 <div style={{fontSize: '1.2rem', color: 'var(--ifm-color-emphasis-700)'}}>
-The complete protocol redesign that makes RGB ready for the world
+The complete protocol redesign with stability guarantees
 </div>
 </div>
 
@@ -19,13 +19,13 @@ The complete protocol redesign that makes RGB ready for the world
 RGB v0.12 includes **consensus-breaking changes**. All v0.11 contracts must be re-issued. See [Migration Guide](#-migration-guide) below.
 :::
 
-<div style={{background: 'var(--ifm-color-success-contrast-background)', padding: '1.5rem', borderRadius: '8px', margin: '2rem 0', border: '2px solid var(--ifm-color-success)'}}>
+<div style={{background: 'var(--ifm-color-info-contrast-background)', padding: '1.5rem', borderRadius: '8px', margin: '2rem 0', border: '2px solid var(--ifm-color-info)'}}>
 
-### ✅ Forward Compatibility Guarantee
+### 🔒 Forward Compatibility Guarantee
 
-**All contracts issued with v0.12 will work with future RGB versions forever.**
+**All contracts issued with v0.12 will work with future RGB versions.**
 
-This is the first RGB version with this guarantee. Build with confidence.
+This is the first RGB version with this guarantee. Test on testnet first.
 
 </div>
 
@@ -274,7 +274,7 @@ pub struct PedersenCommitment   // Removed
 
 ### Lightning Network Integration
 
-Production-ready Lightning support:
+Enhanced Lightning Network support:
 
 ```bash
 # Open RGB-enabled channel

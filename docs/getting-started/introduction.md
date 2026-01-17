@@ -73,11 +73,11 @@ description: Learn about RGB Protocol v0.12 - Smart contracts for Bitcoin and Li
   </div>
 </div>
 
-<div style={{background: 'var(--ifm-color-success-contrast-background)', padding: '1.5rem', borderRadius: '12px', margin: '2rem 0', border: '2px solid var(--ifm-color-success)', textAlign: 'center'}}>
+<div style={{background: 'var(--ifm-color-info-contrast-background)', padding: '1.5rem', borderRadius: '12px', margin: '2rem 0', border: '2px solid var(--ifm-color-info)', textAlign: 'center'}}>
 
-### ✅ Production Ready - v0.12 Released
+### 🚀 RGB v0.12 Released
 
-**RGB is now production-ready** with forward compatibility guarantees. All contracts issued with v0.12 will remain compatible with future versions forever. [See what's new →](/getting-started/whats-new-0-12)
+RGB v0.12 provides forward compatibility guarantees - contracts issued with v0.12 will remain compatible with future versions. Various implementations are under active development. [See what's new →](/getting-started/whats-new-0-12)
 
 </div>
 
@@ -254,12 +254,12 @@ fn validate(consignment) -> bool {
 }
 ```
 
-### 2. Single-Use Seals (Bitcoin UTXOs)
-Bitcoin's UTXO model provides **natural prevention** of double-spending. RGB contracts "seal" state to specific UTXOs.
+### 2. Bitcoin UTXO Anchoring
+RGB binds state to Bitcoin UTXOs, leveraging Bitcoin's existing double-spend prevention.
 
 ```
-Contract State ──→ Sealed to UTXO ──→ Spent Once ──→ New State
-                   (Bitcoin enforces single-use)
+RGB State ──→ Bound to UTXO ──→ UTXO Spent ──→ New State
+              (UTXOs can only be spent once)
 ```
 
 ### 3. AluVM: Zero-Knowledge Ready VM
@@ -470,7 +470,7 @@ rgb issue --schema RGB20 --ticker TKN --supply 1000000
   <div>
     <div style={{fontSize: '3rem', marginBottom: '0.5rem'}}>3️⃣</div>
     <h3 style={{color: 'white'}}>Deploy</h3>
-    <p style={{opacity: 0.9}}>Production-ready now</p>
+    <p style={{opacity: 0.9}}>Test on testnet</p>
   </div>
 </div>
 
@@ -511,13 +511,32 @@ rgb issue --schema RGB20 --ticker TKN --supply 1000000
 
 </div>
 
+## Available Implementations
+
+RGB has several implementations you can try:
+
+### For Users
+
+- **[BitMask](https://bitmask.app/)** - Browser extension wallet with RGB20 and RGB21 support
+- **[MyCitadel](https://mycitadel.io/)** - Desktop wallet for RGB asset management
+
+### For Developers
+
+- **[rgb-node](https://github.com/RGB-WG/rgb-node)** - Reference node implementation (Rust)
+- **[rgb-cli](https://crates.io/crates/rgb-cli)** - Command-line tools
+- **[rgbjs](https://www.npmjs.com/package/rgbjs)** - JavaScript/TypeScript SDK
+- **[RGB Lightning Node](https://github.com/RGB-WG/rgb-lightning-node)** - Lightning with RGB support
+
+:::caution Development Status
+RGB is under active development. Always test on testnet first.
+:::
+
 ## Join the RGB Community
 
 - **[GitHub](https://github.com/RGB-WG)** - 2000+ stars, actively developed
 - **[Telegram](https://t.me/rgbtelegram)** - 5000+ developers
 - **[Twitter](https://twitter.com/rgb_protocol)** - Latest updates
 - **[RGB.tech](https://rgb.tech)** - Official website & blog
-- **[rgbjs.com](https://rgbjs.com)** - JavaScript/TypeScript SDK
 - **[FAQ](https://www.rgbfaq.com)** - Common questions answered
 
 ## What's Next?

@@ -23,17 +23,17 @@ Unlike traditional blockchains where every node validates every transaction, RGB
 
 [Learn more about Client-Side Validation →](/core-concepts/client-side-validation)
 
-### 2. Single-Use Seals
+### 2. Bitcoin UTXO Binding
 
-RGB prevents double-spending by leveraging **Bitcoin's UTXO model** - using what RGB calls "single-use seals":
+RGB prevents double-spending by binding state to Bitcoin UTXOs:
 
-- Each RGB state is bound to a Bitcoin UTXO
-- Spending the UTXO = "closing the seal"
-- Bitcoin consensus prevents double-spending the UTXO
+- Each RGB state is bound to a specific Bitcoin UTXO
+- Spending the UTXO commits the new RGB state
+- Bitcoin consensus prevents double-spending UTXOs
 - Therefore: RGB state cannot be double-spent
-- No RGB-specific consensus required (Bitcoin does it)
+- No RGB-specific consensus needed (Bitcoin handles it)
 
-[Learn more about Single-Use Seals →](/core-concepts/single-use-seals)
+[Learn more about UTXO binding →](/core-concepts/single-use-seals)
 
 ### 3. PRISM Computing
 
@@ -61,7 +61,7 @@ RGB implements **Partially-Replicated Infinite State Machines** (PRISM):
 │  Client-Side Validation                 │  State validation logic
 │  (Consignments, State Transitions)      │
 ├─────────────────────────────────────────┤
-│  Single-Use Seals                       │  Ownership & double-spend prevention
+│  UTXO Binding                           │  Ownership & double-spend prevention
 │  (Bitcoin UTXOs)                        │
 ├─────────────────────────────────────────┤
 │  Deterministic Bitcoin Commitments      │  Commitment layer
@@ -225,7 +225,7 @@ Result: Constant-size validation
 ## Key Takeaways
 
 1. **Client-side validation** keeps data off-chain and private
-2. **Single-use seals** prevent double-spending without global consensus
+2. **Bitcoin UTXO binding** leverages existing double-spend prevention
 3. **PRISM computing** enables massive scalability
 4. **AluVM** provides Turing-complete contract execution
 5. **Bitcoin-native** design leverages existing security
@@ -236,7 +236,7 @@ Result: Constant-size validation
 Dive deeper into specific concepts:
 
 - [**Client-Side Validation**](/core-concepts/client-side-validation) - How RGB validates without blockchain
-- [**Single-Use Seals**](/core-concepts/single-use-seals) - Preventing double-spending
+- [**UTXO Binding**](/core-concepts/single-use-seals) - Using Bitcoin's UTXO model
 - [**AluVM**](/core-concepts/aluvm/overview) - The RGB virtual machine
 - [**State Management**](/core-concepts/state/unified-state) - How RGB manages state
 - [**Bitcoin Integration**](/core-concepts/bitcoin/deterministic-commitments) - RGB's Bitcoin layer

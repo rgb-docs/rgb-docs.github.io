@@ -6,7 +6,7 @@ Technical documentation for RGB Protocol v0.12 - Smart contracts for Bitcoin and
 
 This repository contains the official documentation for the RGB Protocol, hosted at [https://rgb-docs.github.io](https://rgb-docs.github.io).
 
-RGB is a suite of protocols for scalable and confidential smart contracts on Bitcoin and the Lightning Network, utilizing client-side validation and single-use seals.
+RGB is a suite of protocols for scalable and confidential smart contracts on Bitcoin and the Lightning Network, utilizing client-side validation and Bitcoin's UTXO model.
 
 ## Development
 

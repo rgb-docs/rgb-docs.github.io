@@ -1,7 +1,7 @@
 ---
 sidebar_position: 2
 title: Owned State
-description: Understanding RGB's owned state and single-use seals
+description: Understanding RGB's owned state and Bitcoin UTXO binding
 ---
 
 # Owned State
@@ -12,7 +12,7 @@ Owned state is RGB's mechanism for attaching private, transferable state to Bitc
 
 Owned state represents data that:
 
-- Is attached to specific Bitcoin UTXOs (via single-use seals)
+- Is attached to specific Bitcoin UTXOs
 - Can only be modified by the UTXO owner
 - Transfers privately when the UTXO is spent
 - Maintains privacy through client-side validation
@@ -20,28 +20,28 @@ Owned state represents data that:
 
 This model is ideal for assets, balances, ownership rights, and any state that should be privately controlled by individuals.
 
-## Single-Use Seals
+## UTXO Binding
 
 ### Concept
 
-*To be expanded: What are single-use seals*
+*To be expanded: How RGB uses Bitcoin UTXOs*
 
-A single-use seal is a commitment mechanism that:
+RGB binds state to Bitcoin UTXOs, leveraging their inherent properties:
 
-1. **Can be closed exactly once**: Like a physical seal that breaks when opened
-2. **Attached to a Bitcoin UTXO**: The seal is "over" a specific UTXO
-3. **Proves one-time use**: Prevents double-spending of owned state
-4. **Enables transfers**: Closing a seal transfers state to new seal(s)
+1. **UTXOs can only be spent once**: Standard Bitcoin consensus rule
+2. **State attached to specific UTXO**: RGB state is bound to a UTXO identifier
+3. **Double-spend prevention**: Bitcoin's existing UTXO model prevents this
+4. **Enables transfers**: Spending a UTXO transfers RGB state to new UTXO(s)
 
 ```
-[Placeholder for single-use seal diagram]
+[Placeholder for UTXO binding diagram]
 
-UTXO (Seal Container)
+UTXO with RGB State
 ┌─────────────────────┐
 │  Bitcoin UTXO       │
 │  ┌───────────────┐  │
-│  │  RGB Seal     │  │
-│  │  - Unopened   │  │
+│  │  RGB State    │  │
+│  │  - Unspent    │  │
 │  │  - Contains:  │  │
 │  │    Balance    │  │
 │  │    Rights     │  │
@@ -49,21 +49,21 @@ UTXO (Seal Container)
 │  └───────────────┘  │
 └─────────────────────┘
         │
-        │ Spend UTXO (Close Seal)
+        │ Spend UTXO
         ▼
 ┌─────────────────────┐
-│  New UTXOs (Seals)  │
+│  New UTXOs          │
 │  ┌───────┬────────┐ │
-│  │Seal 1 │ Seal 2 │ │
+│  │State 1│ State 2│ │
 │  └───────┴────────┘ │
 └─────────────────────┘
 ```
 
 ### Bitcoin UTXO Integration
 
-*To be expanded: How seals use Bitcoin UTXOs*
+*To be expanded: How RGB leverages Bitcoin UTXOs*
 
-Single-use seals leverage Bitcoin's UTXO model:
+RGB leverages Bitcoin's UTXO model directly:
 
 - **UTXO uniqueness**: Each UTXO can only be spent once
 - **Consensus validation**: Bitcoin ensures UTXO can't be double-spent
@@ -72,13 +72,13 @@ Single-use seals leverage Bitcoin's UTXO model:
 
 **Key insight**: RGB doesn't need its own consensus because it inherits Bitcoin's.
 
-### Seal Definition
+### UTXO Identifier
 
-*To be expanded: Defining a seal*
+*To be expanded: Identifying UTXOs*
 
-A seal is defined by:
+An RGB UTXO is identified by:
 ```
-Seal = (Transaction ID, Output Index)
+UTXO = (Transaction ID, Output Index)
 ```
 
 Example:
@@ -86,10 +86,10 @@ Example:
 txid: a1b2c3d4...
 vout: 0
 
-Full seal: a1b2c3d4...:0
+Full identifier: a1b2c3d4...:0
 ```
 
-This uniquely identifies the Bitcoin UTXO containing the seal.
+This uniquely identifies the Bitcoin UTXO containing RGB state.
 
 ## Owned State Structure
 
@@ -257,48 +257,48 @@ Prove properties without revealing state:
 - Range proofs (amount > X)
 - Set membership proofs
 
-## Seal Types and Patterns
+## UTXO Binding Patterns
 
-### Basic Seal
+### Basic Binding
 
-*To be expanded: Standard single-output seal*
+*To be expanded: Standard single-output binding*
 
-Simple seal on one UTXO:
+Simple state bound to one UTXO:
 ```
-Seal: txid:vout
+UTXO: txid:vout
 State: [Balance: 1000]
 ```
 
-### Multi-Seal Outputs
+### Multi-Output Splits
 
 *To be expanded: State split across multiple UTXOs*
 
-Splitting state to multiple seals:
+Splitting state to multiple UTXOs:
 ```
-Input Seal: [Balance: 1000]
+Input UTXO: [Balance: 1000]
   ↓
-Output Seals:
-  - Seal 1: [Balance: 600]
-  - Seal 2: [Balance: 400]
+Output UTXOs:
+  - UTXO 1: [Balance: 600]
+  - UTXO 2: [Balance: 400]
 ```
 
-### Blank Seals
+### Blank UTXOs
 
-*To be expanded: Seals without initial state*
+*To be expanded: UTXOs without initial state*
 
-Create seal without state (for future receipt):
+Create UTXO binding without state (for future receipt):
 ```
-Seal: txid:vout
+UTXO: txid:vout
 State: [] (empty, awaiting assignment)
 ```
 
-### Seal Reuse Prevention
+### Double-Spend Prevention
 
 *To be expanded: Ensuring one-time use*
 
-Mechanisms preventing seal reuse:
+Mechanisms preventing double-spending:
 - Bitcoin UTXO model (can't double-spend)
-- Client-side validation (detects reuse attempts)
+- Client-side validation (detects double-spend attempts)
 - History tracking (identifies conflicts)
 
 ## Use Cases
@@ -468,13 +468,13 @@ Techniques:
 
 - [Unified State Model](./unified-state.md) - Overall state architecture
 - [Global State](./global-state.md) - Shared state mechanisms
-- [Single-Use Seals](../client-side-validation.md#single-use-seals) - Detailed seal explanation
+- [UTXO Binding](../client-side-validation.md#single-use-seals) - How RGB uses Bitcoin's UTXO model
 - [RGB20 Guide](../../guides/rgb20/creating-tokens.md) - Fungible token implementation
 - [RGB21 Guide](../../guides/rgb21/creating-nfts.md) - NFT implementation
 
 ## References
 
-*Coming soon: Single-use seals papers and specifications*
+*Coming soon: RGB state binding specifications*
 
 ---
 

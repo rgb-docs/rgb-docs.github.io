@@ -75,8 +75,8 @@ fn validate_consignment(consignment: Consignment) -> Result<()> {
         verify_bitcoin_commitment(transition)?;
     }
 
-    // 3. Verify seals are properly closed
-    verify_seals(&consignment)?;
+    // 3. Verify UTXOs are properly spent
+    verify_utxos_spent(&consignment)?;
 
     // 4. Verify I'm the recipient
     verify_ownership(&consignment, my_utxo)?;
@@ -196,17 +196,17 @@ fn validate_transition(transition: &Transition) -> Result<()> {
 }
 ```
 
-### 3. Seal Verification
+### 3. UTXO Verification
 
 ```rust
-fn verify_seals(consignment: &Consignment) -> Result<()> {
+fn verify_utxos_spent(consignment: &Consignment) -> Result<()> {
     for transition in &consignment.transitions {
-        for seal in &transition.seals {
-            // Verify seal was closed (UTXO spent)
-            verify_seal_closed(seal)?;
+        for utxo in &transition.inputs {
+            // Verify UTXO was spent (standard Bitcoin validation)
+            verify_utxo_spent(utxo)?;
 
-            // Verify closure witness
-            verify_closure_witness(seal)?;
+            // Verify Bitcoin transaction witness
+            verify_tx_witness(utxo)?;
         }
     }
     Ok(())
@@ -235,11 +235,11 @@ fn verify_seals(consignment: &Consignment) -> Result<()> {
 4. Recipient validates
    ├── Checks full history
    ├── Verifies Bitcoin commitments
-   ├── Verifies seals
+   ├── Verifies UTXOs spent
    └── Accepts if valid
 
 5. Bitcoin transaction confirms
-   ├── Seals are closed
+   ├── UTXOs are spent
    └── Transfer is final
 ```
 
@@ -328,11 +328,11 @@ let results = transitions
 
 ### Double-Spend Prevention {#single-use-seals}
 
-Client-side validation prevents double-spending through:
+Client-side validation prevents double-spending by leveraging Bitcoin's UTXO model:
 
-1. **Single-use seals** - Can only be closed once
-2. **Bitcoin confirmation** - Seal closure is final
-3. **Cryptographic commitment** - Linked to specific state
+1. **UTXO spending** - UTXOs can only be spent once (standard Bitcoin property)
+2. **Bitcoin confirmation** - UTXO spend is final
+3. **Cryptographic commitment** - RGB state linked to specific UTXO
 
 ### Validation Completeness
 
@@ -340,7 +340,7 @@ Recipients must validate:
 
 - ✓ All transitions from genesis
 - ✓ All Bitcoin commitments
-- ✓ All seal closures
+- ✓ All UTXO spends
 - ✓ Schema compliance
 - ✓ AluVM execution
 
@@ -424,7 +424,7 @@ function fullValidation(consignment: Consignment) {
 
 ## Next Steps
 
-- [**Single-Use Seals**](/core-concepts/single-use-seals) - How double-spending is prevented
+- [**UTXO Binding**](/core-concepts/single-use-seals) - How RGB uses Bitcoin's UTXO model
 - [**PRISM Computing**](/core-concepts/prism-computing) - The computational model
 - [**Consignments**](/technical-reference/consignments) - Technical specification
 

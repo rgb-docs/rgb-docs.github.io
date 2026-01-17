@@ -82,7 +82,7 @@ let stock = Stock::load(StockpileDir::new("/path/to/data")?)?;
 
 ### Pile
 
-Manages single-use seals and witnesses:
+Manages UTXO bindings and witnesses:
 
 ```rust
 pub trait Pile {

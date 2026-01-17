@@ -38,7 +38,7 @@ export default function TransferSimulator() {
       </div>
 
       <p className={styles.description}>
-        Visualize how RGB transfers work: inputs (seals) → transition → outputs (new seals)
+        Visualize how RGB transfers work: inputs (UTXOs) → state transition → outputs (new UTXOs)
       </p>
 
       <div className={styles.formGrid}>
@@ -78,20 +78,20 @@ export default function TransferSimulator() {
           <div className={styles.stateFlow}>
             {/* Input State */}
             <div className={styles.stateBox} style={{borderColor: '#f59e0b'}}>
-              <h4>Input Seal</h4>
+              <h4>Input UTXO</h4>
               <div className={styles.value}>{senderAmount}</div>
-              <small style={{color: '#666'}}>Sender's UTXO</small>
+              <small style={{color: '#666'}}>Sender's balance</small>
             </div>
 
             <div className={styles.flowArrow}>→</div>
 
             {/* Transition */}
             <div className={styles.stateBox} style={{borderColor: '#8b5cf6', background: 'linear-gradient(135deg, #667eea15 0%, #764ba215 100%)'}}>
-              <h4>Transition</h4>
+              <h4>RGB Transition</h4>
               <div className={styles.value} style={{fontSize: '1.2rem'}}>
                 Transfer {transferAmount}
               </div>
-              <small style={{color: '#666'}}>Close input seal<br/>Create output seals</small>
+              <small style={{color: '#666'}}>Spend UTXO<br/>Commit new state</small>
             </div>
 
             <div className={styles.flowArrow}>→</div>
@@ -99,26 +99,26 @@ export default function TransferSimulator() {
             {/* Output States */}
             <div style={{display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1}}>
               <div className={styles.stateBox} style={{borderColor: '#10b981'}}>
-                <h4>Output Seal 1</h4>
+                <h4>Output UTXO 1</h4>
                 <div className={styles.value}>{recipientAmount}</div>
-                <small style={{color: '#666'}}>Recipient's UTXO</small>
+                <small style={{color: '#666'}}>Recipient's balance</small>
               </div>
 
               <div className={styles.stateBox} style={{borderColor: '#10b981'}}>
-                <h4>Output Seal 2</h4>
+                <h4>Output UTXO 2</h4>
                 <div className={styles.value}>{changeAmount}</div>
-                <small style={{color: '#666'}}>Sender's Change</small>
+                <small style={{color: '#666'}}>Sender's change</small>
               </div>
             </div>
           </div>
 
           <div style={{marginTop: '2rem', padding: '1rem', background: 'white', borderRadius: '8px'}}>
-            <h4 style={{marginTop: 0}}>🔐 Single-Use Seal Principle</h4>
+            <h4 style={{marginTop: 0}}>🔐 Using Bitcoin's UTXO Model</h4>
             <ul style={{margin: '0.5rem 0', paddingLeft: '1.5rem', color: '#666'}}>
-              <li>Input seal (UTXO) is <strong>closed</strong> and can never be used again</li>
-              <li>Two new output seals are <strong>created</strong> for recipient and change</li>
+              <li>Input UTXO is <strong>spent</strong> (standard Bitcoin transaction)</li>
+              <li>Two new UTXOs are <strong>created</strong> for recipient and change</li>
               <li>State is preserved: {senderAmount} = {recipientAmount} + {changeAmount} ✓</li>
-              <li>All verified client-side, nothing on Bitcoin blockchain</li>
+              <li>RGB state validated client-side, Bitcoin only sees normal UTXO spend</li>
             </ul>
           </div>
 
