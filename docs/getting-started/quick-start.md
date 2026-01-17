@@ -6,6 +6,10 @@ description: Build your first RGB asset in 5 minutes
 
 # Quick Start
 
+:::info Version
+This guide targets **RGB v0.12.0-rc.3** (current production version). Commands may differ in other versions.
+:::
+
 This quick start guide will walk you through creating your first RGB fungible asset (RGB20 token) in just a few minutes.
 
 ## Prerequisites
@@ -14,63 +18,74 @@ This quick start guide will walk you through creating your first RGB fungible as
 - Access to Bitcoin testnet
 - Basic command line knowledge
 
-## Step 1: Initialize RGB Wallet
+## Step 1: Initialize RGB Data Directory
 
-First, create a new RGB wallet:
+First, initialize the RGB data directory:
 
 ```bash
-# Create new wallet
-rgb wallet create my-wallet --network testnet
+# Initialize data directory
+rgb init
 
-# Generate a new Bitcoin address
-rgb address new
+# Verify initialization
+rgb wallets
 ```
 
-This creates a local wallet database and generates Bitcoin addresses for RGB operations.
+This creates the data directory structure required for RGB operations.
 
-## Step 2: Fund Your Wallet
+## Step 2: Create and Fund Wallet
 
-You'll need some testnet Bitcoin for transaction fees:
+Create a new wallet with a descriptor:
 
 ```bash
-# Get your Bitcoin address
-rgb address list
+# Create a new wallet with taproot support
+rgb create --tapret-key-only my-wallet "tr([fingerprint/84h/1h/0h]xpub...)"
 
-# Fund it using a testnet faucet
+# Get a funding address
+rgb fund --wallet my-wallet
+
+# Fund the address using a testnet faucet
 # Visit: https://testnet-faucet.com
 ```
 
 ## Step 3: Create an RGB20 Token
 
-Now create your first fungible token:
+Now create your first fungible token. First, create a parameters file:
+
+```yaml
+# token-params.yaml
+issuer: "ssi:anonymous"
+ticker: "MYT"
+name: "My Token"
+precision: 8
+supply: 1000000
+allocations:
+  - method: TapretFirst
+    seal: "<UTXO_OUTPOINT>"
+    amount: 1000000
+```
+
+Then issue the contract:
 
 ```bash
 # Issue a new RGB20 token
-rgb issue \
-  --schema RGB20 \
-  --name "My Token" \
-  --ticker MYT \
-  --precision 8 \
-  --supply 1000000 \
-  --output my-token.rgb
+rgb issue --wallet my-wallet token-params.yaml
 ```
 
-This creates:
-- Token name: "My Token"
-- Ticker: MYT
-- Decimal precision: 8
-- Initial supply: 1,000,000 MYT
+The contract will be imported into your wallet's contract store automatically.
 
 ## Step 4: Inspect the Contract
 
 View your newly created contract:
 
 ```bash
-# Display contract details
-rgb contract show my-token.rgb
+# List all contracts
+rgb contracts
 
-# Get contract ID
-rgb contract id my-token.rgb
+# Display detailed contract state
+rgb state --wallet my-wallet <CONTRACT_ID>
+
+# Export contract to a file
+rgb backup <CONTRACT_ID> my-token.rgb
 ```
 
 ## Step 5: Transfer Tokens
@@ -79,19 +94,26 @@ To transfer tokens to another party:
 
 ```bash
 # Recipient generates an invoice
-rgb invoice create \
-  --contract <CONTRACT_ID> \
-  --amount 100 \
-  --output invoice.txt
+rgb invoice --wallet recipient-wallet \
+  <CONTRACT_ID> \
+  100
 
-# Sender creates transfer
-rgb transfer \
-  --invoice invoice.txt \
-  --output consignment.rgb
+# The recipient shares the invoice with the sender
+# Sender pays the invoice, creating a PSBT and consignment
+rgb pay --wallet my-wallet \
+  <INVOICE_STRING> \
+  transfer.consignment \
+  transfer.psbt
+
+# Sender signs the PSBT (using their Bitcoin wallet)
+# Then completes the operation
+rgb complete --wallet my-wallet \
+  transfer.bundle \
+  signed.psbt
 
 # Send consignment file to recipient
 # Recipient accepts the transfer
-rgb accept consignment.rgb
+rgb accept --wallet recipient-wallet transfer.consignment
 ```
 
 ## Step 6: Verify Your Balance
@@ -99,11 +121,11 @@ rgb accept consignment.rgb
 Check your token balances:
 
 ```bash
-# List all assets
-rgb balance
+# View all contract states owned by your wallet
+rgb state --wallet my-wallet --owned
 
 # Show specific contract balance
-rgb balance --contract <CONTRACT_ID>
+rgb state --wallet my-wallet <CONTRACT_ID>
 ```
 
 ## Understanding What Happened
@@ -148,35 +170,36 @@ console.log('Contract ID:', contract.contractId);
 
 ### Creating an NFT (RGB21)
 
+Create a params file for RGB21 and issue:
+
 ```bash
-rgb issue \
-  --schema RGB21 \
-  --name "My NFT Collection" \
-  --supply 100 \
-  --output my-nft.rgb
+# nft-params.yaml
+rgb issue --wallet my-wallet nft-params.yaml
 ```
 
-### Batch Transfers
+### Batch Transfers with Payment Scripts
 
 ```bash
 # Create payment script for multiple beneficiaries
-rgb payment-script create \
-  --beneficiary alice.invoice \
-  --beneficiary bob.invoice \
-  --output batch-payment.script
+rgb script --wallet my-wallet \
+  <INVOICE> \
+  payment.yaml
 
-# Execute batch payment
-rgb transfer --script batch-payment.script
+# Execute script to create bundle and PSBT
+rgb exec --wallet my-wallet \
+  payment.yaml \
+  payment.bundle \
+  1000
 ```
 
-### Lightning Integration
+### Synchronizing Wallet
+
+Keep your wallet synchronized with the blockchain:
 
 ```bash
-# Open RGB-enabled Lightning channel
-rgb lightning open-channel \
-  --contract <CONTRACT_ID> \
-  --peer <NODE_ID> \
-  --amount 1000
+# Sync wallet with Electrum server
+rgb sync --wallet my-wallet \
+  --electrum ssl://electrum.blockstream.info:60002
 ```
 
 ## Troubleshooting
@@ -185,22 +208,30 @@ rgb lightning open-channel \
 
 Ensure your Bitcoin address has testnet BTC for fees:
 ```bash
-rgb address list
-# Fund the address shown
+rgb fund --wallet my-wallet
+# Fund the address shown with testnet BTC
 ```
 
 ### "Contract validation failed"
 
-Check that the consignment file is complete:
+Verify your wallet is synchronized:
 ```bash
-rgb validate consignment.rgb --verbose
+rgb sync --wallet my-wallet \
+  --electrum ssl://electrum.blockstream.info:60002
 ```
 
-### "Electrum connection failed"
+### View wallet seals
 
-Try an alternative server:
+Check available UTXOs for RGB operations:
 ```bash
-export RGB_ELECTRUM_URL=ssl://electrum.blockstream.info:60002
+rgb seals --wallet my-wallet
+```
+
+### List all wallets
+
+See all available wallets:
+```bash
+rgb wallets
 ```
 
 ## Learning Resources
