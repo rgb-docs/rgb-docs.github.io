@@ -236,7 +236,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} RGB Community. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} RGB Community. Licensed under <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-SA 4.0</a>.`,
     },
 
     // Code syntax highlighting
