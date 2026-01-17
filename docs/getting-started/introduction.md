@@ -4,48 +4,183 @@ title: Introduction to RGB
 description: Learn about RGB Protocol v0.12 - Smart contracts for Bitcoin and Lightning Network
 ---
 
-# RGB Protocol: Smart Contracts for Bitcoin
-
-<div style={{textAlign: 'center', margin: '2rem 0', fontSize: '1.3rem', color: 'var(--ifm-color-primary)'}}>
-<strong>Scalable • Confidential • Lightning-Fast</strong>
+<div style={{
+  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  padding: '4rem 2rem',
+  borderRadius: '16px',
+  textAlign: 'center',
+  color: 'white',
+  marginBottom: '3rem',
+  boxShadow: '0 10px 40px rgba(102, 126, 234, 0.3)'
+}}>
+  <h1 style={{
+    fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+    marginBottom: '1rem',
+    fontWeight: '900',
+    color: 'white'
+  }}>
+    RGB Protocol
+  </h1>
+  <p style={{
+    fontSize: 'clamp(1.2rem, 3vw, 2rem)',
+    marginBottom: '2rem',
+    opacity: '0.95',
+    fontWeight: '300'
+  }}>
+    Smart Contracts for Bitcoin & Lightning
+  </p>
+  <div style={{
+    fontSize: 'clamp(1rem, 2vw, 1.5rem)',
+    marginBottom: '2rem',
+    fontWeight: '500',
+    letterSpacing: '0.05em'
+  }}>
+    ⚡ Unlimited Scale • 🔒 Total Privacy • 💎 Bitcoin Security
+  </div>
+  <div style={{
+    display: 'flex',
+    gap: '1rem',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    marginTop: '2rem'
+  }}>
+    <a href="/getting-started/quick-start" style={{
+      padding: '1rem 2.5rem',
+      background: 'white',
+      color: '#667eea',
+      borderRadius: '50px',
+      textDecoration: 'none',
+      fontWeight: 'bold',
+      fontSize: '1.1rem',
+      boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+      transition: 'transform 0.2s'
+    }}>
+      Get Started →
+    </a>
+    <a href="https://github.com/RGB-WG" style={{
+      padding: '1rem 2.5rem',
+      background: 'rgba(255,255,255,0.1)',
+      color: 'white',
+      border: '2px solid white',
+      borderRadius: '50px',
+      textDecoration: 'none',
+      fontWeight: 'bold',
+      fontSize: '1.1rem',
+      backdropFilter: 'blur(10px)'
+    }}>
+      View on GitHub
+    </a>
+  </div>
 </div>
 
-:::tip Production Ready - v0.12
-RGB is now **production-ready** with forward compatibility guarantees. Contracts issued with v0.12 will remain compatible with all future versions.
-:::
+<div style={{background: 'var(--ifm-color-success-contrast-background)', padding: '1.5rem', borderRadius: '12px', margin: '2rem 0', border: '2px solid var(--ifm-color-success)', textAlign: 'center'}}>
 
-## What is RGB?
+### ✅ Production Ready - v0.12 Released
 
-RGB enables **Turing-complete smart contracts** on Bitcoin and Lightning Network without blockchain modifications, new tokens, or consensus changes. It represents a fundamental paradigm shift:
+**RGB is now production-ready** with forward compatibility guarantees. All contracts issued with v0.12 will remain compatible with future versions forever. [See what's new →](/getting-started/whats-new-0-12)
 
+</div>
+
+---
+
+## The Breakthrough: Bitcoin Smart Contracts Without Compromise
+
+RGB achieves what was thought impossible: **Turing-complete smart contracts on Bitcoin** without:
+- ❌ Creating new tokens or sidechains
+- ❌ Modifying Bitcoin consensus
+- ❌ Sacrificing privacy or scalability
+- ❌ Relying on centralized bridges
+
+### The Paradigm Shift
+
+<div style={{background: 'var(--ifm-background-surface-color)', padding: '2rem', borderRadius: '12px', margin: '2rem 0'}}>
+
+**Traditional Blockchain:**
 ```
-Traditional Blockchain: Everyone validates everything
-RGB: You only validate what affects you
+Everyone validates everything → Slow, expensive, no privacy
 ```
 
-This **client-side validation** approach delivers:
+**RGB Protocol:**
+```
+You only validate what affects you → Fast, cheap, private
+```
 
-<div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem', margin: '2rem 0'}}>
-
-<div style={{padding: '1.5rem', border: '2px solid var(--ifm-color-primary)', borderRadius: '8px'}}>
-<h3>⚡ 100x Faster</h3>
-<p>5ms validation vs 500ms in v0.11</p>
 </div>
 
-<div style={{padding: '1.5rem', border: '2px solid var(--ifm-color-primary)', borderRadius: '8px'}}>
-<h3>🔒 Total Privacy</h3>
-<p>Zero on-chain contract data</p>
+## Key Breakthroughs
+
+<div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', margin: '3rem 0'}}>
+
+<div style={{
+  padding: '2rem',
+  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  borderRadius: '16px',
+  color: 'white',
+  boxShadow: '0 8px 30px rgba(102, 126, 234, 0.3)',
+  textAlign: 'center'
+}}>
+  <div style={{fontSize: '3.5rem', marginBottom: '0.5rem'}}>⚡</div>
+  <h3 style={{color: 'white', fontSize: '1.8rem', marginBottom: '0.5rem'}}>100x Faster</h3>
+  <p style={{fontSize: '1.1rem', opacity: 0.9}}>5ms validation</p>
+  <p style={{fontSize: '0.9rem', opacity: 0.7}}>vs 500ms in v0.11</p>
 </div>
 
-<div style={{padding: '1.5rem', border: '2px solid var(--ifm-color-primary)', borderRadius: '8px'}}>
-<h3>♾️ Infinite Scale</h3>
-<p>Validation cost independent of network size</p>
+<div style={{
+  padding: '2rem',
+  background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+  borderRadius: '16px',
+  color: 'white',
+  boxShadow: '0 8px 30px rgba(240, 147, 251, 0.3)',
+  textAlign: 'center'
+}}>
+  <div style={{fontSize: '3.5rem', marginBottom: '0.5rem'}}>♾️</div>
+  <h3 style={{color: 'white', fontSize: '1.8rem', marginBottom: '0.5rem'}}>Unlimited Scale</h3>
+  <p style={{fontSize: '1.1rem', opacity: 0.9}}>No TPS limit</p>
+  <p style={{fontSize: '0.9rem', opacity: 0.7}}>Validation cost O(1)</p>
 </div>
 
-<div style={{padding: '1.5rem', border: '2px solid var(--ifm-color-primary)', borderRadius: '8px'}}>
-<h3>💎 Bitcoin Security</h3>
-<p>Inherits full Bitcoin PoW guarantees</p>
+<div style={{
+  padding: '2rem',
+  background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+  borderRadius: '16px',
+  color: 'white',
+  boxShadow: '0 8px 30px rgba(79, 172, 254, 0.3)',
+  textAlign: 'center'
+}}>
+  <div style={{fontSize: '3.5rem', marginBottom: '0.5rem'}}>🔒</div>
+  <h3 style={{color: 'white', fontSize: '1.8rem', marginBottom: '0.5rem'}}>Total Privacy</h3>
+  <p style={{fontSize: '1.1rem', opacity: 0.9}}>0 bytes on-chain</p>
+  <p style={{fontSize: '0.9rem', opacity: 0.7}}>All data client-side</p>
 </div>
+
+<div style={{
+  padding: '2rem',
+  background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+  borderRadius: '16px',
+  color: 'white',
+  boxShadow: '0 8px 30px rgba(67, 233, 123, 0.3)',
+  textAlign: 'center'
+}}>
+  <div style={{fontSize: '3.5rem', marginBottom: '0.5rem'}}>💎</div>
+  <h3 style={{color: 'white', fontSize: '1.8rem', marginBottom: '0.5rem'}}>Bitcoin Security</h3>
+  <p style={{fontSize: '1.1rem', opacity: 0.9}}>Full PoW protection</p>
+  <p style={{fontSize: '0.9rem', opacity: 0.7}}>No trust assumptions</p>
+</div>
+
+</div>
+
+<div style={{
+  background: 'var(--ifm-alert-background-color)',
+  border: '2px solid var(--ifm-color-warning)',
+  borderRadius: '12px',
+  padding: '2rem',
+  margin: '3rem 0',
+  textAlign: 'center'
+}}>
+
+### 🚀 What This Means in Practice
+
+**Deploy a stablecoin with Lightning support in under 5 minutes.** Issue NFTs with unlimited metadata. Build DeFi protocols with zero blockchain footprint. All with Bitcoin's security, all completely private.
 
 </div>
 
@@ -271,31 +406,108 @@ rgb issue --schema RGB20 --ticker TKN --supply 1000000
 ```
 :::
 
-### Comparison with Alternatives
+### How RGB Compares
 
-| Feature | RGB | Ethereum L2 | Liquid/RSK | Stacks |
-|---------|-----|-------------|------------|--------|
-| **Privacy** | Total | Partial | Moderate | None |
-| **Scalability** | Unlimited | 1000s TPS | 100s TPS | ~30 TPS |
-| **Bitcoin Security** | Native | Bridged | Federated | Anchored |
-| **Smart Contracts** | Turing-complete | Turing-complete | Turing-complete | Clarity |
-| **Lightning Compatible** | ✅ Yes | ❌ No | ❌ No | ❌ No |
-| **Transaction Cost** | Bitcoin fee only | L2 + bridge fees | Network fees | STX fees |
-| **Blockchain Data** | Zero | Rollup data | Full state | Full state |
+<div style={{overflowX: 'auto', margin: '2rem 0'}}>
+
+| Feature | 🟣 RGB | Ethereum L2 | Liquid/RSK | Stacks |
+|---------|:------:|:-----------:|:----------:|:------:|
+| **Privacy** | ✅ **Total** | ⚠️ Partial | ⚠️ Moderate | ❌ None |
+| **Scalability** | ✅ **Unlimited** | ⚠️ 1000s TPS | ⚠️ 100s TPS | ❌ ~30 TPS |
+| **Bitcoin Security** | ✅ **Native** | ⚠️ Bridged | ⚠️ Federated | ⚠️ Anchored |
+| **Smart Contracts** | ✅ Turing-complete | ✅ Turing-complete | ✅ Turing-complete | ⚠️ Clarity |
+| **Lightning Network** | ✅ **Native** | ❌ No | ❌ No | ❌ No |
+| **Transaction Cost** | ✅ **BTC fee only** | ❌ L2 + bridge | ❌ Network fees | ❌ STX fees |
+| **On-chain Footprint** | ✅ **0 bytes** | ❌ Rollup data | ❌ Full state | ❌ Full state |
+| **Trust Assumptions** | ✅ **Zero** | ❌ Bridges | ❌ Federation | ❌ Validators |
+
+</div>
+
+<div style={{
+  background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+  padding: '2rem',
+  borderRadius: '12px',
+  color: 'white',
+  margin: '2rem 0',
+  textAlign: 'center'
+}}>
+
+**The Bottom Line:** RGB is the only solution that delivers Turing-complete smart contracts on Bitcoin with **zero compromises** on privacy, scalability, or security.
+
+</div>
 
 ## Start Building in 5 Minutes
 
-<div style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', padding: '2rem', borderRadius: '12px', color: 'white', margin: '2rem 0'}}>
+<div style={{
+  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  padding: '3rem 2rem',
+  borderRadius: '16px',
+  color: 'white',
+  margin: '3rem 0',
+  boxShadow: '0 20px 60px rgba(102, 126, 234, 0.4)',
+  textAlign: 'center'
+}}>
 
-### 🚀 Quick Start Path
+<h2 style={{color: 'white', fontSize: '2.5rem', marginBottom: '2rem'}}>🚀 From Zero to Production in Minutes</h2>
 
-1. **[Install RGB](/getting-started/installation)** - 2 minutes
-2. **[Create Your First Token](/getting-started/quick-start)** - 3 minutes
-3. **[Deploy to Production](/guides/rgb20/creating-tokens)** - Now
+<div style={{
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+  gap: '2rem',
+  margin: '2rem 0',
+  textAlign: 'left'
+}}>
+  <div>
+    <div style={{fontSize: '3rem', marginBottom: '0.5rem'}}>1️⃣</div>
+    <h3 style={{color: 'white'}}>Install RGB</h3>
+    <p style={{opacity: 0.9}}>One command, 2 minutes</p>
+  </div>
+  <div>
+    <div style={{fontSize: '3rem', marginBottom: '0.5rem'}}>2️⃣</div>
+    <h3 style={{color: 'white'}}>Create Contract</h3>
+    <p style={{opacity: 0.9}}>Issue tokens or NFTs</p>
+  </div>
+  <div>
+    <div style={{fontSize: '3rem', marginBottom: '0.5rem'}}>3️⃣</div>
+    <h3 style={{color: 'white'}}>Deploy</h3>
+    <p style={{opacity: 0.9}}>Production-ready now</p>
+  </div>
+</div>
 
-**Total time: Less than 5 minutes**
+<div style={{marginTop: '2rem'}}>
+  <a href="/getting-started/quick-start" style={{
+    display: 'inline-block',
+    padding: '1.2rem 3rem',
+    background: 'white',
+    color: '#667eea',
+    borderRadius: '50px',
+    textDecoration: 'none',
+    fontWeight: 'bold',
+    fontSize: '1.3rem',
+    boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
+    marginRight: '1rem'
+  }}>
+    Start Building Now →
+  </a>
+  <a href="/core-concepts/overview" style={{
+    display: 'inline-block',
+    padding: '1.2rem 3rem',
+    background: 'rgba(255,255,255,0.1)',
+    color: 'white',
+    border: '2px solid white',
+    borderRadius: '50px',
+    textDecoration: 'none',
+    fontWeight: 'bold',
+    fontSize: '1.3rem',
+    backdropFilter: 'blur(10px)'
+  }}>
+    Learn More
+  </a>
+</div>
 
-[Get Started Now →](/getting-started/installation)
+<p style={{marginTop: '2rem', fontSize: '0.9rem', opacity: 0.8}}>
+  No blockchain fees | No gas | No waiting | No compromises
+</p>
 
 </div>
 
@@ -337,6 +549,39 @@ rgb issue --schema RGB20 --ticker TKN --supply 1000000
 
 ---
 
-<div style={{textAlign: 'center', margin: '3rem 0', fontSize: '1.1rem', fontStyle: 'italic'}}>
+<div style={{
+  background: 'var(--ifm-background-surface-color)',
+  padding: '3rem 2rem',
+  borderRadius: '16px',
+  margin: '4rem 0',
+  textAlign: 'center',
+  border: '1px solid var(--ifm-color-emphasis-200)'
+}}>
+
+<div style={{fontSize: '2.5rem', marginBottom: '1.5rem'}}>💡</div>
+
+<p style={{fontSize: '1.5rem', fontStyle: 'italic', marginBottom: '1rem', color: 'var(--ifm-color-primary)'}}>
 "RGB represents the most significant advancement in Bitcoin smart contracts since the Lightning Network."
+</p>
+
+<p style={{fontSize: '1.1rem', opacity: 0.8, marginTop: '2rem'}}>
+**The future of Bitcoin DeFi is private, scalable, and already here.**
+</p>
+
+</div>
+
+<div style={{textAlign: 'center', margin: '3rem 0'}}>
+  <a href="/getting-started/quick-start" style={{
+    display: 'inline-block',
+    padding: '1rem 2.5rem',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    color: 'white',
+    borderRadius: '50px',
+    textDecoration: 'none',
+    fontWeight: 'bold',
+    fontSize: '1.2rem',
+    boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)'
+  }}>
+    Begin Your RGB Journey →
+  </a>
 </div>
