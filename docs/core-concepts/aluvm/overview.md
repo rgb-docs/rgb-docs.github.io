@@ -295,49 +295,30 @@ See [Memory Model](./memory-model.md) for detailed information.
 
 AluVM provides **complete isolation** from the host environment through strict sandboxing:
 
-```
-Sandbox Architecture
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#667eea','primaryTextColor':'#fff','primaryBorderColor':'#764ba2','lineColor':'#764ba2','secondaryColor':'#f8f9fa','tertiaryColor':'#fff'}}}%%
+graph TB
+    subgraph host["HOST ENVIRONMENT<br/>(OS, File System, Network, Devices)"]
+        direction TB
+        subgraph sandbox["AluVM SANDBOX (Isolated)"]
+            direction TB
+            code["<b>CODE SEGMENT</b><br/>• Loaded bytecode (execute-only)<br/>• Immutable after load"]
+            regs["<b>REGISTERS</b><br/>• 256 typed registers<br/>• Control/status registers"]
+            mem["<b>MEMORY SEGMENTS</b><br/>• Constants (read-only)<br/>• Static data (read/write)<br/>• Stack (managed)<br/>• Input (read-only)<br/>• Output (write-only)"]
 
-┌──────────────────────────────────────────────────────────┐
-│                  HOST ENVIRONMENT                        │
-│  (Operating System, File System, Network, Devices)      │
-│                                                          │
-│  ┌────────────────────────────────────────────────────┐ │
-│  │           AluVM SANDBOX (Isolated)                 │ │
-│  │  ┌──────────────────────────────────────────────┐  │ │
-│  │  │  CODE SEGMENT                                │  │ │
-│  │  │  • Loaded bytecode (execute-only)            │  │ │
-│  │  │  • Immutable after load                      │  │ │
-│  │  └──────────────────────────────────────────────┘  │ │
-│  │  ┌──────────────────────────────────────────────┐  │ │
-│  │  │  REGISTERS                                   │  │ │
-│  │  │  • 256 typed registers                       │  │ │
-│  │  │  • Control/status registers                  │  │ │
-│  │  └──────────────────────────────────────────────┘  │ │
-│  │  ┌──────────────────────────────────────────────┐  │ │
-│  │  │  MEMORY SEGMENTS                             │  │ │
-│  │  │  • Constants (read-only)                     │  │ │
-│  │  │  • Static data (read/write)                  │  │ │
-│  │  │  • Stack (managed)                           │  │ │
-│  │  │  • Input (read-only)                         │  │ │
-│  │  │  • Output (write-only)                       │  │ │
-│  │  └──────────────────────────────────────────────┘  │ │
-│  │                                                    │ │
-│  │  NO ACCESS TO:                                     │ │
-│  │  ✗ File system                                     │ │
-│  │  ✗ Network                                         │ │
-│  │  ✗ System calls                                    │ │
-│  │  ✗ Host memory                                     │ │
-│  │  ✗ Other processes                                 │ │
-│  │  ✗ Random number generation (non-deterministic)   │ │
-│  │  ✗ System time (non-deterministic)                │ │
-│  └────────────────────────────────────────────────────┘ │
-│                                                          │
-│  Interface (Controlled):                                 │
-│  • Load bytecode + data (before execution)              │
-│  • Read output segment (after execution)                │
-│  • Read registers/flags (after execution)               │
-└──────────────────────────────────────────────────────────┘
+            blocked["<b>NO ACCESS TO:</b><br/>✗ File system<br/>✗ Network<br/>✗ System calls<br/>✗ Host memory<br/>✗ Other processes<br/>✗ Random generation<br/>✗ System time"]
+        end
+
+        interface["<b>Controlled Interface:</b><br/>• Load bytecode + data (before)<br/>• Read output segment (after)<br/>• Read registers/flags (after)"]
+    end
+
+    style host fill:#e9ecef,stroke:#495057,stroke-width:2px,color:#212529
+    style sandbox fill:#667eea,stroke:#764ba2,stroke-width:3px,color:#fff
+    style code fill:#7c8ff0,stroke:#764ba2,stroke-width:2px,color:#fff
+    style regs fill:#92a0f3,stroke:#764ba2,stroke-width:2px,color:#fff
+    style mem fill:#a8b1f6,stroke:#764ba2,stroke-width:2px,color:#fff
+    style blocked fill:#c92a2a,stroke:#a61e1e,stroke-width:2px,color:#fff
+    style interface fill:#43e97b,stroke:#2b8a3e,stroke-width:2px,color:#fff
 ```
 
 **Isolation Guarantees**:

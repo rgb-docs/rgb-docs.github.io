@@ -91,16 +91,32 @@ interface ChannelState {
 
 ### Protocol Layers
 
-```
-┌─────────────────────────────────┐
-│   RGB Asset Layer               │  ← Asset definitions, schemas
-├─────────────────────────────────┤
-│   RGB Lightning Protocol        │  ← Channel states, transfers
-├─────────────────────────────────┤
-│   Lightning Network (BOLT)      │  ← Payment routing, HTLCs
-├─────────────────────────────────┤
-│   Bitcoin Blockchain            │  ← Anchoring, settlement
-└─────────────────────────────────┘
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#667eea','primaryTextColor':'#fff','primaryBorderColor':'#764ba2','lineColor':'#764ba2','secondaryColor':'#f8f9fa','tertiaryColor':'#fff'}}}%%
+graph TB
+    subgraph layer4[" "]
+        A["<b>RGB Asset Layer</b><br/>Asset definitions, schemas"]
+    end
+    subgraph layer3[" "]
+        B["<b>RGB Lightning Protocol</b><br/>Channel states, transfers"]
+    end
+    subgraph layer2[" "]
+        C["<b>Lightning Network (BOLT)</b><br/>Payment routing, HTLCs"]
+    end
+    subgraph layer1[" "]
+        D["<b>Bitcoin Blockchain</b><br/>Anchoring, settlement"]
+    end
+
+    A --> B --> C --> D
+
+    style layer4 fill:#667eea,stroke:#764ba2,stroke-width:2px,color:#fff
+    style layer3 fill:#7c8ff0,stroke:#764ba2,stroke-width:2px,color:#fff
+    style layer2 fill:#92a0f3,stroke:#764ba2,stroke-width:2px,color:#fff
+    style layer1 fill:#a8b1f6,stroke:#764ba2,stroke-width:2px,color:#fff
+    style A fill:transparent,stroke:none,color:#fff
+    style B fill:transparent,stroke:none,color:#fff
+    style C fill:transparent,stroke:none,color:#fff
+    style D fill:transparent,stroke:none,color:#fff
 ```
 
 *Architecture details to be expanded*
