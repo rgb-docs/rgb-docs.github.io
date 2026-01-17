@@ -455,7 +455,7 @@ rgb export -f 7C15w3W1-L0T~zXw-Aeh5~kV-Zquz729-HXQFKQW-_5lX9O8 RGB20-FNA.issuer
 
 **Error Handling:**
 - File exists without `--force`: "Error: File already exists"
-- Unknown codex ID: "Error: unknown issuer '{codex}'"
+- Unknown codex ID: "Error: unknown issuer '\{codex\}'"
 
 ---
 
