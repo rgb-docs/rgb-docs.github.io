@@ -37,50 +37,6 @@ description: Learn about RGB Protocol v0.12 - Smart contracts for Bitcoin and Li
   }}>
     ⚡ Unlimited Scale • 🔒 Total Privacy • 💎 Bitcoin Security
   </div>
-  <div style={{
-    display: 'flex',
-    gap: '1rem',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-    marginTop: '2rem'
-  }}>
-    <a href="/getting-started/quick-start" style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '0.9rem 2.5rem',
-      background: 'white',
-      color: '#667eea',
-      borderRadius: '8px',
-      textDecoration: 'none',
-      fontWeight: '600',
-      fontSize: '1.1rem',
-      lineHeight: '1.2',
-      boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-      transition: 'all 0.2s ease',
-      verticalAlign: 'middle'
-    }}>
-      Get Started →
-    </a>
-    <a href="https://github.com/RGB-WG" style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '0.9rem 2.5rem',
-      background: 'transparent',
-      color: 'white',
-      border: '2px solid white',
-      borderRadius: '8px',
-      textDecoration: 'none',
-      fontWeight: '600',
-      fontSize: '1.1rem',
-      lineHeight: '1.2',
-      transition: 'all 0.2s ease',
-      verticalAlign: 'middle'
-    }}>
-      View on GitHub
-    </a>
-  </div>
 </div>
 
 <div style={{background: 'var(--ifm-color-info-contrast-background)', padding: '1.5rem', borderRadius: '12px', margin: '2rem 0', border: '2px solid var(--ifm-color-info)', textAlign: 'center'}}>
@@ -484,48 +440,6 @@ rgb issue --schema RGB20 --ticker TKN --supply 1000000
   </div>
 </div>
 
-<div style={{marginTop: '2rem'}}>
-  <a href="/getting-started/quick-start" style={{
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '1.1rem 3rem',
-    background: 'white',
-    color: '#667eea',
-    borderRadius: '8px',
-    textDecoration: 'none',
-    fontWeight: '600',
-    fontSize: '1.3rem',
-    lineHeight: '1.2',
-    boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
-    marginRight: '1rem',
-    transition: 'all 0.2s ease'
-  }}>
-    Start Building Now →
-  </a>
-  <a href="/core-concepts/overview" style={{
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '1.1rem 3rem',
-    background: 'transparent',
-    color: 'white',
-    border: '2px solid white',
-    borderRadius: '8px',
-    textDecoration: 'none',
-    fontWeight: '600',
-    fontSize: '1.3rem',
-    lineHeight: '1.2',
-    transition: 'all 0.2s ease'
-  }}>
-    Learn More
-  </a>
-</div>
-
-<p style={{marginTop: '2rem', fontSize: '0.9rem', opacity: 0.8}}>
-  No blockchain fees | No gas | No waiting | No compromises
-</p>
-
 </div>
 
 ## Available Implementations
@@ -604,25 +518,4 @@ RGB is under active development. Always test on testnet first.
 **The future of Bitcoin DeFi is private, scalable, and already here.**
 </p>
 
-</div>
-
-<div style={{textAlign: 'center', margin: '3rem 0'}}>
-  <a href="/getting-started/quick-start" style={{
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '0.95rem 2.5rem',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    color: 'white',
-    borderRadius: '8px',
-    textDecoration: 'none',
-    fontWeight: '600',
-    fontSize: '1.2rem',
-    lineHeight: '1.2',
-    boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
-    transition: 'all 0.2s ease',
-    verticalAlign: 'middle'
-  }}>
-    Begin Your RGB Journey →
-  </a>
 </div>
