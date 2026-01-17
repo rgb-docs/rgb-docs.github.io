@@ -1,7 +1,13 @@
 import type {ReactNode} from 'react';
+import {useState} from 'react';
 import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
 import EncodingPlayground from '@site/src/components/Playground/EncodingPlayground';
+import ContractBuilder from '@site/src/components/Playground/ContractBuilder';
+import TransferSimulator from '@site/src/components/Playground/TransferSimulator';
+import ConsignmentInspector from '@site/src/components/Playground/ConsignmentInspector';
+
+type Module = 'encoding' | 'contracts' | 'transfers' | 'consignments';
 
 export default function Playground(): ReactNode {
   return (
@@ -38,68 +44,7 @@ export default function Playground(): ReactNode {
 
       {/* Main Content */}
       <main>
-        <section style={{
-          padding: '3rem 2rem',
-          background: '#f8f9fa'
-        }}>
-          <div className="container">
-            <div style={{
-              background: 'white',
-              borderRadius: '16px',
-              padding: '2rem',
-              marginBottom: '3rem',
-              border: '1px solid #e0e0e0',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
-            }}>
-              <Heading as="h2" style={{
-                fontSize: '1.8rem',
-                marginBottom: '1rem',
-                color: '#1a1a1a'
-              }}>
-                📝 Encoding Tools
-              </Heading>
-              <p style={{
-                color: '#666',
-                fontSize: '1.05rem',
-                marginBottom: '2rem',
-                lineHeight: '1.6'
-              }}>
-                Work with RGB's encoding formats: BAID64, hex conversions, commitment hashes, and invoice parsing.
-                All processing happens in your browser - your data never leaves your device.
-              </p>
-
-              <EncodingPlayground />
-            </div>
-
-            {/* Coming Soon Section */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: '1.5rem'
-            }}>
-              <ComingSoonCard
-                emoji="🏗️"
-                title="Contract Builder"
-                description="Create RGB20 tokens, RGB21 NFTs, and RGB25 collectibles with an interactive visual builder."
-              />
-              <ComingSoonCard
-                emoji="🔄"
-                title="Transfer Simulator"
-                description="Visualize state transitions, seal operations, and transaction bundles in real-time."
-              />
-              <ComingSoonCard
-                emoji="📦"
-                title="Consignment Inspector"
-                description="Upload and inspect RGB consignments, view state history, and validate proofs."
-              />
-              <ComingSoonCard
-                emoji="⚙️"
-                title="AluVM Debugger"
-                description="Write and debug AluVM bytecode with step-by-step execution visualization."
-              />
-            </div>
-          </div>
-        </section>
+        <PlaygroundModules />
 
         {/* Features Info */}
         <section style={{
@@ -187,6 +132,191 @@ export default function Playground(): ReactNode {
         </section>
       </main>
     </Layout>
+  );
+}
+
+function PlaygroundModules() {
+  const [activeModule, setActiveModule] = useState<Module>('encoding');
+
+  return (
+    <section style={{
+      padding: '3rem 2rem',
+      background: '#f8f9fa'
+    }}>
+      <div className="container">
+        {/* Module Tabs */}
+        <div style={{
+          display: 'flex',
+          gap: '0.5rem',
+          marginBottom: '2rem',
+          borderBottom: '2px solid #e0e0e0',
+          flexWrap: 'wrap',
+          overflowX: 'auto'
+        }}>
+          <ModuleTab
+            active={activeModule === 'encoding'}
+            onClick={() => setActiveModule('encoding')}
+            emoji="📝"
+            label="Encodings"
+          />
+          <ModuleTab
+            active={activeModule === 'contracts'}
+            onClick={() => setActiveModule('contracts')}
+            emoji="🏗️"
+            label="Contract Builder"
+          />
+          <ModuleTab
+            active={activeModule === 'transfers'}
+            onClick={() => setActiveModule('transfers')}
+            emoji="🔄"
+            label="Transfer Simulator"
+          />
+          <ModuleTab
+            active={activeModule === 'consignments'}
+            onClick={() => setActiveModule('consignments')}
+            emoji="📦"
+            label="Consignments"
+          />
+        </div>
+
+        {/* Module Content */}
+        <div style={{
+          background: 'white',
+          borderRadius: '16px',
+          padding: '2rem',
+          border: '1px solid #e0e0e0',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+        }}>
+          {activeModule === 'encoding' && (
+            <>
+              <Heading as="h2" style={{
+                fontSize: '1.8rem',
+                marginBottom: '1rem',
+                color: '#1a1a1a'
+              }}>
+                📝 Encoding Tools
+              </Heading>
+              <p style={{
+                color: '#666',
+                fontSize: '1.05rem',
+                marginBottom: '2rem',
+                lineHeight: '1.6'
+              }}>
+                Work with all RGB encoding formats: BAID64, Base58, Base64, Bech32, hex conversions, and hashing.
+              </p>
+              <EncodingPlayground />
+            </>
+          )}
+
+          {activeModule === 'contracts' && (
+            <>
+              <Heading as="h2" style={{
+                fontSize: '1.8rem',
+                marginBottom: '1rem',
+                color: '#1a1a1a'
+              }}>
+                🏗️ Contract Builder
+              </Heading>
+              <p style={{
+                color: '#666',
+                fontSize: '1.05rem',
+                marginBottom: '2rem',
+                lineHeight: '1.6'
+              }}>
+                Create RGB contracts interactively: RGB20 tokens, RGB21 NFTs, and RGB25 collectibles.
+              </p>
+              <ContractBuilder />
+            </>
+          )}
+
+          {activeModule === 'transfers' && (
+            <>
+              <Heading as="h2" style={{
+                fontSize: '1.8rem',
+                marginBottom: '1rem',
+                color: '#1a1a1a'
+              }}>
+                🔄 Transfer Simulator
+              </Heading>
+              <p style={{
+                color: '#666',
+                fontSize: '1.05rem',
+                marginBottom: '2rem',
+                lineHeight: '1.6'
+              }}>
+                Visualize how RGB state transitions work with single-use seals and client-side validation.
+              </p>
+              <TransferSimulator />
+            </>
+          )}
+
+          {activeModule === 'consignments' && (
+            <>
+              <Heading as="h2" style={{
+                fontSize: '1.8rem',
+                marginBottom: '1rem',
+                color: '#1a1a1a'
+              }}>
+                📦 Consignment Inspector
+              </Heading>
+              <p style={{
+                color: '#666',
+                fontSize: '1.05rem',
+                marginBottom: '2rem',
+                lineHeight: '1.6'
+              }}>
+                Inspect RGB consignments: view state history DAG, transitions, and Bitcoin anchors.
+              </p>
+              <ConsignmentInspector />
+            </>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ModuleTab({active, onClick, emoji, label}: {
+  active: boolean;
+  onClick: () => void;
+  emoji: string;
+  label: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        padding: '0.75rem 1.5rem',
+        background: 'transparent',
+        border: 'none',
+        borderBottom: active ? '3px solid #667eea' : '3px solid transparent',
+        cursor: 'pointer',
+        fontSize: '1rem',
+        fontWeight: active ? '600' : '500',
+        color: active ? '#667eea' : '#666',
+        transition: 'all 0.2s ease',
+        position: 'relative',
+        bottom: '-2px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem'
+      }}
+      onMouseEnter={(e) => {
+        if (!active) {
+          e.currentTarget.style.color = '#667eea';
+          e.currentTarget.style.background = 'rgba(102, 126, 234, 0.05)';
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!active) {
+          e.currentTarget.style.color = '#666';
+          e.currentTarget.style.background = 'transparent';
+        }
+      }}
+    >
+      <span>{emoji}</span>
+      <span>{label}</span>
+    </button>
   );
 }
 

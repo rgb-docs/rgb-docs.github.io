@@ -231,3 +231,123 @@ export function generateExampleContractId(): string {
   crypto.getRandomValues(randomBytes);
   return formatContractId(randomBytes);
 }
+
+/**
+ * Encode bytes to Base64
+ */
+export function encodeBase64(bytes: Uint8Array): string {
+  const base64chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  let result = '';
+  let i = 0;
+
+  for (; i < bytes.length - 2; i += 3) {
+    const chunk = (bytes[i] << 16) | (bytes[i + 1] << 8) | bytes[i + 2];
+    result += base64chars[(chunk >> 18) & 63];
+    result += base64chars[(chunk >> 12) & 63];
+    result += base64chars[(chunk >> 6) & 63];
+    result += base64chars[chunk & 63];
+  }
+
+  // Handle padding
+  if (i < bytes.length) {
+    const chunk = bytes[i] << 16 | (i + 1 < bytes.length ? bytes[i + 1] << 8 : 0);
+    result += base64chars[(chunk >> 18) & 63];
+    result += base64chars[(chunk >> 12) & 63];
+    result += i + 1 < bytes.length ? base64chars[(chunk >> 6) & 63] : '=';
+    result += '=';
+  }
+
+  return result;
+}
+
+/**
+ * Decode Base64 to bytes
+ */
+export function decodeBase64(str: string): Uint8Array {
+  const base64chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  const clean = str.replace(/[^A-Za-z0-9+/=]/g, '');
+  const len = clean.length;
+  const bytes = new Uint8Array((len * 3) / 4);
+  let byteIndex = 0;
+
+  for (let i = 0; i < len; i += 4) {
+    const enc1 = base64chars.indexOf(clean[i]);
+    const enc2 = base64chars.indexOf(clean[i + 1]);
+    const enc3 = base64chars.indexOf(clean[i + 2]);
+    const enc4 = base64chars.indexOf(clean[i + 3]);
+
+    bytes[byteIndex++] = (enc1 << 2) | (enc2 >> 4);
+    if (enc3 !== -1) bytes[byteIndex++] = ((enc2 & 15) << 4) | (enc3 >> 2);
+    if (enc4 !== -1) bytes[byteIndex++] = ((enc3 & 3) << 6) | enc4;
+  }
+
+  return bytes.slice(0, byteIndex);
+}
+
+/**
+ * Bech32 character set
+ */
+const BECH32_CHARSET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
+
+/**
+ * Encode bytes to Bech32 (simplified, without checksum for demo)
+ */
+export function encodeBech32(hrp: string, bytes: Uint8Array): string {
+  // Convert 8-bit bytes to 5-bit groups
+  const words = convertBits(Array.from(bytes), 8, 5, true);
+  if (!words) throw new Error('Invalid bytes for Bech32 encoding');
+
+  // Encode to bech32 characters
+  let result = hrp + '1';
+  for (const word of words) {
+    result += BECH32_CHARSET[word];
+  }
+
+  return result;
+}
+
+/**
+ * Convert between bit groups
+ */
+function convertBits(data: number[], fromBits: number, toBits: number, pad: boolean): number[] | null {
+  let acc = 0;
+  let bits = 0;
+  const result: number[] = [];
+  const maxv = (1 << toBits) - 1;
+
+  for (const value of data) {
+    if (value < 0 || value >> fromBits !== 0) {
+      return null;
+    }
+    acc = (acc << fromBits) | value;
+    bits += fromBits;
+    while (bits >= toBits) {
+      bits -= toBits;
+      result.push((acc >> bits) & maxv);
+    }
+  }
+
+  if (pad) {
+    if (bits > 0) {
+      result.push((acc << (toBits - bits)) & maxv);
+    }
+  } else if (bits >= fromBits || ((acc << (toBits - bits)) & maxv)) {
+    return null;
+  }
+
+  return result;
+}
+
+/**
+ * Format bytes as Bitcoin address-like format (demo)
+ */
+export function formatBitcoinAddress(bytes: Uint8Array): string {
+  return encodeBase58(bytes);
+}
+
+/**
+ * Calculate checksum for validation
+ */
+export function calculateChecksum(data: Uint8Array): Uint8Array {
+  return data.slice(0, 4); // Simplified
+}

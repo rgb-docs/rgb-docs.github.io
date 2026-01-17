@@ -11,6 +11,9 @@ import {
   isValidHex,
   isValidBaid64,
   generateExampleContractId,
+  encodeBase64,
+  encodeBech32,
+  encodeBase58,
 } from './encodingUtils';
 
 type Tool = 'baid64' | 'hex' | 'hash' | 'invoice';
@@ -163,6 +166,9 @@ function HexTool() {
   const [hexOutput, setHexOutput] = useState('');
   const [baid64Output, setBaid64Output] = useState('');
   const [rgbIdOutput, setRgbIdOutput] = useState('');
+  const [base64Output, setBase64Output] = useState('');
+  const [base58Output, setBase58Output] = useState('');
+  const [bech32Output, setBech32Output] = useState('');
   const [error, setError] = useState('');
 
   const handleConvert = () => {
@@ -172,11 +178,17 @@ function HexTool() {
       setHexOutput(bytesToHex(bytes));
       setBaid64Output(encodeBaid64(bytes));
       setRgbIdOutput(formatContractId(bytes));
+      setBase64Output(encodeBase64(bytes));
+      setBase58Output(encodeBase58(bytes));
+      setBech32Output(encodeBech32('rgb', bytes));
     } catch (e) {
       setError(e.message);
       setHexOutput('');
       setBaid64Output('');
       setRgbIdOutput('');
+      setBase64Output('');
+      setBase58Output('');
+      setBech32Output('');
     }
   };
 
@@ -243,8 +255,32 @@ function HexTool() {
                 </button>
               </div>
 
+              <div className={styles.formatOutput}>
+                <label>Base64:</label>
+                <code className={styles.codeBlock}>{base64Output}</code>
+                <button onClick={() => navigator.clipboard.writeText(base64Output)}>
+                  📋
+                </button>
+              </div>
+
+              <div className={styles.formatOutput}>
+                <label>Base58:</label>
+                <code className={styles.codeBlock}>{base58Output}</code>
+                <button onClick={() => navigator.clipboard.writeText(base58Output)}>
+                  📋
+                </button>
+              </div>
+
+              <div className={styles.formatOutput}>
+                <label>Bech32 (rgb prefix):</label>
+                <code className={styles.codeBlock}>{bech32Output}</code>
+                <button onClick={() => navigator.clipboard.writeText(bech32Output)}>
+                  📋
+                </button>
+              </div>
+
               <div className={styles.info}>
-                ℹ️ Length: {hexOutput.length / 2} bytes
+                ℹ️ Length: {hexOutput.length / 2} bytes | All formats represent the same data
               </div>
             </>
           )
