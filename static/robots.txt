@@ -1,0 +1,21 @@
+# RGB Protocol Documentation - robots.txt
+# https://rgb-docs.github.io
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://rgb-docs.github.io/sitemap.xml
+
+# Crawl-delay for specific bots (optional, prevents overload)
+User-agent: Googlebot
+Crawl-delay: 0
+
+User-agent: Bingbot
+Crawl-delay: 1
+
+# Block access to build artifacts and hidden files
+User-agent: *
+Disallow: /.docusaurus/
+Disallow: /build/
+Disallow: /node_modules/
