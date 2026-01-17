@@ -83,6 +83,14 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'category',
+          label: 'RGB25 (Collectibles)',
+          collapsed: true,
+          items: [
+            'guides/rgb25/overview',
+          ],
+        },
+        {
+          type: 'category',
           label: 'Smart Contracts',
           collapsed: true,
           items: [
@@ -90,6 +98,8 @@ const sidebars: SidebarsConfig = {
             'guides/contracts/contractum',
             'guides/contracts/genesis',
             'guides/contracts/state-transitions',
+            'guides/contracts/bundles',
+            'guides/contracts/extensions',
           ],
         },
         {
@@ -123,6 +133,7 @@ const sidebars: SidebarsConfig = {
         'technical-reference/api',
         'technical-reference/cli',
         'technical-reference/interfaces',
+        'technical-reference/encodings',
         'technical-reference/consignments',
         'technical-reference/invoices',
         'technical-reference/payment-scripts',

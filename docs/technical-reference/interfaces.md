@@ -369,7 +369,7 @@ let rgb21 = stock.contract_iface_class::<Rgb21>(contract_id)?;
 let tokens: Vec<_> = rgb21.tokens(&FilterIncludeAll).collect();
 ```
 
-## RGB25: Collectible Fungible Assets
+## RGB25: Collectible Fungible Assets {#rgb25}
 
 ### Overview
 
