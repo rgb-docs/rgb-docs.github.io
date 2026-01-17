@@ -326,7 +326,7 @@ let results = transitions
 
 ## Security Considerations
 
-### Double-Spend Prevention
+### Double-Spend Prevention {#single-use-seals}
 
 Client-side validation prevents double-spending through:
 

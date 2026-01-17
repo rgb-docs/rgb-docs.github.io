@@ -45,7 +45,7 @@ pub struct IfaceImpl {
 }
 ```
 
-## RGB20: Fungible Assets
+## RGB20: Fungible Assets {#rgb20}
 
 ### Overview
 
@@ -217,7 +217,7 @@ pub fn nia_lib() -> Lib {
 - **Transfer**: Sum of input amounts must equal sum of output amounts
 - **Pedersen Commitments**: Cryptographically verify amounts without revealing them
 
-## RGB21: Non-Fungible Tokens
+## RGB21: Non-Fungible Tokens {#rgb21}
 
 ### Overview
 

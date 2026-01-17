@@ -602,7 +602,6 @@ Test complete workflows:
 - [Unified State Model](./unified-state.md) - Overall state architecture
 - [Owned State](./owned-state.md) - Private UTXO-attached state
 - [State Transitions](../../guides/contracts/state-transitions.md) - Creating transitions
-- [DAO Example](../../guides/contracts/schemas.md#dao-example) - Full DAO schema
 - [Schemas](../../guides/contracts/schemas.md) - Schema design guide
 
 ## References
