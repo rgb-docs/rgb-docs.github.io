@@ -183,6 +183,11 @@ const config: Config = {
           position: 'left',
         },
         {
+          to: '/playground',
+          label: '🎮 Playground',
+          position: 'left',
+        },
+        {
           type: 'dropdown',
           label: 'Ecosystem',
           position: 'left',
