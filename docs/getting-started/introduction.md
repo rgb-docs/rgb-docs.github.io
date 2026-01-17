@@ -48,16 +48,17 @@ description: Learn about RGB Protocol v0.12 - Smart contracts for Bitcoin and Li
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '1rem 2.5rem',
+      padding: '0.9rem 2.5rem',
       background: 'white',
       color: '#667eea',
       borderRadius: '8px',
       textDecoration: 'none',
       fontWeight: '600',
       fontSize: '1.1rem',
-      lineHeight: '1',
+      lineHeight: '1.2',
       boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-      transition: 'all 0.2s ease'
+      transition: 'all 0.2s ease',
+      verticalAlign: 'middle'
     }}>
       Get Started →
     </a>
@@ -65,7 +66,7 @@ description: Learn about RGB Protocol v0.12 - Smart contracts for Bitcoin and Li
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '1rem 2.5rem',
+      padding: '0.9rem 2.5rem',
       background: 'transparent',
       color: 'white',
       border: '2px solid white',
@@ -73,8 +74,9 @@ description: Learn about RGB Protocol v0.12 - Smart contracts for Bitcoin and Li
       textDecoration: 'none',
       fontWeight: '600',
       fontSize: '1.1rem',
-      lineHeight: '1',
-      transition: 'all 0.2s ease'
+      lineHeight: '1.2',
+      transition: 'all 0.2s ease',
+      verticalAlign: 'middle'
     }}>
       View on GitHub
     </a>
@@ -487,14 +489,14 @@ rgb issue --schema RGB20 --ticker TKN --supply 1000000
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '1.2rem 3rem',
+    padding: '1.1rem 3rem',
     background: 'white',
     color: '#667eea',
     borderRadius: '8px',
     textDecoration: 'none',
     fontWeight: '600',
     fontSize: '1.3rem',
-    lineHeight: '1',
+    lineHeight: '1.2',
     boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
     marginRight: '1rem',
     transition: 'all 0.2s ease'
@@ -505,7 +507,7 @@ rgb issue --schema RGB20 --ticker TKN --supply 1000000
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '1.2rem 3rem',
+    padding: '1.1rem 3rem',
     background: 'transparent',
     color: 'white',
     border: '2px solid white',
@@ -513,7 +515,7 @@ rgb issue --schema RGB20 --ticker TKN --supply 1000000
     textDecoration: 'none',
     fontWeight: '600',
     fontSize: '1.3rem',
-    lineHeight: '1',
+    lineHeight: '1.2',
     transition: 'all 0.2s ease'
   }}>
     Learn More
@@ -609,16 +611,17 @@ RGB is under active development. Always test on testnet first.
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '1rem 2.5rem',
+    padding: '0.95rem 2.5rem',
     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     color: 'white',
     borderRadius: '8px',
     textDecoration: 'none',
     fontWeight: '600',
     fontSize: '1.2rem',
-    lineHeight: '1',
+    lineHeight: '1.2',
     boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
-    transition: 'all 0.2s ease'
+    transition: 'all 0.2s ease',
+    verticalAlign: 'middle'
   }}>
     Begin Your RGB Journey →
   </a>
