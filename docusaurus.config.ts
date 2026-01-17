@@ -28,6 +28,12 @@ const config: Config = {
     locales: ['en'],
   },
 
+  // Mermaid support
+  themes: ['@docusaurus/theme-mermaid'],
+  markdown: {
+    mermaid: true,
+  },
+
   // Head tags for additional SEO and OGP
   headTags: [
     // Canonical URL
