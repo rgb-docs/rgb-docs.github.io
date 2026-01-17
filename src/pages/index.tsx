@@ -50,9 +50,9 @@ function HomepageHeader() {
           marginTop: '2rem'
         }}>
           <Link
-            className="button button--lg"
-            to="/getting-started/quick-start"
+            to="/getting-started/introduction"
             style={{
+              display: 'inline-block',
               padding: '1rem 2.5rem',
               background: 'white',
               color: '#667eea',
@@ -60,21 +60,25 @@ function HomepageHeader() {
               fontSize: '1.1rem',
               fontWeight: '600',
               boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-              borderRadius: '8px'
+              borderRadius: '8px',
+              textDecoration: 'none',
+              transition: 'all 0.2s ease'
             }}>
-            Get Started
+            Get Started →
           </Link>
           <Link
-            className="button button--lg"
             to="https://github.com/RGB-WG"
             style={{
+              display: 'inline-block',
               padding: '1rem 2.5rem',
-              background: 'rgba(255,255,255,0.2)',
+              background: 'transparent',
               color: 'white',
               border: '2px solid white',
               fontSize: '1.1rem',
               fontWeight: '600',
-              borderRadius: '8px'
+              borderRadius: '8px',
+              textDecoration: 'none',
+              transition: 'all 0.2s ease'
             }}>
             View on GitHub
           </Link>
@@ -250,9 +254,9 @@ function CTASection() {
           flexWrap: 'wrap'
         }}>
           <Link
-            className="button button--lg"
             to="/getting-started/installation"
             style={{
+              display: 'inline-block',
               padding: '1rem 2.5rem',
               background: 'white',
               color: '#667eea',
@@ -260,21 +264,25 @@ function CTASection() {
               fontSize: '1.1rem',
               fontWeight: '600',
               boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-              borderRadius: '8px'
+              borderRadius: '8px',
+              textDecoration: 'none',
+              transition: 'all 0.2s ease'
             }}>
-            Install Now
+            Install Now →
           </Link>
           <Link
-            className="button button--lg"
             to="/getting-started/quick-start"
             style={{
+              display: 'inline-block',
               padding: '1rem 2.5rem',
-              background: 'rgba(255,255,255,0.2)',
+              background: 'transparent',
               color: 'white',
               border: '2px solid white',
               fontSize: '1.1rem',
               fontWeight: '600',
-              borderRadius: '8px'
+              borderRadius: '8px',
+              textDecoration: 'none',
+              transition: 'all 0.2s ease'
             }}>
             Quick Start Guide
           </Link>
