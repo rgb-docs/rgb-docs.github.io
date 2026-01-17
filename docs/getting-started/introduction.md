@@ -45,28 +45,30 @@ description: Learn about RGB Protocol v0.12 - Smart contracts for Bitcoin and Li
     marginTop: '2rem'
   }}>
     <a href="/getting-started/quick-start" style={{
+      display: 'inline-block',
       padding: '1rem 2.5rem',
       background: 'white',
       color: '#667eea',
-      borderRadius: '50px',
+      borderRadius: '8px',
       textDecoration: 'none',
-      fontWeight: 'bold',
+      fontWeight: '600',
       fontSize: '1.1rem',
       boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-      transition: 'transform 0.2s'
+      transition: 'all 0.2s ease'
     }}>
       Get Started →
     </a>
     <a href="https://github.com/RGB-WG" style={{
+      display: 'inline-block',
       padding: '1rem 2.5rem',
-      background: 'rgba(255,255,255,0.1)',
+      background: 'transparent',
       color: 'white',
       border: '2px solid white',
-      borderRadius: '50px',
+      borderRadius: '8px',
       textDecoration: 'none',
-      fontWeight: 'bold',
+      fontWeight: '600',
       fontSize: '1.1rem',
-      backdropFilter: 'blur(10px)'
+      transition: 'all 0.2s ease'
     }}>
       View on GitHub
     </a>
@@ -480,26 +482,27 @@ rgb issue --schema RGB20 --ticker TKN --supply 1000000
     padding: '1.2rem 3rem',
     background: 'white',
     color: '#667eea',
-    borderRadius: '50px',
+    borderRadius: '8px',
     textDecoration: 'none',
-    fontWeight: 'bold',
+    fontWeight: '600',
     fontSize: '1.3rem',
     boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
-    marginRight: '1rem'
+    marginRight: '1rem',
+    transition: 'all 0.2s ease'
   }}>
     Start Building Now →
   </a>
   <a href="/core-concepts/overview" style={{
     display: 'inline-block',
     padding: '1.2rem 3rem',
-    background: 'rgba(255,255,255,0.1)',
+    background: 'transparent',
     color: 'white',
     border: '2px solid white',
-    borderRadius: '50px',
+    borderRadius: '8px',
     textDecoration: 'none',
-    fontWeight: 'bold',
+    fontWeight: '600',
     fontSize: '1.3rem',
-    backdropFilter: 'blur(10px)'
+    transition: 'all 0.2s ease'
   }}>
     Learn More
   </a>
@@ -595,11 +598,12 @@ RGB is under active development. Always test on testnet first.
     padding: '1rem 2.5rem',
     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     color: 'white',
-    borderRadius: '50px',
+    borderRadius: '8px',
     textDecoration: 'none',
-    fontWeight: 'bold',
+    fontWeight: '600',
     fontSize: '1.2rem',
-    boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)'
+    boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
+    transition: 'all 0.2s ease'
   }}>
     Begin Your RGB Journey →
   </a>
