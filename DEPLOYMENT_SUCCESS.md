@@ -12,10 +12,10 @@
 ✅ GitHub Actions workflow triggered automatically
 
 ### Current Status
-🔄 **Deploy to GitHub Pages** - In Progress
-🔄 **pages build and deployment** - In Progress
+✅ **Deploy to GitHub Pages** - SUCCESS (completed at 06:55 UTC)
+✅ **Site is LIVE** - https://rgb-docs.github.io
 
-The site is currently building. Check deployment status:
+The site has been successfully deployed and is now accessible!
 ```bash
 gh run list -R rgb-docs/rgb-docs.github.io
 ```
@@ -103,9 +103,23 @@ Total: 72 files, 57,086 lines
 
 ## Commit Information
 
-**Commit Hash:** a5ce69d
+**Initial Commit:** a5ce69d - Initial RGB v0.12 Technical Documentation
+**Fix Commit 1:** f51d703 - Fix MDX compilation errors (4 files)
+**Fix Commit 2:** be81c4b - Fix MDX JSX expression error in CLI docs
 **Branch:** main
-**Message:** Initial RGB v0.12 Technical Documentation
+**Status:** Deployed and Live
+
+### Deployment Fixes Applied
+
+Three commits were needed to successfully deploy:
+
+1. **Initial deployment** (a5ce69d) - Failed due to MDX syntax errors
+2. **MDX compilation fixes** (f51d703):
+   - Fixed `<1 ms` → "Less than 1 ms" (overview.md)
+   - Fixed `Contract<S, P>` heading → moved to text (rust-sdk.md)
+   - Fixed `<64KB` → "less than 64KB" (creating-nfts.md, metadata-attachments.md)
+3. **JSX expression fix** (be81c4b):
+   - Escaped `{codex}` → `\{codex\}` in CLI docs to prevent variable reference error
 
 ## Credits
 
