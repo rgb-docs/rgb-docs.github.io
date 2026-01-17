@@ -6,7 +6,11 @@ description: Command-line interface reference for RGB tools
 
 # RGB CLI Reference
 
-Complete command-line reference for RGB v0.12 tools.
+:::info Version
+This reference targets **RGB v0.12.0-rc.3** (current production version). Commands verified against source code.
+:::
+
+Complete command-line reference for the RGB wallet and contract management tool.
 
 ## rgb-cli
 
