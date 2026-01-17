@@ -20,7 +20,7 @@ $ rgb issue --schema RGB20 --ticker TEST ...
 Error: unrecognized option '--schema'
 ```
 
-**Root Cause:** You're using a pre-release version (like `v0.12.0-rc.3`) that has different command syntax than the stable release documented here.
+**Root Cause:** You're using a pre-release version (like `v0.12.0-rc.X` from a git branch) that has different command syntax than the stable release documented here.
 
 **Solution:**
 
@@ -29,7 +29,7 @@ Error: unrecognized option '--schema'
 rgb --version
 ```
 
-2. **If you see an RC version** (e.g., `0.12.0-rc.3`, `0.12.0-rc.2`):
+2. **If you see an RC version** (e.g., `0.12.0-rc.1`, `0.12.0-rc.2`, `0.12.0-rc.3`):
    - **Option A:** Install the stable release that matches this documentation:
      ```bash
      cargo install rgb-cli
@@ -39,7 +39,7 @@ rgb --version
    - **Option B:** Use documentation from the specific branch you're working with:
      ```bash
      # Clone the repository at your RC version
-     git clone --branch v0.12.0-rc.3 https://github.com/RGB-WG/rgb
+     git clone --branch <your-rc-version> https://github.com/RGB-WG/rgb
      cd rgb
      
      # Read the README and examples from that specific version

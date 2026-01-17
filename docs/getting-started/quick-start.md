@@ -9,7 +9,7 @@ description: Build your first RGB asset in 5 minutes
 This quick start guide will walk you through creating your first RGB fungible asset (RGB20 token) in just a few minutes.
 
 :::info Documentation Version
-This documentation targets **RGB v0.12.0 (stable release)**. If you're using pre-release versions like `v0.12.0-rc.3`, command syntax and APIs may differ. For RC versions, refer to the [version compatibility notes](#version-compatibility-notes) at the bottom of this page.
+This documentation targets **RGB v0.12.0 (stable release)**. If you're using pre-release versions like `v0.12.0-rc.X`, command syntax and APIs may differ. For RC versions, refer to the [version compatibility notes](#version-compatibility-notes) at the bottom of this page.
 :::
 
 ## Prerequisites
@@ -233,7 +233,7 @@ Check out these complete examples:
 ## Version Compatibility Notes
 
 :::warning Working with Pre-Release Versions
-If you're using RGB from development branches (e.g., `v0.12.0-rc.1`, `v0.12.0-rc.2`, `v0.12.0-rc.3`), be aware that:
+If you're using RGB from development branches (e.g., `v0.12.0-rc.1`, `v0.12.0-rc.2`, or any RC version), be aware that:
 
 1. **Command syntax may differ** - CLI commands in release candidates may use different flags or parameters
 2. **APIs may be unstable** - Function signatures and module structures can change between RC versions
@@ -244,7 +244,7 @@ If you're using RGB from development branches (e.g., `v0.12.0-rc.1`, `v0.12.0-rc
 - **For Development**: If using an RC version, consult the specific branch documentation:
   ```bash
   # Clone the RGB repository at the specific version
-  git clone --branch v0.12.0-rc.3 https://github.com/RGB-WG/rgb
+  git clone --branch <your-rc-version> https://github.com/RGB-WG/rgb
   
   # Check the README and examples in that branch
   cd rgb && cat README.md

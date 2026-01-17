@@ -20,7 +20,7 @@ RGB v0.12 includes **consensus-breaking changes**. All v0.11 contracts must be r
 :::
 
 :::caution **Pre-Release vs Stable Versions**
-This document describes **RGB v0.12 stable release** features. If you're working with pre-release versions from git branches (e.g., `v0.12.0-rc.1`, `v0.12.0-rc.2`, `v0.12.0-rc.3`):
+This document describes **RGB v0.12 stable release** features. If you're working with pre-release versions from git branches (e.g., any `v0.12.0-rc.X` version):
 
 - **Command syntax may differ** between RC versions and the stable release
 - **APIs are subject to change** until the stable release
