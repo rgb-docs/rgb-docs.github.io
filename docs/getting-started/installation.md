@@ -179,6 +179,30 @@ rgb --help
 rgb help
 ```
 
+:::warning Version Compatibility
+Ensure your installed version matches this documentation:
+
+**Expected output:**
+```
+rgb-cli 0.12.0 (or higher stable version)
+```
+
+**If you see a pre-release version** (e.g., `0.12.0-rc.3`):
+- Pre-release versions are built from development branches
+- Commands and APIs may not match this documentation
+- Consider installing the stable release: `cargo install rgb-cli`
+- Or refer to documentation in the specific git branch you're using
+
+**To install a specific stable version:**
+```bash
+# Install latest stable
+cargo install rgb-cli
+
+# Or install specific version
+cargo install rgb-cli --version 0.12.0
+```
+:::
+
 ### Test JavaScript Installation
 
 ```typescript

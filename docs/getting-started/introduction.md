@@ -45,6 +45,8 @@ description: Learn about RGB Protocol v0.12 - Smart contracts for Bitcoin and Li
 
 RGB v0.12 provides forward compatibility guarantees - contracts issued with v0.12 will remain compatible with future versions. Various implementations are under active development. [See what's new →](/getting-started/whats-new-0-12)
 
+**Documentation Version:** This documentation covers **RGB v0.12.0 stable release**. If using pre-release versions (RC builds), see [version compatibility notes](/getting-started/quick-start#version-compatibility-notes).
+
 </div>
 
 ---

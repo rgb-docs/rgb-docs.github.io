@@ -12,6 +12,10 @@ This reference targets **RGB v0.12.0-rc.3** (current production version). Comman
 
 Complete command-line reference for the RGB wallet and contract management tool.
 
+:::info Documentation Version
+This CLI reference documents **RGB v0.12.0 stable release**. Pre-release versions (RC builds like v0.12.0-rc.1, rc.2, rc.3) may have different command syntax. Always verify your installed version with `rgb --version` and ensure it matches the documentation version for best results.
+:::
+
 ## rgb-cli
 
 Main RGB command-line interface for managing RGB smart contracts, wallets, and state transfers.
@@ -2129,6 +2133,22 @@ done
 - Improved coin selection strategies
 - Script-based payment workflows
 - Advanced consignment handling
+
+:::tip Stable vs Pre-Release Versions
+The commands documented here are for **stable v0.12.x releases**. If you're using a development version (like v0.12.0-rc.3 from a git branch), commands may differ.
+
+**To ensure compatibility:**
+```bash
+# Install the latest stable release
+cargo install rgb-cli
+
+# Verify version
+rgb --version
+# Should show: rgb-cli 0.12.0 or higher (without -rc suffix)
+```
+
+If you need to work with a specific pre-release version, clone the repository at that tag and refer to the documentation within that branch.
+:::
 
 ### v0.11
 - Initial stable release
