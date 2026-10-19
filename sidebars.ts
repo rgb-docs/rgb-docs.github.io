@@ -124,6 +124,7 @@ const sidebars: SidebarsConfig = {
       collapsed: true,
       items: [
         'technical-reference/cli',
+        'technical-reference/cli-v011',
         'technical-reference/invoices',
         'technical-reference/consignments',
         'technical-reference/interfaces',

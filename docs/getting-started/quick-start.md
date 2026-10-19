@@ -1,258 +1,321 @@
 ---
 sidebar_position: 3
 title: Quick Start
-description: Build your first RGB asset in 5 minutes
+description: Issue and transfer a test asset with rgb-cmd 0.11.1 on regtest, or with rgb-wallet 0.12.0-rc.3 on testnet.
+rgb_line: both
+verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
+last_update:
+  date: 2026-10-19
 ---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
 # Quick Start
 
-:::info Version
-This guide targets **RGB v0.12.0-rc.3** (current production version). Commands may differ in other versions.
+:::info Applies to both RGB lines
+There are two separate walkthroughs, one per line. Their files, invoices and wallets can't be mixed. See [Two RGB lines](/getting-started/two-rgbs).
 :::
 
-This quick start guide will walk you through creating your first RGB fungible asset (RGB20 token) in just a few minutes.
+Both walkthroughs issue a fungible asset and send part of it to a second wallet. Each follows its project's own demo: [rgb-sandbox](https://github.com/rgb-protocol/rgb-sandbox) for Line B, and [`examples/demo.sh`](https://github.com/RGB-WG/rgb/blob/v0.12.0-rc.3/examples/demo.sh) for Line A. Output shown as **real output** came from running the pinned binary offline on 2026-10-19. Steps that need a node or an indexer weren't run here. Their output is quoted from the upstream README, or left out.
 
-## Prerequisites
+You need the CLI for your line installed first: see [Installation](/getting-started/installation).
 
-- RGB CLI installed ([Installation Guide](/getting-started/installation))
-- Access to Bitcoin testnet
-- Basic command line knowledge
+:::danger Before you move real value
+- **Send the consignment and get it accepted before you broadcast.** If the witness transaction is published and the recipient never gets the consignment, the assets are gone.
+- **Let only the RGB tool spend the RGB wallet's coins.** A Bitcoin-only wallet that spends a UTXO holding RGB state destroys that state.
+- **Back up the RGB data directory**, not just the seed. A seed alone doesn't recover assets.
+:::
 
-## Step 1: Initialize RGB Data Directory
+<Tabs groupId="rgb-line">
+<TabItem value="b" label="v0.11 (rgb-cmd)">
 
-First, initialize the RGB data directory:
+## Line B: regtest with rgb-cmd 0.11.1
 
-```bash
-# Initialize data directory
-rgb init
+This is the manual demo from the [rgb-sandbox README](https://github.com/rgb-protocol/rgb-sandbox#manual-demo), run with `rgb-cmd` 0.11.1. The sandbox itself pins 0.11.1-rc.6. `rgb-cmd` does the RGB work, and `bp-wallet` (`bp`, `bp-hot`) holds the keys and signs. For apps, [rgb-lib](https://github.com/RGB-Tools/rgb-lib) wraps all of this in one library.
 
-# Verify initialization
-rgb wallets
+### 1. Start regtest and set up
+
+```bash line=B
+git clone https://github.com/rgb-protocol/rgb-sandbox --recurse-submodules --shallow-submodules
+cd rgb-sandbox
+docker compose --profile electrum up -d
+cargo install bp-wallet --version 0.11.1-alpha.2 --root ./bp-wallet --features=cli,hot
+cargo install --locked rgb-cmd --version 0.11.1 --root ./rgb-cmd
+export PATH="$PWD/rgb-cmd/bin:$PWD/bp-wallet/bin:$PATH"
+export LNPBP_NETWORK=regtest
+alias bcli="docker compose exec -u blits bitcoind bitcoin-cli -regtest"
+bcli createwallet miner
+bcli -generate 103
 ```
 
-This creates the data directory structure required for RGB operations.
+The issuer's data lives in `data0` and the recipient's in `data1`. Every `rgb` command below passes `-d` (data directory), `-w` (wallet name) and `--electrum=localhost:50001` (the sandbox's indexer; the `=` is required).
 
-## Step 2: Create and Fund Wallet
+### 2. Create keys and RGB wallets
 
-Create a new wallet with a descriptor:
-
-```bash
-# Create a new wallet with taproot support
-rgb create --tapret-key-only my-wallet "tr([fingerprint/84h/1h/0h]xpub...)"
-
-# Get a funding address
-rgb fund --wallet my-wallet
-
-# Fund the address using a testnet faucet
-# Visit: https://testnet-faucet.com
+```bash line=B
+mkdir wallets
+export SEED_PASSWORD="seed test password"
+bp-hot seed wallets/0.seed
+bp-hot derive -N -s bip86 wallets/0.seed wallets/0.derive
+# copy the "Account:" value it prints, e.g. [598d26fe/86h/1h/0h]tpubDCwK...4FLe
+descriptor_0="<account_0>/<0;1;9>/*"
+rgb -d data0 --electrum=localhost:50001 create --wpkh "$descriptor_0" issuer
 ```
 
-## Step 3: Create an RGB20 Token
+Repeat with `wallets/1.seed`, `descriptor_1`, `-d data1` and the name `rcpt1` for the recipient.
 
-Now create your first fungible token. First, create a parameters file:
+### 3. Import the NIA schema
+
+The sandbox ships the compiled schemas from `rgb-schemas` as a submodule:
+
+```bash line=B
+rgb -d data0 -w issuer import rgb-schemas/schemata/NonInflatableAsset.rgb
+rgb -d data1 -w rcpt1 import rgb-schemas/schemata/NonInflatableAsset.rgb
+```
+
+Real output:
+
+```text
+Unable to find or parse config file; using config defaults
+Importing kit rgb:kit:qxyONQWD-WY7Sha7-wzsRSMW-MaNI6PI-T74uzx9-sBzUztg:
+- schema NonInflatableAsset RWhwUfTMpuP2Zfx1~j4nswCANGeJrYOqDcKelaMV4zU#remote-digital-pegasus
+- script library alu:q~CZ0ovt-UN9eBlc-VMn86mz-Kfd3ywu-f7~9jTB-k6A8tiY#japan-nylon-center
+- strict types: 35 definitions
+Kit is imported
+```
+
+The schema ID is `rgb:sch:RWhwUfTMpuP2Zfx1~j4nswCANGeJrYOqDcKelaMV4zU#remote-digital-pegasus`. `rgb schemata` prints it again.
+
+### 4. Fund both wallets
+
+```bash line=B
+rgb -d data0 -w issuer --electrum=localhost:50001 address -k 9
+rgb -d data1 -w rcpt1 --electrum=localhost:50001 address -k 9
+bcli -rpcwallet=miner sendtoaddress "<addr_issue>" 1
+bcli -rpcwallet=miner sendtoaddress "<addr_receive>" 1
+bcli -rpcwallet=miner -generate 1
+rgb -d data0 -w issuer --electrum=localhost:50001 utxos --sync
+rgb -d data1 -w rcpt1 --electrum=localhost:50001 utxos --sync
+```
+
+Note one outpoint (`txid:vout`) from each wallet: `outpoint_issue` for the issuer and `outpoint_receive` for the recipient.
+
+### 5. Issue
+
+Write `demo.yaml`. This is the sandbox's `contracts/usdt.yaml.template` with a neutral ticker, and with the schema ID and issue outpoint filled in:
 
 ```yaml
-# token-params.yaml
-issuer: "ssi:anonymous"
-ticker: "MYT"
-name: "My Token"
-precision: 8
-supply: 1000000
-allocations:
-  - method: TapretFirst
-    seal: "<UTXO_OUTPOINT>"
-    amount: 1000000
+schema: rgb:sch:RWhwUfTMpuP2Zfx1~j4nswCANGeJrYOqDcKelaMV4zU#remote-digital-pegasus
+
+globals:
+  spec:
+    ticker: DEMO
+    name: Demo Asset
+    details: ~
+    precision: 0
+  terms:
+    text: demo NIA asset
+    media: ~
+  issuedSupply: 1000
+
+assignments:
+  assetOwner:
+    seal: <outpoint_issue>
+    amount: 1000
 ```
 
-Then issue the contract:
-
-```bash
-# Issue a new RGB20 token
-rgb issue --wallet my-wallet token-params.yaml
+```bash line=B
+rgb -d data0 -w issuer issue "ssi:issuer" demo.yaml
+rgb -d data0 -w issuer contracts
 ```
 
-The contract will be imported into your wallet's contract store automatically.
+Real output (the contract ID differs on every run, because genesis seals are blinded with random values):
 
-## Step 4: Inspect the Contract
+```text
+A new contract rgb:7Wf1Rne9-BQWvPlL-P50XBTB-D1sZQlF-Wn7eRYV-3_wZZg8 is issued and added to the stash.
+Use `export` command to export the contract.
 
-View your newly created contract:
-
-```bash
-# List all contracts
-rgb contracts
-
-# Display detailed contract state
-rgb state --wallet my-wallet <CONTRACT_ID>
-
-# Export contract to a file
-rgb backup <CONTRACT_ID> my-token.rgb
+rgb:7Wf1Rne9-BQWvPlL-P50XBTB-D1sZQlF-Wn7eRYV-3_wZZg8	BitcoinRegtest	2026-10-19	rgb:sch:RWhwUfTMpuP2Zfx1~j4nswCANGeJrYOqDcKelaMV4zU#remote-digital-pegasus
+  Developer: ssi:issuer
 ```
 
-## Step 5: Transfer Tokens
+`rgb -d data0 -w issuer --electrum=localhost:50001 state "$contract_id"` shows the 1000 units on `outpoint_issue`.
 
-To transfer tokens to another party:
+### 6. Recipient: create an invoice
 
-```bash
-# Recipient generates an invoice
-rgb invoice --wallet recipient-wallet \
-  <CONTRACT_ID> \
-  100
-
-# The recipient shares the invoice with the sender
-# Sender pays the invoice, creating a PSBT and consignment
-rgb pay --wallet my-wallet \
-  <INVOICE_STRING> \
-  transfer.consignment \
-  transfer.psbt
-
-# Sender signs the PSBT (using their Bitcoin wallet)
-# Then completes the operation
-rgb complete --wallet my-wallet \
-  transfer.bundle \
-  signed.psbt
-
-# Send consignment file to recipient
-# Recipient accepts the transfer
-rgb accept --wallet recipient-wallet transfer.consignment
+```bash line=B
+rgb -d data1 -w rcpt1 --electrum=localhost:50001 invoice --amount 100 "$contract_id"
 ```
 
-## Step 6: Verify Your Balance
+Example output, from the sandbox README:
 
-Check your token balances:
-
-```bash
-# View all contract states owned by your wallet
-rgb state --wallet my-wallet --owned
-
-# Show specific contract balance
-rgb state --wallet my-wallet <CONTRACT_ID>
+```text
+rgb:Tk3d0h5w-8v4XYCg-7e~Sc0o-Lu6rp~X-~Jt7VHS-jqgzFD8/~/BF/bcrt:utxob:MSLQCKkW-w6caphB-12do1nJ-HNfgxvv-WE3zOOC-s8yZyHq-Ihoa5
 ```
 
-## Understanding What Happened
+The `utxob:` part is the recipient's outpoint, blinded so that the payer never learns it. Use the long option `--amount`: in 0.11.1, `invoice` gives the short flag `-a` to three different options.
 
-### Client-Side Validation
+### 7. Sender: transfer
 
-Your token was created entirely **off-chain**. The Bitcoin blockchain only contains cryptographic commitments, not the token data itself.
-
-### Consignments
-
-The `consignment.rgb` file contains all validation data needed for the recipient to verify ownership. This is RGB's client-side validation in action.
-
-### Bitcoin UTXO Binding
-
-Each transfer spends a Bitcoin UTXO (binding old state) and creates new UTXOs for the recipient (binding new state), leveraging Bitcoin's existing double-spend prevention.
-
-## Next Steps with JavaScript
-
-Create the same token using rgbjs:
-
-```typescript
-import { RGB, RGB20 } from 'rgbjs';
-
-// Initialize RGB
-const rgb = new RGB({
-  network: 'testnet',
-  electrumUrl: 'ssl://electrum.blockstream.info:60002'
-});
-
-// Issue RGB20 token
-const contract = await RGB20.issue({
-  name: 'My Token',
-  ticker: 'MYT',
-  precision: 8,
-  supply: 1000000n,
-});
-
-console.log('Contract ID:', contract.contractId);
+```bash line=B
+rgb -d data0 -w issuer --electrum=localhost:50001 transfer "$invoice" data0/consignment.rgb data0/tx.psbt
 ```
 
-## Common Workflows
+This writes the consignment and a PSBT that already commits to it. The default fee is 400 sats (`--fee`).
 
-### Creating an NFT (RGB21)
+### 8. Recipient: validate, and only then broadcast
 
-Create a params file for RGB21 and issue:
+Send `data0/consignment.rgb` to the recipient. The sandbox just copies it. Real deployments use an [RGB proxy](https://github.com/RGB-Tools/rgb-proxy-server).
 
-```bash
-# nft-params.yaml
-rgb issue --wallet my-wallet nft-params.yaml
+```bash line=B
+cp data0/consignment.rgb data1/
+rgb -d data1 -w rcpt1 --electrum=localhost:50001 validate data1/consignment.rgb
 ```
 
-### Batch Transfers with Payment Scripts
+Once the recipient approves, the sender signs, finalizes and publishes:
 
-```bash
-# Create payment script for multiple beneficiaries
-rgb script --wallet my-wallet \
-  <INVOICE> \
-  payment.yaml
-
-# Execute script to create bundle and PSBT
-rgb exec --wallet my-wallet \
-  payment.yaml \
-  payment.bundle \
-  1000
+```bash line=B
+bp-hot sign -N data0/tx.psbt wallets/0.derive
+rgb -d data0 -w issuer --electrum=localhost:50001 finalize -p data0/tx.psbt data0/tx.tx
+bcli -rpcwallet=miner -generate 1
 ```
 
-### Synchronizing Wallet
+### 9. Recipient: accept
 
-Keep your wallet synchronized with the blockchain:
-
-```bash
-# Sync wallet with Electrum server
-rgb sync --wallet my-wallet \
-  --electrum ssl://electrum.blockstream.info:60002
+```bash line=B
+rgb -d data1 -w rcpt1 --electrum=localhost:50001 utxos --sync
+rgb -d data1 -w rcpt1 --electrum=localhost:50001 accept data1/consignment.rgb
+rgb -d data1 -w rcpt1 --electrum=localhost:50001 state "$contract_id"
 ```
 
-## Troubleshooting
+`accept` prints `Transfer accepted into the stash` (from `cli/src/command.rs`). The recipient's state now shows 100 units, and the sender's shows 900 units of change. To clean up, run `docker compose --profile electrum down -v` and `rm -fr data0 data1 wallets`.
 
-### "Insufficient funds" error
+</TabItem>
+<TabItem value="a" label="v0.12 (rgb-wallet)">
 
-Ensure your Bitcoin address has testnet BTC for fees:
-```bash
-rgb fund --wallet my-wallet
-# Fund the address shown with testnet BTC
+## Line A: rgb-wallet 0.12.0-rc.3
+
+:::danger Release candidate, test networks only
+`rgb-wallet` 0.12.0-rc.3 refuses mainnet: it panics on `-n bitcoin`. Use testnet4 (the default), signet or regtest.
+:::
+
+### 1. Offline demo with the upstream example data
+
+The `RGB-WG/rgb` repository ships two prepared wallets: `alice` in `examples/data` and `bob` in `examples/data2`. It also ships an issuer (codex) file, and a contract definition that allocates the supply to an output already in Alice's wallet. These steps follow `examples/demo.sh` and run without a network.
+
+```bash line=A
+git clone https://github.com/RGB-WG/rgb --branch v0.12.0-rc.3
+cd rgb
+rgb -d examples/data init
+rgb -d examples/data2 init
+rgb -d examples/data import examples/RGB20-FNA.issuer
+rgb -d examples/data issue -w alice examples/DemoToken.yaml
 ```
 
-### "Contract validation failed"
+Real output:
 
-Verify your wallet is synchronized:
-```bash
-rgb sync --wallet my-wallet \
-  --electrum ssl://electrum.blockstream.info:60002
+```text
+Processing 'RGB20-FNA.issuer' ... codex id 7C15w3W1-L0T~zXw-Aeh5~kV-Zquz729-HXQFKQW-_5lX9O8#heavy-cactus-quiet ... success
+A new contract issued with ID contract:nztjpjRX-_NVDDgd-EHENsqL-AKsGsyV-F6LzljB-X4WTv0Y
 ```
 
-### View wallet seals
+Running `rgb issue` with no file lists the issuers you can issue under. Here that is `Fungible Non-inflatable Asset`, developer `dns:pandoraprime.ch`. More issuers are published in [pandora-prime/rgb-issuers](https://github.com/pandora-prime/rgb-issuers).
 
-Check available UTXOs for RGB operations:
-```bash
-rgb seals --wallet my-wallet
+`DemoToken.yaml` is the issue parameter file. Its `owned` section puts all 10000 units on one seal, which is an outpoint (`txid:vout`) in Alice's wallet:
+
+```yaml
+consensus: bitcoin
+testnet: true
+issuer:
+  codexId: 7C15w3W1-L0T~zXw-Aeh5~kV-Zquz729-HXQFKQW-_5lX9O8
+  version: 0
+  checksum: AYkSrg
+name: DemoToken
+method: issue
+timestamp: "2024-12-18T10:32:00-02:00"
+
+global:
+  - name: ticker
+    verified: DEMO
+  - name: name
+    verified: Demo Token
+  - name: precision
+    verified: centiMilli
+  - name: issued
+    verified: 10000
+
+owned:
+  - name: balance
+    seal: b7116550736fbe5d3e234d0141c6bc8d1825f94da78514a3cede5674e9a5eae9:1
+    data: 10000
 ```
 
-### List all wallets
+### 2. Give Bob the contract
 
-See all available wallets:
-```bash
-rgb wallets
+Bob must know the contract before he can invoice for it. Before this step, `rgb -d examples/data2 invoice -w bob DemoToken 10` fails with `Error: unknown contract 'DemoToken'` (real output).
+
+```bash line=A
+rgb -d examples/data backup -f DemoToken examples/DemoToken.rgb
+rgb -d examples/data2 accept -w bob -u examples/DemoToken.rgb
+rgb -d examples/data state -go -w alice
 ```
 
-## Learning Resources
+`-u` allows a contract Bob has never seen. `state` needs `-g` (global), `-o` (owned) or both.
 
-Now that you've created your first RGB asset, explore:
+### 3. Bob creates an invoice
 
-- [**Core Concepts**](/core-concepts/overview) - Understand how RGB works
-- [**RGB20 Guide**](/guides/rgb20/creating-tokens) - Advanced fungible assets
-- [**RGB21 Guide**](/guides/rgb21/creating-nfts) - Create NFTs
-- [**Smart Contracts**](/guides/contracts/schemas) - Build custom contracts
+```bash line=A
+rgb -d examples/data2 invoice -w bob --nonce 0 --seal-only DemoToken
+rgb -d examples/data2 invoice -w bob --nonce 0 DemoToken 10
+```
 
-## Example Projects
+The first command prints only Bob's seal, an auth token. Real output:
 
-Check out these complete examples:
+```text
+at:FWKMBVDc-NBk8dAZA-tYGt2HIP-MtzSRO17-8g3QvRIN-nuPjug
+```
 
-- [RGB20 Stablecoin](https://github.com/RGB-WG/rgb-examples/tree/main/stablecoin)
-- [RGB21 NFT Collection](https://github.com/RGB-WG/rgb-examples/tree/main/nft)
-- [Lightning Asset Wallet](https://github.com/RGB-WG/rgb-examples/tree/main/lightning)
+The second prints the full invoice, `contract:tb@<contract id>/<value>@<seal>/`. When the same command is run for Alice's wallet, the real output is:
 
-## Get Help
+```text
+contract:tb@contract:nztjpjRX-_NVDDgd-EHENsqL-AKsGsyV-F6LzljB-X4WTv0Y/10@at:VbJYsl3B-FccP_ZkJ-Yi49U0M6-DLNra14f-SyXj7URN-pmdnfQ/
+```
 
-- [FAQ](/technical-reference/faq) - Common questions
-- [Troubleshooting](/technical-reference/troubleshooting) - Debug issues
-- [Telegram](https://t.me/rgbtelegram) - Community support
+With `--wout`, the seal is a new output in the payer's transaction (`wout:…`) rather than one of Bob's UTXOs.
+
+### 4. Alice pays, Bob accepts
+
+```bash line=A
+rgb -d examples/data pay -w alice "$INVOICE" examples/transfer.rgb examples/transfer.psbt
+rgb -d examples/data2 accept -w bob examples/transfer.rgb
+rgb -d examples/data2 state -go -w bob
+```
+
+`pay` writes a consignment and a ready-to-sign binary PSBT, and prints nothing. The demo ends here, before anything is signed or broadcast. On a real network, Alice would sign the PSBT with whatever holds the wallet's keys (`rgb` doesn't sign), wait until Bob has accepted the consignment, and then run `rgb finalize -w alice --broadcast --esplora examples/transfer.psbt`. Don't run `complete` after `pay`. `complete` belongs to the `script` → `exec` workflow ([upstream Payments.md](https://github.com/RGB-WG/rgb/blob/v0.12.0-rc.3/doc/Payments.md)).
+
+### 5. Your own testnet4 wallet
+
+To leave the demo data and use your own wallet, start from a BIP-32 account descriptor in the form `[fingerprint/84h/1h/0h]tpub…/<0;1>/*`. These steps weren't run for this page, because they need an indexer.
+
+```bash line=A
+rgb init
+rgb create --wpkh alice.wallet "[<fp>/84h/1h/0h]<tpub>/<0;1>/*"
+rgb fund alice
+rgb sync alice --esplora
+rgb seals -w alice
+```
+
+- The `.wallet` suffix works around the rc.3 `create` bug: without it, `-w alice` can't find the wallet (`cli/src/exec.rs:104`).
+- `--wpkh` makes an opret-only wallet. Use `--tapret-key-only` with an 86h (taproot) account for tapret.
+- `rgb fund` prints a receive address. Send testnet4 coins to it, then sync. A bare `--esplora` uses `https://mempool.space/testnet4/api` (`cli/src/opts.rs`).
+- `rgb seals` lists outpoints. Put one in the `seal:` field of your copy of `DemoToken.yaml`, give it a new `name`, and `rgb issue -w alice` it.
+
+</TabItem>
+</Tabs>
+
+## Next steps
+
+- CLI references: [v0.11 (rgb-cmd)](/technical-reference/cli-v011) and [v0.12 (rgb-wallet)](/technical-reference/cli).
+- Line B: [docs.rgb.info](https://docs.rgb.info), [rgb-lib](https://github.com/RGB-Tools/rgb-lib), and [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) (alpha).
+- Line A: [rgb.tech](https://rgb.tech) and the [RGB-WG/rgb README](https://github.com/RGB-WG/rgb/tree/v0.12.0-rc.3).

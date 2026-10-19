@@ -1,257 +1,148 @@
 ---
 sidebar_position: 2
 title: Installation
-description: Install RGB Protocol tools and SDKs for development
+description: Install the rgb command-line tool for RGB v0.11 (rgb-cmd) or RGB v0.12 (rgb-wallet), and the libraries for building apps.
+rgb_line: both
+verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
+last_update:
+  date: 2026-10-19
 ---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
 # Installation
 
-This guide covers installing RGB tools and SDKs for different development environments.
-
-## Available Implementations
-
-RGB has several implementations under active development:
-
-### End-User Wallets
-
-- **[BitMask](https://bitmask.app/)** - Browser extension wallet supporting RGB20 tokens and RGB21 NFTs on Bitcoin and Lightning
-- **[MyCitadel](https://mycitadel.io/)** - Desktop wallet with RGB asset management
-
-### Node Implementations
-
-- **[RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node)** - Lightning node with RGB support (Line B, alpha, regtest/testnet)
-
-### Developer Tools
-
-- **[rgb-wallet](https://crates.io/crates/rgb-wallet)** (Line A) and **[rgb-cmd](https://crates.io/crates/rgb-cmd)** (Line B) - the `rgb` command-line tools
-- **[rgbjs](https://www.npmjs.com/package/rgbjs)** - JavaScript/TypeScript SDK for web and Node.js
-
-:::info Development Status
-RGB is under active development. Test thoroughly on testnet before using on mainnet.
+:::info Applies to both RGB lines
+Each line has its own CLI, crates and data directory, so the tabs below are separate. See [Two RGB lines](/getting-started/two-rgbs) for which one to use.
 :::
 
-## Prerequisites
+Both lines install a binary called `rgb`, and the two binaries are incompatible. Install only one per `PATH`, or use `cargo install --root <dir>` to keep them apart.
 
-Before installing RGB, ensure you have:
+## Rust toolchain
 
-- **Bitcoin Node** or **Electrum Server** access
-- **Rust** (for Rust development) - v1.75 or higher
-- **Node.js** (for JavaScript development) - v18 or higher
-- **Git** - For cloning repositories
-
-## Rust Installation
-
-RGB is primarily developed in Rust. To use the Rust SDK:
-
-### Install Rust Toolchain
+Both CLIs are built from source with Cargo. Both declare `rust-version = "1.85.0"` (`Cargo.toml` of `RGB-WG/rgb` at v0.12.0-rc.3 and of `rgb-protocol/rgb-api` at 0.11.1). `rgb-lib` needs Rust 1.88.
 
 ```bash
-# Install Rust via rustup
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
-# Ensure you have the latest stable version
 rustup update stable
 ```
 
-### Install RGB CLI
+## Command-line tool
 
-RGB split into two lines in 2025, and each ships its own CLI. Both install a binary called `rgb`, so install only one per `PATH`.
+<Tabs groupId="rgb-line">
+<TabItem value="b" label="v0.11 (rgb-cmd)">
 
-:::warning Don't use `cargo install rgb-cli`
-The `rgb-cli` crate is a 2023 release (0.9.1) from before the split. It works with neither current line.
-:::
-
-```bash line=A
-# Line A: RGB v0.12 (RGB-WG). Release candidate, testnet only.
-cargo install --locked rgb-wallet --version 0.12.0-rc.3
-rgb --help   # this CLI has no --version flag
-```
+`rgb-cmd` 0.11.1 was published on 2026-09-16 from [rgb-protocol/rgb-api](https://github.com/rgb-protocol/rgb-api).
 
 ```bash line=B
-# Line B: RGB v0.11 (RGB Protocol Association).
 cargo install --locked rgb-cmd --version 0.11.1
 rgb --version
 ```
 
-### Add RGB Libraries to Your Project
+`rgb --version` prints `rgb-cmd 0.11.1`.
 
-Pin exact versions. Line A only has release candidates, and Cargo won't pick a pre-release for a plain `"0.12"` requirement.
+`rgb-cmd` does RGB work only. To sign transactions you need a Bitcoin wallet that holds the keys. The official sandbox uses `bp-wallet` for this, installing its `bp` and `bp-hot` tools:
 
-```toml title="Cargo.toml (Line A)"
+```bash line=B
+cargo install bp-wallet --version 0.11.1-alpha.2 --root ./bp-wallet --features=cli,hot
+```
+
+**Defaults:** the data directory is `~/.lnp-bp` (env `LNPBP_DATA_DIR`) and the network is `testnet3` (env `LNPBP_NETWORK`). Data goes in a per-network subdirectory, such as `~/.lnp-bp/regtest`. There is no `init` step: the directory is created on first use.
+
+</TabItem>
+<TabItem value="a" label="v0.12 (rgb-wallet)">
+
+`rgb-wallet` 0.12.0-rc.3 was published on 2025-07-15 from [RGB-WG/rgb](https://github.com/RGB-WG/rgb). It is a release candidate, and no later release exists as of 2026-10-19. Always give `--version`: a plain `cargo install rgb-wallet` installs the last *stable* version, the unrelated 0.10.9.
+
+```bash line=A
+cargo install --locked rgb-wallet --version 0.12.0-rc.3
+rgb --help
+rgb init
+```
+
+This `rgb` has no `--version` flag, so use `--help` to check the install. `rgb init` creates the data directory. Every other command refuses to run until the directory exists.
+
+**Defaults:** the data directory is `~/.local/share/rgb` on Linux (or `$XDG_DATA_HOME/rgb`; env `RGB_DATA_DIR`). The network is `testnet4` (env `RGB_NETWORK`). All test networks share the subdirectory `bitcoin.testnet`.
+
+:::danger Testnet only
+`rgb-wallet` 0.12.0-rc.3 panics with "Non-testnet networks are not yet supported" on `-n bitcoin` (`cli/src/args.rs`). Use it with testnet, signet or regtest only.
+:::
+
+**Known rc.3 bugs**
+
+- `rgb create <name> …` writes the wallet to `<data>/<name>`, but every other command loads `<data>/<name>.wallet` (`cli/src/exec.rs:104` vs `cli/src/args.rs`). Name the wallet with the suffix, as in `rgb create --wpkh alice.wallet …`, and then refer to it as `-w alice`. The bug is still on `master`.
+- The Electrum environment variable is spelled `ELECRTUM_SERVER` (`cli/src/opts.rs:42`). Setting `ELECTRUM_SERVER` has no effect. Pass `--electrum=<URL>` instead.
+
+</TabItem>
+</Tabs>
+
+## Blockchain access
+
+Neither CLI talks to Bitcoin Core RPC. Both read the chain through an indexer that you choose per command: `--electrum=<URL>` or `--esplora=<URL>`, and on Line B also `--mempool=<URL>`. The `=` is required. In an Esplora or Mempool URL, `{network}` is replaced with the network name.
+
+- **Line A:** a bare `--electrum` uses `mycitadel.io:50001`, and a bare `--esplora` uses `https://mempool.space/{network}/api`.
+- **Line B:** a bare `--electrum` uses the placeholder `example.com:50001`, so always give a URL. A bare `--esplora` uses `https://blockstream.info/{network}/api`. The Electrum environment variable in `bp-wallet` 0.11.1-alpha.2 has the same typo, `ELECRTUM_SERVER`.
+
+For local testing, run regtest with an Electrum server. [rgb-sandbox](https://github.com/rgb-protocol/rgb-sandbox) (below) packages `bitcoind` and `electrs` with Docker Compose.
+
+## Line B: regtest sandbox
+
+[rgb-protocol/rgb-sandbox](https://github.com/rgb-protocol/rgb-sandbox) is the official regtest demo. It needs git, cargo, Docker with Compose, and the SQLite development headers (`libsqlite3-dev`).
+
+```bash line=B
+git clone https://github.com/rgb-protocol/rgb-sandbox --recurse-submodules --shallow-submodules
+cd rgb-sandbox
+bash demo.sh
+```
+
+`demo.sh` installs `bp-wallet` and `rgb-cmd` into the project directory, starts the services, issues an asset, runs transfers and cleans up. As of its last commit (2026-09-22), the sandbox README says it is "based on RGB version 0.11.1 RC 6", not the 0.11.1 final this site is pinned to. The [quick start](/getting-started/quick-start) walks through the manual version.
+
+## Libraries
+
+<Tabs groupId="rgb-line">
+<TabItem value="b" label="v0.11 (rgb-cmd)">
+
+**Wallets and apps:** use [`rgb-lib`](https://github.com/RGB-Tools/rgb-lib) (RGB-Tools). It handles Bitcoin walleting (through BDK) and RGB together, and has official bindings for Kotlin, Swift, Python, Node.js and C/C++ ([bindings list](https://github.com/RGB-Tools/rgb-lib/tree/master/bindings)). Version 0.3.0-beta.7 (2026-07-17) is built on `rgb-ops` 0.11.1-rc.11 and needs Rust 1.88.
+
+```toml
+[dependencies]
+rgb-lib = "=0.3.0-beta.7"
+```
+
+:::danger Use each wallet on one device only
+The rgb-lib README warns that using the same mnemonic on more than one device "can lead to RGB asset loss due to improper UTXO management".
+:::
+
+**Lower-level crates**, the ones `rgb-cmd` is built from:
+
+```toml
+[dependencies]
+rgb-api = "=0.11.1"
+rgb-ops = "=0.11.1"
+rgb-consensus = "=0.11.1"
+rgb-schemas = "=0.11.1"
+```
+
+Pin these exactly. 0.11.2 (release candidate since 2026-10-09) changes the consignment format. API docs are on [docs.rs/rgb-api](https://docs.rs/rgb-api/0.11.1) and [docs.rs/rgb-lib](https://docs.rs/rgb-lib).
+
+</TabItem>
+<TabItem value="a" label="v0.12 (rgb-wallet)">
+
+The Rust runtime that the CLI uses is `rgb-runtime` (library name `rgbp`), built on `rgb-std`. Both are release candidates, so Cargo needs an exact pre-release requirement. A plain `"0.12"` doesn't match them.
+
+```toml
 [dependencies]
 rgb-runtime = "=0.12.0-rc.3"
 rgb-std = "=0.12.0-rc.3"
 ```
 
-```toml title="Cargo.toml (Line B)"
-[dependencies]
-rgb-api = "=0.11.1"
-# or, for applications, the wallet library used by Iris and RGB Lightning Node:
-# rgb-lib = "0.2.2"
-```
+`rgb-core` 0.12.0 (final, 2025-07-10) comes in as a dependency. There are no bindings for other languages. API docs are on [docs.rs/rgb-runtime](https://docs.rs/rgb-runtime/0.12.0-rc.3) and [docs.rs/rgb-std](https://docs.rs/rgb-std/0.12.0-rc.3).
 
-## JavaScript/TypeScript Installation
+</TabItem>
+</Tabs>
 
-For web and mobile development, use the rgbjs library:
+## Next steps
 
-### Install via npm
-
-```bash
-npm install rgbjs
-```
-
-### Install via yarn
-
-```bash
-yarn add rgbjs
-```
-
-### Install via pnpm
-
-```bash
-pnpm add rgbjs
-```
-
-### Basic Usage
-
-```typescript
-import { RGB } from 'rgbjs';
-
-// Initialize RGB client
-const rgb = new RGB({
-  network: 'testnet',
-  electrumUrl: 'ssl://electrum.blockstream.info:60002'
-});
-```
-
-## Bitcoin Infrastructure
-
-RGB requires access to Bitcoin blockchain data:
-
-### Option 1: Full Bitcoin Node
-
-```bash
-# Install Bitcoin Core
-# Follow instructions at https://bitcoin.org/en/download
-
-# Configure bitcoin.conf for RGB usage
-txindex=1
-server=1
-```
-
-### Option 2: Electrum Server
-
-RGB can work with Electrum servers for lighter infrastructure:
-
-```bash
-# Connect to public Electrum server
-electrum.blockstream.info:50002 (mainnet)
-electrum.blockstream.info:60002 (testnet)
-```
-
-### Option 3: Local Electrs
-
-```bash
-# Install and run electrs
-git clone https://github.com/romanz/electrs
-cd electrs
-cargo build --release
-
-# Run electrs
-./target/release/electrs --network testnet
-```
-
-## Verify Installation
-
-### Check RGB CLI
-
-```bash
-# Line B: print the version (Line A's rgb has no --version flag)
-rgb --version
-
-# Show help
-rgb --help
-
-# List available commands
-rgb help
-```
-
-### Test JavaScript Installation
-
-```typescript
-import { RGB } from 'rgbjs';
-
-console.log('RGB SDK version:', RGB.version);
-```
-
-## Configuration
-
-### Configure RGB Data Directory
-
-```bash
-# Set RGB data directory (optional)
-export RGB_DATA_DIR="$HOME/.rgb"
-
-# Create directory
-mkdir -p $RGB_DATA_DIR
-```
-
-### Configure Network
-
-```bash
-# For testnet development
-export RGB_NETWORK=testnet
-
-# For mainnet (production)
-export RGB_NETWORK=mainnet
-```
-
-## Docker Installation (Alternative)
-
-For containerized development:
-
-```dockerfile
-FROM rust:latest
-
-# Install RGB
-RUN cargo install --locked rgb-cmd --version 0.11.1   # Line B; for Line A: rgb-wallet --version 0.12.0-rc.3
-
-# Set working directory
-WORKDIR /app
-
-# Configure environment
-ENV RGB_NETWORK=testnet
-ENV RGB_DATA_DIR=/app/.rgb
-
-CMD ["rgb", "--help"]
-```
-
-## Next Steps
-
-- [**Quick Start**](/getting-started/quick-start) - Build your first RGB contract
-- [**Core Concepts**](/core-concepts/overview) - Understand RGB architecture
-- [**Development Guide**](/guides/development/rust-sdk) - Start developing with RGB
-
-## Troubleshooting
-
-### Common Issues
-
-**Issue: `cargo install` fails**
-- Ensure Rust is up to date: `rustup update`
-- Check you have build tools installed
-
-**Issue: Electrum connection fails**
-- Verify server URL and port
-- Check firewall settings
-- Try alternative Electrum servers
-
-**Issue: Node.js module errors**
-- Ensure Node.js v18 or higher
-- Clear npm cache: `npm cache clean --force`
-- Reinstall dependencies
-
-## Additional Resources
-
-- [RGB GitHub](https://github.com/RGB-WG)
-- [rgbjs Documentation](https://rgbjs.com)
-- [Rust Installation Guide](https://www.rust-lang.org/tools/install)
+- [Quick start](/getting-started/quick-start): issue and transfer a test asset.
+- CLI references: [v0.11](/technical-reference/cli-v011) and [v0.12](/technical-reference/cli).
