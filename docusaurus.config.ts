@@ -155,7 +155,7 @@ const config: Config = {
     // Optional announcement bar
     announcementBar: {
       id: 'rewrite_2026_10',
-      content: 'These docs are being rewritten for the two RGB lines: v0.12 (RGB-WG, release candidate 0.12.0-rc.3) and v0.11 (RGB Protocol Association, 0.11.1). Many pages predate the split. Check commands against <code>rgb --help</code> before using real funds.',
+      content: 'These docs are being rewritten for the two RGB lines: v0.12 (RGB-WG, release candidate 0.12.0-rc.3) and v0.11 (RGB Protocol Association, 0.11.1). Many pages predate the split. Check every command against rgb --help before using real funds.',
       backgroundColor: '#B45309',
       textColor: '#fff',
       isCloseable: false,
