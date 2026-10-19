@@ -1,484 +1,115 @@
 ---
 sidebar_position: 3
 title: Single-Use Seals
-description: Understanding how RGB uses Bitcoin's UTXO model for state management
+description: How RGB ties contract state to Bitcoin outputs. A seal is closed only when its output is spent by a transaction that commits to the message.
+rgb_line: both
+verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
+last_update:
+  date: 2026-10-19
 ---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
 # Single-Use Seals
 
-Single-use seals are a **conceptual framework** for understanding how RGB prevents double-spending by leveraging Bitcoin's existing UTXO model. They're not a new cryptographic primitive, but rather an **abstraction** that describes how RGB uses the fundamental property that Bitcoin UTXOs can only be spent once.
-
-## What is a Single-Use Seal?
-
-A single-use seal is an **abstraction over Bitcoin's UTXO model** that provides a conceptual framework for three key operations:
-
-:::info What Single-Use Seals Really Are
-Single-use seals are **not a new cryptographic primitive**. They're simply a way of describing how RGB uses Bitcoin's existing UTXO properties for state management. When Bitcoin prevents you from spending the same UTXO twice, RGB calls this a "single-use seal."
+:::info Applies to both RGB lines
+Both lines use Bitcoin transaction outputs as single-use seals, with different seal structures. See [Two RGB lines](/getting-started/two-rgbs).
 :::
 
-### 1. Seal Definition (Abstraction)
+A **single-use seal** is a cryptographic primitive described by Peter Todd in 2016 ([Commitments and single-use seals](https://petertodd.org/2016/commitments-and-single-use-seals)). A seal is a promise that can be kept once: it can be **closed over exactly one message**, and anyone can later check which message that was.
 
-In Bitcoin terms: **A UTXO that exists**
-In RGB terms: A "seal" that can be closed once
+Both lines implement it in code:
 
-```
-Seal = Reference to a Bitcoin UTXO
-```
+- Line A: the `SingleUseSeal` trait and `SealWitness::verify_seal_closing` in `single_use_seals` 0.12.0 (`LNP-BP/client_side_validation`).
+- Line B: `rgb-consensus` 0.11.1 `src/single_use_seals/` and `src/seals/`.
 
-### 2. Seal Closing (Abstraction)
+## Seals on Bitcoin
 
-In Bitcoin terms: **Spending the UTXO**
-In RGB terms: "Closing the seal" with a state commitment
+RGB uses a Bitcoin **transaction output** as the seal:
 
-```
-Close(seal) = Spend the UTXO + Embed RGB commitment
-```
+| Seal operation | On Bitcoin |
+|---|---|
+| **Define** | Name an output (`txid:vout`) in an RGB operation, e.g. the receiver's UTXO in a transfer. |
+| **Close** | Spend that output in a transaction that **commits to the message**: the new RGB operation that moves the state. |
+| **Verify** | Check that the output was spent by that transaction **and** that the transaction carries a valid commitment to the message. |
 
-### 3. Seal Verification (Abstraction)
+Bitcoin consensus guarantees that an output is spent at most once. The [deterministic commitment](./bitcoin/deterministic-commitments.md) rules guarantee that the spending transaction commits to at most one message per contract. Together they give single use.
 
-In Bitcoin terms: **Bitcoin consensus validates the spend**
-In RGB terms: "Verifying the seal closure"
+:::danger A spend alone proves nothing
+"The UTXO was spent" is **not** enough to accept a transfer. A verifier must also check that:
 
-```
-Verify(seal) = Check UTXO was spent via Bitcoin consensus
-```
+1. the first `OP_RETURN`-or-P2TR output of the spending transaction (the **witness transaction**) holds a valid [opret](./bitcoin/opret.md) or [tapret](./bitcoin/tapret.md) commitment;
+2. the [MPC proof](./bitcoin/multi-protocol-commitments.md) links this contract's leaf to that commitment; and
+3. the leaf commits to this operation: through the transition bundle in Line B, and through the multi-message bundle entry for the spending input in Line A.
 
-## Key Property: Single-Use
+Code that only checks `is_spent()` would accept forged transfers. Use the validators in `rgb-consensus` (B) or `rgb-core` (A).
+:::
 
-This abstraction leverages Bitcoin's fundamental property: **a UTXO can only be spent once**.
+The verification code is `src/validation/validator.rs` `validate_seal_closing` in `rgb-consensus` 0.11.1 (B), and `TxoSeal::is_included` plus `Tx::verify_commitment` in `bp-core` 0.12.0 `seals/src/txout.rs` (A).
 
-```
-UTXO spent once → CONFIRMED by Bitcoin network
-Try to spend again → REJECTED by Bitcoin consensus
-```
+## What a seal looks like
 
-RGB doesn't create this property - it **uses the existing UTXO model** as a mechanism for state commitment.
+No seal stores a commitment method. Opret or tapret is decided when the seal is closed, by the type of the first `OP_RETURN`-or-P2TR output of the witness transaction.
 
-## The Abstraction: Bitcoin UTXOs AS Seals
-
-RGB maps Bitcoin's UTXO model to the seal abstraction:
-
-```
-Bitcoin Reality          RGB Abstraction
-───────────────────     ─────────────────
-UTXO                 →  Seal Definition
-Spending the UTXO    →  Seal Closing
-Bitcoin consensus    →  Seal Verification
-Can't double-spend   →  Can't reuse seal
-```
-
-**Important**: Single-use seals aren't a new invention - they're a **design pattern** for thinking about how RGB leverages Bitcoin's existing properties.
-
-### Example
+<Tabs groupId="rgb-line">
+<TabItem value="b" label="v0.11 (rgb-cmd)">
 
 ```rust
-// Define a seal (point to a UTXO)
-let seal = Seal {
-    txid: "abc123...",
-    vout: 0,
-    method: SealMethod::Tapret
-};
-
-// Close the seal (spend the UTXO)
-let closure = close_seal(
-    seal,
-    new_state_commitment,  // The message
-    bitcoin_tx             // The witness
-);
-
-// Verify the seal closure
-verify_seal_closure(seal, closure)?; // ✓ Valid
-```
-
-## How RGB Uses Bitcoin's Double-Spend Prevention
-
-### The Problem (Without Bitcoin)
-
-```mermaid
-%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#f5576c','primaryTextColor':'#fff','primaryBorderColor':'#c92a2a','lineColor':'#c92a2a','secondaryColor':'#fee','tertiaryColor':'#fff'}}}%%
-graph TB
-    A["Alice has 100 RGB tokens"] --> B["Transfer to Bob: -100 tokens ✓"]
-    A --> C["Transfer to Charlie: -100 tokens ✓"]
-    B --> D["Both look valid!"]
-    C --> D
-    D --> E["❌ Double-spend!"]
-
-    style A fill:#f5576c,stroke:#c92a2a,stroke-width:2px,color:#fff
-    style B fill:#fa5252,stroke:#c92a2a,stroke-width:2px,color:#fff
-    style C fill:#fa5252,stroke:#c92a2a,stroke-width:2px,color:#fff
-    style D fill:#ff6b6b,stroke:#c92a2a,stroke-width:2px,color:#fff
-    style E fill:#c92a2a,stroke:#c92a2a,stroke-width:3px,color:#fff
-```
-
-### The Solution (Using Bitcoin UTXOs)
-
-RGB binds state to Bitcoin UTXOs, so **Bitcoin's existing double-spend prevention** protects RGB state:
-
-```mermaid
-%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#43e97b','primaryTextColor':'#fff','primaryBorderColor':'#2b8a3e','lineColor':'#2b8a3e','secondaryColor':'#e6fcf5','tertiaryColor':'#fff'}}}%%
-graph TB
-    A["Alice has 100 tokens<br/>(bound to Bitcoin UTXO #1)"]
-    B["Transfer to Bob<br/>Spend UTXO #1 + RGB commitment"]
-    C["Transfer to Charlie<br/>Try to spend UTXO #1 again"]
-    D["Bitcoin accepts! ✓<br/>UTXO spent once"]
-    E["❌ Bitcoin rejects!<br/>UTXO already spent"]
-
-    A --> B
-    A --> C
-    B --> D
-    C --> E
-
-    style A fill:#43e97b,stroke:#2b8a3e,stroke-width:2px,color:#fff
-    style B fill:#51cf66,stroke:#2b8a3e,stroke-width:2px,color:#fff
-    style C fill:#ff8787,stroke:#c92a2a,stroke-width:2px,color:#fff
-    style D fill:#2b8a3e,stroke:#2b8a3e,stroke-width:3px,color:#fff
-    style E fill:#c92a2a,stroke:#c92a2a,stroke-width:3px,color:#fff
-```
-
-### Bitcoin Does the Heavy Lifting
-
-```mermaid
-%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#667eea','primaryTextColor':'#fff','primaryBorderColor':'#764ba2','lineColor':'#764ba2','secondaryColor':'#f8f9fa','tertiaryColor':'#fff'}}}%%
-graph TB
-    A["RGB doesn't prevent<br/>double-spending itself"]
-    B["RGB binds state to<br/>Bitcoin UTXOs"]
-    C["Bitcoin consensus prevents<br/>double-spending UTXOs"]
-    D["✓ Therefore: RGB state<br/>can't be double-spent"]
-
-    A --> B --> C --> D
-
-    style A fill:#667eea,stroke:#764ba2,stroke-width:2px,color:#fff
-    style B fill:#7c8ff0,stroke:#764ba2,stroke-width:2px,color:#fff
-    style C fill:#92a0f3,stroke:#764ba2,stroke-width:2px,color:#fff
-    style D fill:#43e97b,stroke:#2b8a3e,stroke-width:3px,color:#fff
-```
-
-**Key Insight**: RGB gets double-spend prevention "for free" by using Bitcoin's UTXO model. The "single-use seal" terminology is just a way to describe this property.
-
-## Seal Methods in RGB
-
-RGB v0.12 supports two seal closing methods:
-
-### 1. Tapret (Taproot-based)
-
-**Preferred method** using Taproot script path:
-
-```
-Commitment placed in taproot leaf
-├── Better privacy
-├── Smaller blockchain footprint
-└── Requires taproot wallet
-```
-
-```rust
-let seal = Seal::tapret(txid, vout);
-```
-
-### 2. Opret (OP_RETURN-based)
-
-**Fallback method** for non-taproot wallets:
-
-```
-Commitment in OP_RETURN output
-├── Works with legacy wallets
-├── Visible on chain
-└── Slightly larger footprint
-```
-
-```rust
-let seal = Seal::opret(txid, vout);
-```
-
-## Seal Lifecycle
-
-### 1. Creation
-
-```rust
-// Genesis creates initial seals
-let genesis_seal = Seal::tapret(
-    genesis_txid,
-    allocation_vout
-);
-
-// State is sealed to UTXO
-let state = SealedState {
-    seal: genesis_seal,
-    amount: 1000,
-};
-```
-
-### 2. Transition
-
-```rust
-// Input: Old seal (being closed)
-let old_seal = previous_allocation.seal;
-
-// Output: New seal (being created)
-let new_seal = Seal::tapret(
-    transition_txid,
-    recipient_vout
-);
-
-// Transition closes old, creates new
-let transition = StateTransition {
-    inputs: vec![old_seal],
-    outputs: vec![new_seal],
-};
-```
-
-### 3. Verification
-
-```rust
-// Verify seal was actually closed
-fn verify_seal_closed(seal: &Seal) -> Result<()> {
-    // Check UTXO is spent
-    let utxo = get_utxo(&seal.txid, seal.vout)?;
-
-    ensure!(
-        utxo.is_spent(),
-        "Seal not closed: UTXO still unspent"
-    );
-
-    Ok(())
+// rgb-consensus 0.11.1, src/seals/txout/blind.rs
+pub struct BlindSeal<Id: SealTxid> {
+    pub txid: Id,       // Txid, or TxPtr::WitnessTx for "an output of the witness tx"
+    pub vout: Vout,
+    pub blinding: u64,  // random; stops anyone matching the seal to on-chain UTXOs
 }
 ```
 
-## Advanced Concepts
+- `GenesisSeal` = `BlindSeal<Txid>`. `GraphSeal` = `BlindSeal<TxPtr>`, which can point at an output of the witness transaction itself.
+- The **concealed** form, `SecretSeal`, is a tagged hash of the seal (tag `urn:lnp-bp:seals:secret#2024-02-03`). A receiver puts it in an invoice as `utxob:…`, and the sender never learns the UTXO.
+- A receiver who wants the output created by the payment itself uses a **witness-output** invoice, `wvout:…`.
+- Genesis fixes the closing rule as `SealClosingStrategy::FirstOpretOrTapret`.
 
-### Blinded Seals
-
-Seals can be "blinded" for privacy:
-
-```rust
-// Recipient creates blinded seal
-let blinded_seal = create_blinded_seal(
-    secret_key,
-    utxo_commitment
-);
-
-// Sender can't see actual UTXO
-// But can still close the seal correctly
-```
-
-### Seal Witnesses
-
-Bitcoin transactions serve as witnesses:
+</TabItem>
+<TabItem value="a" label="v0.12 (rgb-wallet)">
 
 ```rust
-struct SealWitness {
-    // Bitcoin transaction that spent the UTXO
-    bitcoin_tx: Transaction,
-
-    // Merkle proof of inclusion
-    merkle_proof: MerkleProof,
-
-    // Block header
-    block_header: BlockHeader,
+// bp-core 0.12.0, seals/src/wtxout.rs and seals/src/txout.rs
+pub struct WTxoSeal {
+    pub primary: WOutpoint,     // Wout(vout) of the witness tx, or Extern(Outpoint)
+    pub secondary: TxoSealExt,  // Noise(40 bytes) or Fallback(Outpoint)
+}
+pub struct TxoSeal {            // the resolved seal
+    pub primary: Outpoint,
+    pub secondary: TxoSealExt,
 }
 ```
 
-### Multi-Protocol Commitments (MPC)
+- Contract state doesn't store the seal. Each state cell holds an **`AuthToken`**: the first 30 bytes of the seal definition's tagged hash (`rgb-core` 0.12.0 `src/seals.rs`). Invoices carry it as `at:…`, or `wout:…` for a witness output.
+- The 40-byte `Noise` hides the seal from anyone who has only the auth token.
+- `Fallback` seals are defined, but fallback proofs are not implemented yet (marked "TODO v0.13" in `txout.rs`).
+- The closing witness is `SealWitness { published: Tx, client: Anchor { mmb_proof, mpc_protocol, mpc_proof, dbc_proof, fallback_proof } }`.
 
-Multiple seals can share one Bitcoin commitment:
+</TabItem>
+</Tabs>
 
-```
-One Bitcoin TX commits to:
-├── RGB seal closure #1 (Token A transfer)
-├── RGB seal closure #2 (NFT transfer)
-└── RGB seal closure #3 (Token B transfer)
-    └── Efficient batching!
-```
+Neither line carries SPV Merkle proofs or block headers in the witness. Wallets look transactions up through an indexer (Electrum, Esplora) to check that they exist and are confirmed.
 
-## Seals vs Traditional Consensus
+## Seals and contracts
 
-| Aspect | Traditional Blockchain | RGB Single-Use Seals |
-|--------|----------------------|----------------------|
-| Validation | Global consensus | Individual verification |
-| Double-Spend Prevention | All nodes validate | Bitcoin enforces |
-| Privacy | Public | Private |
-| Scalability | Limited | Unlimited |
-| Validation Cost | O(network size) | O(1) per seal |
+- One output can carry seals of several contracts at once. Spending it closes all of them, so the wallet must move every contract's state in the same witness transaction (Line B's `rgb-api` and `rgb-lib` build these "extra transitions" automatically for contracts you weren't sending).
+- Seals of different contracts closed by one transaction share one commitment through MPC: one leaf per contract.
+- Validation cost grows with the history a recipient checks. It is not constant per seal.
 
-## Security Model
+:::danger Coin selection
+An ordinary Bitcoin wallet doesn't know which of your UTXOs hold RGB state. If it spends one, the seal closes without a valid RGB commitment and the assets on it are gone. Keep RGB UTXOs in the RGB wallet. Don't import the same seed into a Bitcoin wallet that may spend them.
+:::
 
-### Assumptions
+## Confirmations
 
-1. **Bitcoin is secure**: UTXOs can only be spent once
-2. **Cryptographic hashes are collision-resistant**: Can't forge commitments
-3. **Recipients validate**: Must check seals are properly closed
+A seal closed by a transaction that is only in the mempool is not final. The transaction can be replaced or never mined, and then the closing never happened. Wait for confirmations before treating received state as settled. Line A's `rgb-wallet` defaults to `--min-confirmations 32` for its own operations.
 
-### Threat Model
+## Further reading
 
-#### ✓ Protected Against
-
-- Double-spending (Bitcoin prevents)
-- State forgery (cryptographic commitments)
-- History rewriting (Bitcoin immutability)
-
-#### ❌ NOT Protected Against
-
-- Recipients not validating (user error)
-- Spending unconfirmed UTXOs (wait for confirmation)
-- Bitcoin 51% attack (same as Bitcoin)
-
-## Implementation Examples
-
-### Creating a Seal
-
-```rust
-use rgb::Seal;
-
-// Create tapret seal
-let seal = Seal::new_tapret(
-    OutPoint::new(txid, vout)
-);
-
-// Or create opret seal
-let seal = Seal::new_opret(
-    OutPoint::new(txid, vout)
-);
-```
-
-### Closing a Seal
-
-```rust
-// Create state transition
-let transition = create_transition(
-    inputs: vec![old_seal],
-    outputs: vec![new_seal],
-    state_data: transfer_data,
-);
-
-// Commit to Bitcoin
-let commitment = create_commitment(&transition);
-
-// Create Bitcoin transaction
-let bitcoin_tx = create_bitcoin_tx(
-    spend_utxo(old_seal.outpoint()),
-    commit_to(commitment),
-    new_utxo(new_seal.outpoint()),
-);
-
-// Broadcast Bitcoin transaction
-broadcast(bitcoin_tx)?;
-```
-
-### Verifying a Seal
-
-```rust
-fn verify_seal_closure(
-    seal: &Seal,
-    witness: &SealWitness,
-    commitment: &Commitment,
-) -> Result<()> {
-    // 1. Verify UTXO was spent
-    verify_utxo_spent(seal, witness)?;
-
-    // 2. Verify commitment in transaction
-    verify_commitment_present(witness.tx, commitment)?;
-
-    // 3. Verify transaction is confirmed
-    verify_confirmation(witness)?;
-
-    Ok(())
-}
-```
-
-## Common Patterns
-
-### Batch Seal Closures
-
-```rust
-// Close multiple seals in one Bitcoin TX
-let batch_closure = BatchSealClosure {
-    seals: vec![seal1, seal2, seal3],
-    commitments: vec![comm1, comm2, comm3],
-    witness: single_bitcoin_tx,
-};
-```
-
-### Conditional Seals
-
-```rust
-// Seal that can only be closed under certain conditions
-let conditional_seal = ConditionalSeal {
-    seal: base_seal,
-    condition: AluVMScript::new(validation_logic),
-};
-```
-
-### Time-Locked Seals
-
-```rust
-// Seal that can't be closed before block height
-let timelock_seal = TimeLockSeal {
-    seal: base_seal,
-    unlock_height: 800000,
-};
-```
-
-## Best Practices
-
-### For Developers
-
-```rust
-// ✓ GOOD: Wait for confirmation
-async fn safe_seal_closure() {
-    let tx = broadcast_seal_closure()?;
-    wait_for_confirmations(tx, 6).await?;
-    mark_seal_closed();
-}
-
-// ✗ BAD: Trust unconfirmed
-fn unsafe_seal_closure() {
-    broadcast_seal_closure()?;
-    // Don't wait!
-    mark_seal_closed(); // Risky!
-}
-```
-
-### For Users
-
-```
-1. ✓ Always wait for Bitcoin confirmations (6+ blocks)
-2. ✓ Verify seal closures in consignments
-3. ✓ Keep UTXO private keys secure
-4. ✗ Don't reuse sealed UTXOs for other purposes
-```
-
-## Debugging
-
-### Check Seal Status
-
-```bash
-# Using RGB CLI
-rgb seal status <TXID>:<VOUT>
-
-# Output:
-# Status: Closed
-# Closed in: <CLOSE_TXID>
-# Block: 800123
-# Confirmations: 45
-```
-
-### Verify Seal Closure
-
-```bash
-# Verify a seal was properly closed
-rgb seal verify \
-  --seal <TXID>:<VOUT> \
-  --witness <WITNESS_FILE>
-
-# Output: ✓ Valid seal closure
-```
-
-## Next Steps
-
-- [**State Management**](/core-concepts/state/unified-state) - How state is bound to seals
-- [**Bitcoin Integration**](/core-concepts/bitcoin/deterministic-commitments) - How seals commit to Bitcoin
-
-## Additional Resources
-
-- [Single-Use Seals Paper](https://petertodd.org/2016/commitments-and-single-use-seals)
-- [RGB Seals Specification](https://rgb-org.github.io/)
-- [Implementation](https://github.com/RGB-WG/rgb-core/tree/master/src/seals)
+- [Single-use seals](https://docs.rgb.info/distributed-computing-concepts/single-use-seals) on docs.rgb.info (Line B).
+- [`single_use_seals`](https://github.com/LNP-BP/client_side_validation) and [`bp-seals`](https://github.com/BP-WG/bp-core) (Line A).
+- [Invoices](/technical-reference/invoices) for the `utxob:` / `wvout:` and `at:` / `wout:` forms.
