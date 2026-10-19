@@ -111,6 +111,8 @@ A tapret output's key is `P` tweaked by a script tree only your RGB wallet knows
 rgb taprets --wallet <NAME>
 ```
 
+See the [CLI reference (v0.11)](/technical-reference/cli-v011) and the [CLI reference (v0.12)](/technical-reference/cli) for the wallet commands of each line.
+
 ## Further reading
 
 - [BIP 341](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki) (Taproot) and [BIP 340](https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki) (tagged hashes).

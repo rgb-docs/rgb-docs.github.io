@@ -104,6 +104,8 @@ rgb accept transfer.rgb     # verify and accept a contract or transfer consignme
 </TabItem>
 </Tabs>
 
+Full flag lists: [CLI reference (v0.11)](/technical-reference/cli-v011) and [CLI reference (v0.12)](/technical-reference/cli).
+
 ## Trust model
 
 - **You don't trust the sender.** Anything that fails validation is rejected, whatever the sender claims.
