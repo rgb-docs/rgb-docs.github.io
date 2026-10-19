@@ -1,0 +1,27 @@
+{
+  "_comment": "The two RGB lines this site documents, each pinned to one release. Bump a pin: change it here, regenerate scripts/cli-help/<line>.json (scripts/dump-cli-help.mjs), run the gate, fix, merge.",
+  "A": {
+    "label": "RGB v0.12 (LNP/BP Standards Association, RGB-WG)",
+    "crate": "rgb-wallet",
+    "version": "0.12.0-rc.3",
+    "bin": "rgb",
+    "repo": "RGB-WG/rgb",
+    "tag": "v0.12.0-rc.3",
+    "hidden_aliases": {
+      "s": "state",
+      "i": "invoice",
+      "p": "pay",
+      "x": "exec",
+      "a": "accept"
+    }
+  },
+  "B": {
+    "label": "RGB v0.11 (RGB Protocol Association, rgb-protocol)",
+    "crate": "rgb-cmd",
+    "version": "0.11.1",
+    "bin": "rgb",
+    "repo": "rgb-protocol/rgb-api",
+    "tag": "0.11.1",
+    "hidden_aliases": {}
+  }
+}
