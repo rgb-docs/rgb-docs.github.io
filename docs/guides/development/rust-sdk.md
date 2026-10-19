@@ -1,992 +1,236 @@
 ---
 sidebar_position: 1
-title: Rust SDK
-description: Building RGB applications with the official Rust SDK
+title: Rust
+description: The Rust crates for each RGB line, rgb-lib and rgb-ops/rgb-api for v0.11 and rgb-runtime/rgb-std for v0.12, with pinned versions and checked examples.
+rgb_line: both
+verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
+last_update:
+  date: 2026-10-19
 ---
 
-# RGB Rust SDK
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
-The RGB Rust SDK provides the core libraries for building RGB applications. This guide covers installation, basic usage, and the complete Contract API for Rust developers.
+# Rust
 
-## Installation
+:::info Applies to both RGB lines
+Each line has its own crates, and they don't interoperate. See [Two RGB lines](/getting-started/two-rgbs).
+:::
 
-### Adding Dependencies
+| | Line B: v0.11 | Line A: v0.12 |
+|---|---|---|
+| For wallets and apps | [`rgb-lib`](https://docs.rs/rgb-lib/0.3.0-beta.7) 0.3.0-beta.7 (2026-07-17), or 0.2.2 stable | [`rgb-runtime`](https://docs.rs/rgb-runtime/0.12.0-rc.3) 0.12.0-rc.3, imported as `rgbp` |
+| Lower level | [`rgb-api`](https://docs.rs/rgb-api/0.11.1) (imported as `rgb`), [`rgb-ops`](https://docs.rs/rgb-ops/0.11.1) (`rgbstd`), `rgb-consensus` (`rgbcore`), `rgb-schemas` (`schemata`), all 0.11.1 | [`rgb-std`](https://docs.rs/rgb-std/0.12.0-rc.3) 0.12.0-rc.3 (`rgb`), `rgb-core` 0.12.0 |
+| Minimum Rust | 1.85; rgb-lib needs 1.88 | 1.85 |
+| Chain access | Electrum or Esplora indexer | Electrum or Esplora indexer |
 
-Add RGB libraries to your `Cargo.toml`:
+Neither line needs a Bitcoin Core RPC connection. Pin every version exactly: Cargo never matches a pre-release such as `0.12.0-rc.3` from a plain `"0.12"`. The crate called `rgb` on crates.io is an unrelated pixel-colour library.
+
+<Tabs groupId="rgb-line">
+<TabItem value="b" label="v0.11 (rgb-cmd)">
+
+## Line B: rgb-lib
+
+[rgb-lib](https://github.com/RGB-Tools/rgb-lib) (RGB-Tools) is a complete wallet: BDK for bitcoin, `rgb-ops` for RGB, SQLite for its database, and an RGB proxy server to exchange consignments. 0.3.0-beta.7 is built on `rgb-ops` 0.11.1-rc.11.
 
 ```toml
 [dependencies]
-# Line A (RGB-WG v0.12): only release candidates exist, so pin them exactly.
-# Don't add `rgb = ...`: the crate called `rgb` is an unrelated pixel-colour library.
-rgb-runtime = "=0.12.0-rc.3"
-rgb-std = "=0.12.0-rc.3"
-rgb-core = "=0.12.0"
-rgb-persist-fs = { version = "=0.12.0-rc.3", optional = true }
-rgb-psbt = "=0.12.0-rc.3"
-
-[features]
-fs = ["rgb-persist-fs"]
-serde = ["rgb-std/serde"]
+rgb-lib = "=0.3.0-beta.7"
 ```
 
-### Platform Requirements
-
-- Rust 1.75 or later
-- Bitcoin Core (for testnet/mainnet)
-- 64-bit architecture (required for strict types)
-
-## Core Types and Concepts
-
-### Contract Type
-
-The central type for working with RGB contracts is `Contract<S, P>`:
+The flow below uses only names that exist at the [0.3.0-beta.7 tag](https://github.com/RGB-Tools/rgb-lib/tree/0.3.0-beta.7). It wasn't compiled here, because the crate isn't in this site's offline build cache. The methods are on `Wallet` (`src/wallet/singlesig.rs`) and on the `RgbWalletOpsOffline` and `RgbWalletOpsOnline` traits.
 
 ```rust
-use rgb::{Contract, Stock, Pile, RgbSeal};
+// rgb-lib 0.3.0-beta.7
+use std::collections::HashMap;
 
-pub struct Contract<S: Stock, P: Pile> {
-    contract_id: ContractId,
-    ledger: Ledger<S>,
-    pile: P,
+use rgb_lib::keys::{generate_keys, WitnessVersion};
+use rgb_lib::wallet::{
+    DatabaseType, OnlineOptions, Recipient, RgbWalletOpsOffline, RgbWalletOpsOnline,
+    SinglesigKeys, Wallet, WalletData,
+};
+use rgb_lib::{AssetSchema, Assignment, BitcoinNetwork, Error};
+
+const PROXY: &str = "rpc://127.0.0.1:3000/json-rpc";
+
+fn demo(expiry: u64) -> Result<(), Error> {
+    let keys = generate_keys(BitcoinNetwork::Regtest, WitnessVersion::Taproot);
+    // Store keys.mnemonic securely. It is not enough to restore RGB assets on its own.
+    let mut wallet = Wallet::new(
+        WalletData {
+            data_dir: "./data".to_string(),
+            bitcoin_network: BitcoinNetwork::Regtest,
+            database_type: DatabaseType::Sqlite,
+            max_allocations_per_utxo: 1,
+            supported_schemas: vec![AssetSchema::Nia],
+        },
+        SinglesigKeys::from_keys(&keys, None),
+    )?;
+    let online = wallet.go_online(OnlineOptions {
+        indexer_url: "tcp://localhost:50001".to_string(),
+        skip_consistency_check: false,
+        vanilla_sync_lookback: 20,
+    })?;
+
+    // Fund wallet.get_address()? first, then create UTXOs to hold RGB allocations.
+    wallet.create_utxos(online, false, Some(5), None, 1, false)?;
+    let asset = wallet.issue_asset_nia("DEMO".into(), "Demo asset".into(), 0, vec![1000])?;
+
+    // The recipient (another Wallet) makes an invoice:
+    //   rcv.blind_receive(None, Assignment::Fungible(100), expiry, vec![PROXY.into()], 1)?
+    // or rcv.witness_receive(...) for an address-based one.
+    let recipient_id = "<recipient_id from the invoice>".to_string();
+    let recipients = HashMap::from([(
+        asset.asset_id.clone(),
+        vec![Recipient {
+            recipient_id,
+            witness_data: None, // Some(WitnessData { .. }) for witness_receive invoices
+            assignment: Assignment::Fungible(100),
+            transport_endpoints: vec![PROXY.to_string()],
+        }],
+    )]);
+    wallet.send(online, recipients, false, 2, 1, expiry)?;
+
+    // Both sides call refresh until the transfer settles.
+    wallet.refresh(online, None, vec![], false)?;
+
+    // Encrypted backup of the whole RGB data directory.
+    wallet.backup("./wallet.backup", "backup password")?;
+    Ok(())
 }
 ```
 
-**Type Parameters:**
-- `S: Stock` - Persistent storage backend for contract state
-- `P: Pile` - Seal and witness management
+The rest of the API: `list_assets`, `get_asset_balance`, `list_transfers`, `list_unspents`, `sync`, `send_begin`/`send_end` with `sign_psbt` (for external signers), `issue_asset_ifa`/`_uda`/`_cfa`, and `rgb_lib::wallet::restore_backup(path, password, target_dir)`. The [Kotlin](https://github.com/RGB-Tools/rgb-lib-kotlin), [Swift](https://github.com/RGB-Tools/rgb-lib-swift), [Python](https://github.com/RGB-Tools/rgb-lib-python) and [Node.js](./rgbjs.md) bindings expose the same calls.
 
-### Stock
+:::danger Use each wallet on one device only
+The rgb-lib README warns that using the same mnemonic on more than one device "can lead to RGB asset loss due to improper UTXO management". rgb-lib expects to manage every UTXO of its wallet.
+:::
 
-Storage abstraction for contract operations and state:
+## Line B: rgb-ops and rgb-api
+
+These are the crates `rgb-cmd` is built from. Use them for tooling, or for a wallet that manages its own bitcoin side.
+
+```toml
+[dependencies]
+rgb-ops = { version = "=0.11.1", features = ["fs"] }
+rgb-api = "=0.11.1"
+```
+
+- **`rgbstd::persistence::Stock`** holds contracts. Create it with `Stock::in_memory()` or `Stock::load(provider, autosave)`. It has `import_kit`, `import_contract`, `contract_builder(issuer, schema_id, chain_net)`, `transition_builder(contract_id, name)` and `contract_wrapper::<NonInflatableAsset>(id)`, which gives typed readers such as `spec()`, `total_issued_supply()` and `allocations(filter)` (`src/persistence/stock.rs`).
+- **`rgb::RgbWallet`** in `rgb-api` pairs a `Stock` with a bp-wallet or BDK wallet and provides `pay`, `construct_psbt`, `transfer` and `history` (`src/wallet.rs`).
+
+[Genesis](../contracts/genesis.md) has a complete `ContractBuilder` example that was compiled and run against `rgb-ops` 0.11.1. The [rgb-schemas examples](https://github.com/rgb-protocol/rgb-schemas/tree/0.11.1/examples) issue and read every schema. Line B 0.11.1 has no interfaces, valencies or state extensions.
+
+</TabItem>
+<TabItem value="a" label="v0.12 (rgb-wallet)">
+
+## Line A: rgb-runtime and rgb-std
+
+:::danger Release candidate, test networks only
+`rgb-std`, `rgb-runtime` and `rgb-wallet` are at 0.12.0-rc.3 (2025-07-15), with no release since. The `rgb` CLI refuses mainnet. Don't hold real value with them.
+:::
+
+```toml
+[dependencies]
+rgb-std = { version = "=0.12.0-rc.3", features = ["binfile", "uri", "serde"] }
+rgb-runtime = { version = "=0.12.0-rc.3", features = ["fs", "resolvers-all", "serde"] }
+rgb-persist-fs = "=0.12.0-rc.3"
+bp-std = "=0.12.0-rc.3"
+```
+
+`rgb-std` features: `std`, `bitcoin` (both default), `liquid`, `prime`, `binfile`, `uri`, `stl`, `serde`, `async`. File persistence is the `fs` feature of `rgb-runtime`, together with the `rgb-persist-fs` crate.
+
+This program follows how the `rgb` CLI builds its runtime (`cli/src/args.rs` at `v0.12.0-rc.3`). It was compiled offline on 2026-10-19 with exactly the dependencies above. The read-only part was run against the data directory from [Genesis](../contracts/genesis.md):
 
 ```rust
-use rgbstd::persistence::Stock;
+// rgb-runtime / rgb-std 0.12.0-rc.3
+use std::path::PathBuf;
 
-// In-memory stock (for testing)
-let stock = Stock::in_memory();
-
-// File-backed stock (for production)
+use bpstd::psbt::TxParams;
+use bpstd::seals::TxoSeal;
+use bpstd::{Network, Sats};
+use rgb::invoice::RgbInvoice;
+use rgb::popls::bp::RgbWallet;
+use rgb::{Consensus, ContractId, Contracts};
 use rgb_persist_fs::StockpileDir;
-let stock = Stock::load(StockpileDir::new("/path/to/data")?)?;
-```
+use rgbp::resolvers::MultiResolver;
+use rgbp::{CoinselectStrategy, FileHolder, Owner, RgbpRuntimeDir};
 
-### Pile
-
-Manages UTXO bindings and witnesses:
-
-```rust
-pub trait Pile {
-    type Seal: RgbSeal;
-    type Conf;
-    type Error: Error;
-
-    fn seal(&self, addr: CellAddr) -> Option<Self::Seal>;
-    fn add_seals(&mut self, opid: Opid, seals: SmallOrdMap<u16, Self::Seal::Definition>);
-    fn witness_status(&self, wid: Self::Seal::WitnessId) -> WitnessStatus;
-    // ... more methods
-}
-```
-
-## Complete Contract API
-
-### Initialization and Loading
-
-#### Create from Consignment
-
-```rust
-use rgb::{Contract, Articles, Consignment};
-
-impl<S: Stock, P: Pile> Contract<S, P> {
-    pub fn with(
-        articles: Articles,
-        consignment: Consignment<P::Seal>,
-        conf: S::Conf,
-    ) -> Result<Self, MultiError<ConsumeError<P::Seal::Definition>, S::Error, P::Error>>
-    where
-        P::Conf: From<S::Conf>,
-        <P::Seal as RgbSeal>::Definition: StrictDecode,
-        <P::Seal as RgbSeal>::Client: StrictDecode,
-        <P::Seal as RgbSeal>::Published: StrictDecode,
-    {
-        // Create contract from articles and consignment
-        // Validates entire history during import
-    }
-}
-```
-
-**Example:**
-```rust
-let articles = load_articles("contract_articles.rgb")?;
-let consignment = load_consignment("transfer.consignment")?;
-let config = StockConfig::default();
-
-let contract = Contract::with(articles, consignment, config)?;
-println!("Contract loaded: {}", contract.contract_id());
-```
-
-#### Issue New Contract
-
-```rust
-impl<S: Stock, P: Pile> Contract<S, P> {
-    pub fn issue(
-        issuer: Issuer,
-        params: CreateParams<P::Seal::Definition>,
-        conf: impl FnOnce(&Articles) -> Result<S::Conf, S::Error>,
-    ) -> Result<Self, MultiError<IssuerError, S::Error, P::Error>>
-    where
-        P::Conf: From<S::Conf>,
-    {
-        // Issue new contract genesis
-    }
-}
-```
-
-**Example:**
-```rust
-use rgb::{Issuer, CreateParams, Consensus};
-
-let issuer = Issuer::new(identity, private_key);
-let params = CreateParams::new_testnet(
-    "ssi:issuer",
-    Consensus::Bitcoin,
-    "RGB20Token",
-);
-
-let contract = Contract::issue(
-    issuer,
-    params,
-    |articles| Ok(StockConfig::for_contract(articles)),
-)?;
-```
-
-#### Load Existing Contract
-
-```rust
-impl<S: Stock, P: Pile> Contract<S, P> {
-    pub fn load(
-        stock_conf: S::Conf,
-        pile_conf: P::Conf,
-    ) -> Result<Self, MultiError<S::Error, P::Error>> {
-        // Load contract from persistent storage
-    }
-}
-```
-
-**Example:**
-```rust
-let stock_config = StockConfig::load("/path/to/stock")?;
-let pile_config = PileConfig::load("/path/to/pile")?;
-
-let contract = Contract::load(stock_config, pile_config)?;
-```
-
-### Contract Information
-
-#### Contract ID
-
-```rust
-impl<S: Stock, P: Pile> Contract<S, P> {
-    pub fn contract_id(&self) -> ContractId {
-        self.contract_id
-    }
-}
-```
-
-**Example:**
-```rust
-let contract_id = contract.contract_id();
-println!("Contract: {}", contract_id.to_string());
-// Output: rgb:pOIzGFyQ-mA!yQq2-QH8vB5!-5fAplY!-x2lW!vz-JHDbYPg
-```
-
-#### Articles
-
-```rust
-impl<S: Stock, P: Pile> Contract<S, P> {
-    pub fn articles(&self) -> &Articles {
-        self.ledger.articles()
-    }
-}
-```
-
-**Articles** contain:
-- Schema definition
-- Interface implementations
-- Genesis operation
-- Issuer signature
-
-**Example:**
-```rust
-let articles = contract.articles();
-println!("Schema: {}", articles.schema().name);
-println!("Genesis: {}", articles.genesis_opid());
-```
-
-### State Queries
-
-#### Get Contract State
-
-```rust
-impl<S: Stock, P: Pile> Contract<S, P> {
-    pub fn state(&self) -> ContractState<P::Seal> {
-        // Returns current contract state with seal resolution
-    }
-}
-```
-
-**ContractState Structure:**
-```rust
-pub struct ContractState<Seal> {
-    pub immutable: BTreeMap<StateName, Vec<ImmutableState>>,
-    pub owned: BTreeMap<StateName, Vec<OwnedState<Seal>>>,
-    pub aggregated: BTreeMap<StateName, StrictVal>,
-}
-```
-
-**Example:**
-```rust
-let state = contract.state();
-
-// Query global state
-for (name, states) in state.immutable {
-    for state in states {
-        println!("Global {}: {:?}", name, state.data);
-    }
+fn contracts(dir: PathBuf) -> Contracts<StockpileDir<TxoSeal>> {
+    // `testnet: true`: rc.3 doesn't support non-test networks.
+    let stockpile = StockpileDir::load(dir, Consensus::Bitcoin, true).expect("contracts dir");
+    Contracts::load(stockpile)
 }
 
-// Query owned state
-for (name, states) in state.owned {
-    for owned in states {
-        println!("Owned {}: seal={}, value={:?}, status={:?}",
-            name,
-            owned.assignment.seal,
-            owned.assignment.data,
-            owned.status
-        );
-    }
-}
-
-// Query aggregated state
-for (name, value) in state.aggregated {
-    println!("Aggregated {}: {:?}", name, value);
-}
-```
-
-#### Full State (Raw)
-
-```rust
-impl<S: Stock, P: Pile> Contract<S, P> {
-    pub fn full_state(&self) -> &EffectiveState {
-        self.ledger.state()
-    }
-}
-```
-
-**Example:**
-```rust
-let full_state = contract.full_state();
-println!("State hash: {}", full_state.state_hash());
-```
-
-#### Seal Queries
-
-```rust
-impl<S: Stock, P: Pile> Contract<S, P> {
-    pub fn seal(&self, seal: &P::Seal::Definition) -> Option<CellAddr> {
-        // Find state assignment for a seal
-    }
-}
-```
-
-**Example:**
-```rust
-let seal_def = TxoSeal::new(outpoint, method);
-if let Some(addr) = contract.seal(&seal_def) {
-    println!("Seal controls state at: opid={}, output={}",
-        addr.opid, addr.ty);
-}
-```
-
-### Operations
-
-#### List Operations
-
-```rust
-impl<S: Stock, P: Pile> Contract<S, P> {
-    pub fn operations(
-        &self,
-    ) -> impl Iterator<Item = (Opid, Operation, OpRels<P::Seal>)> + use<'_, S, P> {
-        // Iterate all operations (excluding genesis)
-    }
-}
-```
-
-**Example:**
-```rust
-for (opid, operation, rels) in contract.operations() {
-    println!("Operation {}", opid);
-    println!("  Inputs: {}", operation.inputs.len());
-    println!("  Outputs: {}", operation.owned.len());
-    println!("  Seals: {:?}", rels.seals);
-}
-```
-
-#### Trace History
-
-```rust
-impl<S: Stock, P: Pile> Contract<S, P> {
-    pub fn trace(&self) -> impl Iterator<Item = (Opid, Transition)> + use<'_, S, P> {
-        // Trace transition history
-    }
-}
-```
-
-**Example:**
-```rust
-for (opid, transition) in contract.trace() {
-    println!("Transition {}: method={}", opid, transition.method);
-}
-```
-
-#### Operation Relations
-
-```rust
-impl<S: Stock, P: Pile> Contract<S, P> {
-    pub fn op_seals(&self, opid: Opid, up_to: u16) -> OpRels<P::Seal> {
-        // Get seal relationships for operation
-    }
-}
-```
-
-### Witnesses
-
-#### List Witness IDs
-
-```rust
-impl<S: Stock, P: Pile> Contract<S, P> {
-    pub fn witness_ids(
-        &self,
-    ) -> impl Iterator<Item = P::Seal::WitnessId> + use<'_, S, P> {
-        // All witness IDs in contract
-    }
-}
-```
-
-#### List Witnesses
-
-```rust
-impl<S: Stock, P: Pile> Contract<S, P> {
-    pub fn witnesses(&self) -> impl Iterator<Item = Witness<P::Seal>> + use<'_, S, P> {
-        // All witnesses with status
-    }
-}
-```
-
-**Example:**
-```rust
-for witness in contract.witnesses() {
-    println!("Witness {}: status={:?}",
-        witness.id(),
-        witness.status
-    );
-}
-```
-
-#### Query by Witness
-
-```rust
-impl<S: Stock, P: Pile> Contract<S, P> {
-    pub fn ops_by_witness_id(
-        &self,
-        wid: P::Seal::WitnessId,
-    ) -> impl Iterator<Item = Opid> + use<'_, S, P> {
-        // All operations using this witness
-    }
-}
-```
-
-**Example:**
-```rust
-let witness_id = TxWitness::from(txid);
-for opid in contract.ops_by_witness_id(witness_id) {
-    println!("Operation {} uses witness {}", opid, witness_id);
-}
-```
-
-### State Transitions
-
-#### Create State Transition (Call)
-
-```rust
-impl<S: Stock, P: Pile> Contract<S, P> {
-    pub fn call(
-        &mut self,
-        call: CallParams,
-        seals: SmallOrdMap<u16, P::Seal::Definition>,
-    ) -> Result<Operation, MultiError<AcceptError, S::Error>> {
-        // Create and apply new state transition
-    }
-}
-```
-
-**CallParams Structure:**
-```rust
-pub struct CallParams {
-    pub method: MethodName,        // Transition method name
-    pub global: Vec<NamedState<StateAtom>>,   // Global state updates
-    pub owned: Vec<NamedState<DataCell>>,     // Owned state assignments
-    pub valencies: Vec<Valency>,   // Valency declarations
-}
-```
-
-**Example:**
-```rust
-use rgb::CallParams;
-
-let call = CallParams {
-    method: MethodName::from("transfer"),
-    global: vec![],
-    owned: vec![
-        NamedState {
-            name: StateName::from("assetOwner"),
-            state: DataCell {
-                auth: recipient_seal.auth_token(),
-                data: StrictVal::from(1000u64),
-                lock: None,
-            },
-        }
-    ],
-    valencies: vec![],
-};
-
-let seals = small_bmap! {
-    0u16 => recipient_seal
-};
-
-let operation = contract.call(call, seals)?;
-println!("Created operation: {}", operation.opid());
-```
-
-#### Include Operation
-
-```rust
-impl<S: Stock, P: Pile> Contract<S, P> {
-    pub fn include(
-        &mut self,
-        opid: Opid,
-        anchor: P::Seal::Client,
-        published: &P::Seal::Published,
-    ) {
-        // Include operation with witness
-    }
-}
-```
-
-**Example:**
-```rust
-// After broadcasting Bitcoin transaction
-let opid = operation.opid();
-let anchor = ClientAnchor::from(psbt);
-let published = PublishedWitness::from(tx);
-
-contract.include(opid, anchor, &published);
-```
-
-### Synchronization
-
-#### Sync Witness Status
-
-```rust
-impl<S: Stock, P: Pile> Contract<S, P> {
-    pub fn sync(
-        &mut self,
-        changed: impl IntoIterator<Item = (P::Seal::WitnessId, WitnessStatus)>,
-    ) -> Result<(), MultiError<AcceptError, S::Error>> {
-        // Update witness status and recompute state
-    }
-}
-```
-
-**WitnessStatus Enum:**
-```rust
-pub enum WitnessStatus {
-    Genesis,               // Genesis operation
-    Tentative,             // Unconfirmed
-    Mined { depth: u32 }, // Confirmed
-    Invalid,               // Rejected/double-spent
-}
-```
-
-**Example:**
-```rust
-// After Bitcoin confirmations
-let updates = vec![
-    (witness_id1, WitnessStatus::Mined { depth: 1 }),
-    (witness_id2, WitnessStatus::Mined { depth: 6 }),
-];
-
-contract.sync(updates)?;
-
-// State automatically recomputes
-let state = contract.state();
-```
-
-### Consignments
-
-#### Export Full Contract
-
-```rust
-impl<S: Stock, P: Pile> Contract<S, P> {
-    pub fn export(&self, writer: StrictWriter<impl WriteRaw>) -> io::Result<()>
-    where
-        P::Seal::Client: StrictDumb + StrictEncode,
-        P::Seal::Published: StrictDumb + StrictEncode,
-        P::Seal::WitnessId: StrictEncode,
-    {
-        // Export complete contract
-    }
-}
-```
-
-**Example:**
-```rust
-use std::fs::File;
-use strict_encoding::StrictWriter;
-
-let file = File::create("contract.rgb")?;
-let writer = StrictWriter::new(file);
-contract.export(writer)?;
-```
-
-#### Create Consignment
-
-```rust
-impl<S: Stock, P: Pile> Contract<S, P> {
-    pub fn consign(
-        &self,
-        terminals: impl IntoIterator<Item = impl Borrow<AuthToken>>,
-        writer: StrictWriter<impl WriteRaw>,
-    ) -> io::Result<()>
-    where
-        P::Seal::Client: StrictDumb + StrictEncode,
-        P::Seal::Published: StrictDumb + StrictEncode,
-        P::Seal::WitnessId: StrictEncode,
-    {
-        // Export consignment for specific terminals
-    }
-}
-```
-
-**Example:**
-```rust
-// Create consignment for transfer
-let terminals = vec![recipient_auth_token];
-let file = File::create("transfer.consignment")?;
-let writer = StrictWriter::new(file);
-
-contract.consign(terminals, writer)?;
-```
-
-#### Consume Consignment
-
-```rust
-impl<S: Stock, P: Pile> Contract<S, P> {
-    pub fn consume<E>(
-        &mut self,
-        reader: &mut StrictReader<impl ReadRaw>,
-        seal_resolver: impl FnMut(&Operation) -> BTreeMap<u16, P::Seal::Definition>,
-        sig_validator: impl FnOnce(StrictHash, &Identity, &SigBlob) -> Result<(), E>,
-    ) -> Result<(), MultiError<ConsumeError<P::Seal::Definition>, S::Error>>
-    where
-        P::Seal::Client: StrictDecode,
-        P::Seal::Published: StrictDecode,
-        P::Seal::WitnessId: StrictDecode,
-    {
-        // Import and validate consignment
-    }
-}
-```
-
-**Example:**
-```rust
-let file = File::open("transfer.consignment")?;
-let mut reader = StrictReader::new(file);
-
-// Seal resolver matches blinded seals to wallet seals
-let seal_resolver = |op: &Operation| {
-    wallet.resolve_seals_for_operation(op)
-};
-
-// Signature validator checks issuer signature
-let sig_validator = |hash, identity, sig| {
-    identity.verify_signature(hash, sig)
-};
-
-contract.consume(&mut reader, seal_resolver, sig_validator)?;
-```
-
-### File Operations
-
-When the `fs` feature is enabled:
-
-```rust
-impl<S: Stock, P: Pile> Contract<S, P> {
-    pub fn export_to_file(&self, path: impl AsRef<Path>) -> io::Result<()>
-    where
-        P::Seal::Client: StrictDumb + StrictEncode,
-        P::Seal::Published: StrictDumb + StrictEncode,
-        P::Seal::WitnessId: StrictEncode,
-    {
-        // Export to file
-    }
-
-    pub fn consign_to_file(
-        &self,
-        path: impl AsRef<Path>,
-        terminals: impl IntoIterator<Item = impl Borrow<AuthToken>>,
-    ) -> io::Result<()>
-    where
-        P::Seal::Client: StrictDumb + StrictEncode,
-        P::Seal::Published: StrictDumb + StrictEncode,
-        P::Seal::WitnessId: StrictEncode,
-    {
-        // Create consignment file
-    }
-}
-```
-
-**Example:**
-```rust
-// Export full contract
-contract.export_to_file("contract.rgb")?;
-
-// Create consignment
-contract.consign_to_file("transfer.consignment", terminals)?;
-```
-
-## Working with RGB20
-
-### Creating Fungible Tokens
-
-```rust
-use schemata::NonInflatableAsset;
-use ifaces::Rgb20;
-use rgbstd::persistence::Stock;
-
-// Simple token creation
-let contract = NonInflatableAsset::testnet(
-    "ssi:issuer",
-    "TOKEN",
-    "My Token",
-    None,
-    Precision::CentiMicro,
-    [(Method::TapretFirst, beneficiary, 1_000_000_00000000u64)]
-)?;
-
-// Import to stock
-let mut stock = Stock::in_memory();
-stock.import_contract(contract, NoResolver)?;
-
-// Query via RGB20 interface
-let rgb20 = stock.contract_iface_class::<Rgb20>(contract_id)?;
-```
-
-### Interface Queries
-
-```rust
-// Get token spec
-let spec = rgb20.spec();
-println!("Ticker: {}", spec.ticker);
-println!("Name: {}", spec.name);
-println!("Precision: {}", spec.precision);
-
-// Get supply
-let total_supply = rgb20.total_supply();
-println!("Total Supply: {}", total_supply);
-
-// Get allocations
-use rgbstd::interface::{FilterIncludeAll, FungibleAllocation};
-
-for FungibleAllocation { seal, state, witness, .. } in rgb20.allocations(&FilterIncludeAll) {
-    println!("Allocation: amount={}, seal={}", state, seal);
-}
-```
-
-## Working with RGB21
-
-### Creating NFTs
-
-```rust
-use schemata::UniqueDigitalAsset;
-use ifaces::Rgb21;
-use ifaces::rgb21::{TokenData, EmbeddedMedia};
-
-// Define token data
-let token_data = TokenData {
-    index: TokenIndex::from_inner(1),
-    preview: Some(EmbeddedMedia {
-        ty: MediaType::with("image/png"),
-        data: SmallBlob::try_from_iter(image_bytes)?,
-    }),
-    ..Default::default()
-};
-
-// Create contract with builder
-let mut stock = Stock::in_memory();
-let kit = Kit::load_file("UniqueDigitalAsset.rgb")?.validate()?;
-stock.import_kit(kit)?;
-
-let contract = stock.contract_builder(
-        "ssi:issuer",
-        UniqueDigitalAsset::schema().schema_id(),
-        "RGB21",
-    )?
-    .add_global_state("tokens", token_data)?
-    .add_global_state("spec", spec)?
-    .add_data("assetOwner", seal, Allocation::with(index, 1))?
-    .issue_contract()?;
-
-// Query via RGB21 interface
-let rgb21 = stock.contract_iface_class::<Rgb21>(contract_id)?;
-```
-
-## Advanced Patterns
-
-### Custom Schemas
-
-Define custom contract logic:
-
-```rust
-use rgbstd::schema::{Schema, GenesisSchema, TransitionSchema};
-use aluvm::library::Lib;
-
-fn custom_schema() -> Schema {
-    let types = StandardTypes::new();
-
-    Schema {
-        ffv: zero!(),
-        flags: none!(),
-        name: tn!("CustomContract"),
-        timestamp: 1713343888,
-        developer: Identity::from("ssi:developer"),
-        meta_types: none!(),
-        global_types: tiny_bmap! {
-            0u16 => GlobalStateSchema::once(types.get("CustomData")),
-        },
-        owned_types: tiny_bmap! {
-            0u16 => OwnedStateSchema::Fungible(FungibleType::Unsigned64Bit),
-        },
-        valency_types: none!(),
-        genesis: GenesisSchema {
-            metadata: none!(),
-            globals: tiny_bmap! { 0u16 => Occurrences::Once },
-            assignments: tiny_bmap! { 0u16 => Occurrences::OnceOrMore },
-            valencies: none!(),
-            validator: Some(LibSite::with(0, validation_lib_id)),
-        },
-        extensions: none!(),
-        transitions: tiny_bmap! {
-            0u16 => TransitionSchema {
-                metadata: none!(),
-                globals: none!(),
-                inputs: tiny_bmap! { 0u16 => Occurrences::OnceOrMore },
-                assignments: tiny_bmap! { 0u16 => Occurrences::OnceOrMore },
-                valencies: none!(),
-                validator: Some(LibSite::with(4, validation_lib_id)),
+fn main() {
+    let data = PathBuf::from(std::env::args().nth(1).expect("usage: <data-dir>/bitcoin.testnet"));
+
+    // List contracts and their owned state.
+    let contracts = contracts(data.clone());
+    for id in contracts.contract_ids() {
+        let articles = contracts.contract_articles(id);
+        let state = contracts.contract_state(id);
+        println!("{id} {}", articles.issue().meta.name);
+        for (name, cells) in &state.owned {
+            for cell in cells {
+                println!("  {name}: {} at {}", cell.assignment.data, cell.assignment.seal);
             }
-        },
-        reserved: none!(),
+        }
+    }
+
+    // Pay an invoice. Needs a funded wallet and an indexer resolver.
+    if let Some(invoice) = std::env::args().nth(2) {
+        let invoice: RgbInvoice<ContractId> = invoice.parse().expect("invalid invoice");
+        let holder = FileHolder::load(data.join("alice.wallet")).expect("wallet");
+        let resolver = MultiResolver::new_absent().expect("resolver"); // or new_esplora(url)
+        let owner = Owner::with_components(Network::Testnet4, holder, resolver);
+        let mut runtime = RgbpRuntimeDir::from(RgbWallet::with_components(owner, contracts));
+        let params = TxParams::with(Sats::from_sats(1000u64));
+        let (psbt, payment) = runtime
+            .pay_invoice(&invoice, CoinselectStrategy::Aggregate, params, None)
+            .expect("payment");
+        runtime
+            .contracts
+            .consign_to_file("transfer.rgb", invoice.scope, payment.terminals)
+            .expect("consignment");
+        // Sign `psbt` elsewhere. Send transfer.rgb and wait until it's accepted, then
+        // finalize and broadcast (runtime.finalize).
+        println!("{psbt}");
     }
 }
 ```
 
-### Validation Scripts
+Real output of the read-only part:
 
-Create AluVM validation scripts:
-
-```rust
-use aluvm::library::Lib;
-use rgbstd::rgbasm;
-
-fn validation_lib() -> Lib {
-    let code = rgbasm! {
-        // Custom validation logic
-        put     a8[0], 1;         // Error code
-        pcvs    0u16;              // Verify commitments
-        test;
-        ret;
-    };
-
-    Lib::assemble(&code).expect("invalid validation script")
-}
+```text
+contract:nztjpjRX-_NVDDgd-EHENsqL-AKsGsyV-F6LzljB-X4WTv0Y DemoToken
+  balance: 10000 at b7116550736fbe5d3e234d0141c6bc8d1825f94da78514a3cede5674e9a5eae9:1/16bba313796e55a7cca81e2fbc5b6a47d5e2dc97f886a40ed31fc537b014c3b3ffffffffffffffff
 ```
 
-## Error Handling
+`RgbRuntime` (`src/runtime.rs`) also has `rbf`, `script`, `transfer`, `compose_psbt`, `color_psbt`, `exec`, `complete` and `finalize`. `pay_invoice` already calls `complete`.
 
-### Common Error Types
+### The Contract API
 
-```rust
-#[derive(Debug, Display, Error)]
-pub enum ConsumeError<Seal: RgbSealDef> {
-    Io(IoError),
-    UnknownContract(ContractId),
-    Semantics(SemanticError),
-    Decode(DecodeError),
-    Verify(VerificationError<Seal::Src>),
-    Issue(IssuerError),
-}
-```
+Below `Contracts` sits one `Contract<S: Stock, P: Pile>` per contract ([`src/contract.rs`](https://github.com/RGB-WG/rgb-std/blob/v0.12.0-rc.3/src/contract.rs)):
 
-### Error Handling Pattern
+| Group | Methods |
+|---|---|
+| Create and open | `with`, `issue`, `load(stock_conf, pile_conf)` |
+| Read | `contract_id`, `articles`, `operations`, `trace`, `witness_ids`, `witnesses`, `ops_by_witness_id`, `op_seals`, `seal`, `state`, `full_state` |
+| Change | `sync`, `call`, `include` |
+| Move data | `export`, `consign`, `consume`; with `binfile`, `export_to_file` and `consign_to_file` |
 
-```rust
-match contract.consume(&mut reader, resolver, validator) {
-    Ok(_) => {
-        println!("Consignment accepted");
-    }
-    Err(MultiError::A(ConsumeError::UnknownContract(id))) => {
-        eprintln!("Unknown contract: {}", id);
-        // Import genesis first
-    }
-    Err(MultiError::A(ConsumeError::Verify(err))) => {
-        eprintln!("Validation failed: {}", err);
-        // Invalid consignment
-    }
-    Err(e) => {
-        eprintln!("Error: {}", e);
-    }
-}
-```
+Types you'll meet:
 
-## Testing
+- **`ContractState`** has `immutable`, `owned` and `aggregated` maps, keyed by state name. Each owned entry is an `OwnedState` with `addr`, `assignment` (`seal`, `data`) and `status`.
+- **`WitnessStatus`** (`src/pile.rs`) is `Genesis`, `Mined(NonZeroU64)` (a block height), `Offchain`, `Tentative` or `Archived` (the default).
+- **`CallParams`** (`hypersonic` 0.12.0) is `{ core: CoreParams { method, global, owned }, using, reading }`. There are no valencies.
+- **`Issuer`** (`sonic-api` 0.12.0) is a codex plus its semantics. Load one from an `.issuer` file with `Issuer::load`. It is not a key pair.
+- **`Articles`** holds the `Issue` (contract metadata, codex and genesis), the semantics (APIs, types, libraries) and an optional issuer signature. There are no schemas or interfaces in v0.12.
+- **`CreateParams`** is the input to `Contracts::issue`. See [Genesis](../contracts/genesis.md).
+- **`ConsumeError`** has the variants `Io`, `UnknownContract`, `Semantics`, `Decode`, `Verify` and `Issue`.
 
-### Unit Tests
+Changes are committed to persistence inside each method call. There is no save-on-drop.
 
-```rust
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_contract_creation() {
-        let contract = NonInflatableAsset::testnet(
-            "ssi:test",
-            "TEST",
-            "Test Token",
-            None,
-            Precision::CentiMicro,
-            [(Method::TapretFirst, test_outpoint(), 1000_00000000)]
-        ).unwrap();
-
-        assert_eq!(contract.contract_id().to_string().len() > 0, true);
-    }
-
-    #[test]
-    fn test_state_query() {
-        let contract = create_test_contract();
-        let state = contract.state();
-
-        assert!(state.owned.contains_key(&StateName::from("assetOwner")));
-    }
-
-    #[test]
-    fn test_transfer() {
-        let mut contract = create_test_contract();
-
-        let call = CallParams {
-            method: MethodName::from("transfer"),
-            global: vec![],
-            owned: vec![create_transfer_output(1000)],
-            valencies: vec![],
-        };
-
-        let result = contract.call(call, test_seals());
-        assert!(result.is_ok());
-    }
-}
-```
-
-### Integration Tests
-
-```rust
-#[test]
-fn test_full_transfer_workflow() {
-    // 1. Create genesis
-    let contract = create_genesis_contract();
-
-    // 2. Export consignment
-    let terminals = vec![recipient_token];
-    let mut consignment_data = Vec::new();
-    contract.consign(terminals, StrictWriter::new(&mut consignment_data)).unwrap();
-
-    // 3. Import on recipient side
-    let mut recipient_contract = Contract::with(
-        contract.articles().clone(),
-        Consignment::decode(&consignment_data).unwrap(),
-        config,
-    ).unwrap();
-
-    // 4. Verify state
-    let state = recipient_contract.state();
-    assert!(state.owned.len() > 0);
-}
-```
-
-## Best Practices
-
-### Resource Management
-
-```rust
-// Use RAII for automatic cleanup
-{
-    let contract = Contract::load(config)?;
-    // Contract automatically saved on drop
-} // <- Resources freed here
-```
-
-### Thread Safety
-
-```rust
-use std::sync::{Arc, Mutex};
-
-// Share contracts across threads
-let contract = Arc::new(Mutex::new(contract));
-
-let contract_clone = contract.clone();
-std::thread::spawn(move || {
-    let mut c = contract_clone.lock().unwrap();
-    // Use contract
-});
-```
-
-### Performance Tips
-
-```rust
-// Cache state queries
-let state = contract.state();
-// Reuse state for multiple queries
-
-// Batch witness updates
-let updates = vec![
-    (wid1, status1),
-    (wid2, status2),
-    (wid3, status3),
-];
-contract.sync(updates)?;  // Single batch update
-
-// Use iterators efficiently
-for (opid, op, rels) in contract.operations().take(10) {
-    // Process only first 10 operations
-}
-```
-
-## Related Documentation
-
-- [Creating RGB20 Tokens](../rgb20/creating-tokens.md)
-- [Transferring Assets](../rgb20/transferring-assets.md)
-- [RGB Interfaces](../../technical-reference/interfaces.md)
-- [Client-Side Validation](../../core-concepts/client-side-validation.md)
-
----
-
-**Source Code**: See `/tmp/rgb-repos/rgb-std/src/contract.rs` for complete Contract implementation.
+</TabItem>
+</Tabs>
