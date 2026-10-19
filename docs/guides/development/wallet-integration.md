@@ -28,27 +28,15 @@ An RGB wallet is a Bitcoin wallet that also keeps client-side contract data. Bes
 5. **Backup and recovery**: preserve both the Bitcoin keys and the RGB data.
 
 ```text
-┌─────────────────────────────────────┐
-│         User interface              │
-│  (balance, send, receive, history)  │
-└─────────────────────────────────────┘
-                   │
-┌─────────────────────────────────────┐
-│  RGB library: rgb-lib (B) or        │
-│  rgb-runtime (A)                    │
-│  invoices, transfers, consignments, │
-│  validation, coin selection         │
-└─────────────────────────────────────┘
-          │                  │
-┌──────────────────┐ ┌──────────────────┐
-│  RGB data dir    │ │  Bitcoin wallet  │
-│  (stash, state)  │ │  (keys, UTXOs)   │
-└──────────────────┘ └──────────────────┘
-          │                  │
-┌──────────────────┐ ┌──────────────────┐
-│ Consignment      │ │ Electrum or      │
-│ transport        │ │ Esplora indexer  │
-└──────────────────┘ └──────────────────┘
+User interface (balance, send, receive, history)
+        |
+RGB library: rgb-lib (B) or rgb-runtime (A)
+  invoices, transfers, consignments, validation, coin selection
+        |                                   |
+RGB data directory                    Bitcoin wallet
+  (stash, state)                        (keys, UTXOs)
+        |                                   |
+Consignment transport                 Electrum or Esplora indexer
 ```
 
 Let the library do steps 1 to 4. The stash format, transition building, validation and coin selection are consensus-critical. A home-made version can accept invalid assets or burn valid ones.
