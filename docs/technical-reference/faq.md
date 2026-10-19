@@ -1,156 +1,103 @@
 ---
 sidebar_position: 9
 title: FAQ
-description: Frequently asked questions about RGB
+description: Short answers to common RGB questions, per RGB line, with dated status.
+rgb_line: both
+verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
+last_update:
+  date: 2026-10-19
 ---
 
 # Frequently Asked Questions
 
-:::danger `@rgbjs/*` packages don't exist
-The `@rgbjs/...` imports on this page refer to npm packages that were never published, and the `@rgbjs` scope isn't registered. Treat these examples as illustrative only and **don't install anything under that name**: anyone could register it. Real JavaScript options: Line B (RGB Protocol Association) has the [`rgb-lib`](https://www.npmjs.com/package/rgb-lib) bindings from RGB-Tools. Line A (RGB-WG v0.12) has no JavaScript SDK. This page is being rewritten.
+:::info Applies to both RGB lines
+Many answers differ between RGB v0.11 (Line B) and v0.12 (Line A). Status answers are dated 2026-10-19. See [Two RGB lines](/getting-started/two-rgbs).
 :::
 
-Common questions about RGB protocol and development.
-
-## General
+## Which RGB?
 
 ### What is RGB?
 
-RGB is a smart contract system for Bitcoin and Lightning Network that uses client-side validation.
+A system for issuing and transferring assets and other contract state on Bitcoin. State is held by its owners and validated by the people who receive it ([client-side validation](/core-concepts/client-side-validation)). Bitcoin transactions only carry small commitments, which stop the same state being spent twice.
 
-*Answer to be expanded*
+### Why are there two RGBs?
 
-### How is RGB different from Ethereum?
+In 2025 the project split. RGB-WG (LNP/BP Standards Association) built v0.12, a redesign. The RGB Protocol Association (Bitfinex, RGB-Tools and others) continued v0.11 as 0.11.1. This site calls them **Line A** (v0.12) and **Line B** (v0.11). The full story is on [Two RGB lines](/getting-started/two-rgbs).
 
-- **Validation**: Client-side vs on-chain
-- **Privacy**: Default privacy vs public
-- **Scalability**: Unlimited vs limited
-- **Security**: Bitcoin-backed vs own consensus
+### Which one should I use?
 
-*Comparison to be expanded*
+To build a wallet or app, or to work with assets people hold today: **Line B**. To study the v0.12 design: **Line A**, on testnet or regtest only.
+
+### Are they compatible?
+
+No. Contracts, invoices, consignments and tapret commitments from one line don't work in the other, and there is no migration path in either direction. Both install a binary called `rgb`, so keep them apart.
+
+## Status
 
 ### Is RGB on Bitcoin mainnet?
 
-Yes, RGB v0.10+ supports Bitcoin mainnet.
+- **Line B: yes.** It went live on mainnet in July 2025 on 0.11.1 release candidates. 0.11.1 has been final since 2026-09-16 (crates.io). Wallets such as Iris use it.
+- **Line A: no.** `rgb-wallet` 0.12.0-rc.3 is a release candidate, the last Line A release (2025-07-15). Its CLI panics on mainnet with "Non-testnet networks are not yet supported".
 
-*Status to be expanded*
-
-## Technical
-
-### How does client-side validation work?
-
-Instead of miners/validators checking transactions, recipients validate transfer history themselves.
-
-*Explanation to be expanded*
-
-### Where is RGB state stored?
-
-State is stored client-side in "stashes." Only commitments go on Bitcoin blockchain.
-
-*Storage to be expanded*
-
-### Can RGB contracts interact?
-
-Not directly. Each contract is independent, though atomic swaps enable coordination.
-
-*Interoperability to be expanded*
-
-### What happens if I lose my consignment?
-
-You can't prove ownership. Always backup consignments.
-
-*Data safety to be expanded*
-
-## Development
-
-### Which SDK should I use?
-
-- Rust: For core applications, wallets, infrastructure
-- TypeScript/JavaScript: For web apps, mobile apps
-
-*SDK selection to be expanded*
-
-### Can I use RGB with JavaScript?
-
-Line B has the [`rgb-lib`](https://www.npmjs.com/package/rgb-lib) bindings from RGB-Tools; Line A has no JavaScript SDK. (The `@rgbjs` packages this answer used to name do not exist.)
-
-*JavaScript support to be expanded*
-
-### How do I test RGB contracts?
-
-Use regtest or testnet. See [Testing Guide](../guides/development/testing.md).
-
-*Testing to be expanded*
-
-## Tokens
-
-### How do I create an RGB20 token?
-
-See [Creating RGB20 Tokens](../guides/rgb20/creating-tokens.md).
-
-*Token creation to be expanded*
-
-### Can RGB20 tokens be listed on exchanges?
-
-Yes, with RGB-aware exchange integration.
-
-*Exchange support to be expanded*
-
-### What's the difference between RGB20 and RGB21?
-
-- RGB20: Fungible tokens (like ERC-20)
-- RGB21: NFTs (like ERC-721)
-
-*Token standards to be expanded*
-
-## Lightning
+:::danger Real value
+Line A is testnet-only. On Line B, wallets for real assets are built on `rgb-lib`; the `rgb-cmd` CLI is mostly used for development and the regtest sandbox. Whatever you use, back up your RGB data, not just the seed.
+:::
 
 ### Does RGB work with Lightning?
 
-Yes, RGB supports Lightning Network channels for instant transfers.
+- **Line B:** the [RGB Lightning Node](/guides/lightning/overview) (RGB-Tools) supports RGB asset channels. It is alpha, with no tagged releases, and its maintainers list open safety issues such as a fixed fee rate and no anchor fee bumping ([rgb.info, 2026-06-23](https://rgb.info/rgb-lightning-roadmap/)). Don't put funds in it that you can't lose.
+- **Line A:** RGB-WG has released no Lightning node. Bitlight Labs builds its own v0.12 Lightning stack.
 
-*Lightning support to be expanded*
+### Is USDT on RGB?
 
-### Do I need Lightning for RGB?
+Tether announced USD₮ on RGB (Line B) on 2025-08-28. As of 2026-10-19 it isn't confirmed live: reports from 2026-10-02 say Utexo will issue it "in October" under a Tether licence, on-chain first. "USDT on Lightning" through Taproot Assets is a different protocol. See [Ecosystem](./ecosystem.md).
 
-No, but Lightning enables instant, low-fee transfers.
+### Is it audited?
 
-*Lightning requirement to be expanded*
+Line B says its code was audited up to v0.11.0-beta.9 (November 2024), but we found no public report. We found no published audit of v0.12. Line B's bug bounty is suspended (rgbprotocol.org, read 2026-10-19).
 
-## Privacy
+## Building
+
+### Can I use JavaScript?
+
+- **Line B:** yes, through [`rgb-lib`](https://www.npmjs.com/package/rgb-lib) (RGB-Tools), which has Node.js bindings as well as Kotlin, Swift and Python. Other npm packages, such as Utexo's, are listed on [Ecosystem](./ecosystem.md).
+- **Line A:** no maintained JavaScript SDK. Use Rust.
+
+There are no `@rgbjs/*` packages. Don't install anything under that name.
+
+### How do I create a token?
+
+- Line B: issue a NIA contract. See [Creating tokens](/guides/rgb20/creating-tokens).
+- Line A: import an issuer such as `RGB20-FNA` and issue from a YAML file. See the [Quick Start](/getting-started/quick-start).
+
+### What happened to RGB20 and RGB21?
+
+They were *interfaces* in the v0.11 betas. Line B now names contract types after their schemas (NIA, IFA, UDA, CFA, PFA). Line A uses codexes and APIs, and keeps the name RGB20 in issuers like `RGB20-FNA`. See [Interfaces, schemas and codexes](./interfaces.md).
+
+### How do I test?
+
+On regtest. For Line B, [rgb-sandbox](https://github.com/rgb-protocol/rgb-sandbox) runs `bitcoind` and `electrs` with Docker. For Line A, use the [Quick Start](/getting-started/quick-start) on testnet4 or regtest. See [Testing](/guides/development/testing).
+
+## Safety and privacy
+
+### What if I lose a consignment or my RGB data?
+
+You lose the ability to prove you own the state, so the assets are effectively gone. A Bitcoin seed doesn't restore them. Back up the RGB data directory, or with `rgb-lib` its backup file, after every receive and send. On Line A, `rgb backup` writes a whole contract to a file.
+
+:::danger Never spend RGB UTXOs from a plain Bitcoin wallet
+A wallet that doesn't know about RGB can spend an output holding assets and destroy them. Keep RGB UTXOs in an RGB-aware wallet only, and use each wallet on one device only.
+:::
 
 ### Is RGB private?
 
-Yes, transfers are private by default. Only parties involved know details.
+More private than on-chain tokens, but not fully. Bitcoin sees only ordinary transactions, and nothing public shows balances. But a receiver gets the history of the state they receive, including earlier amounts and outpoints, and indexers see which transactions you look up.
 
-*Privacy to be expanded*
+### Can contracts call each other?
 
-### Can anyone see my RGB balance?
+No. Each contract is validated on its own. Several contracts can move in one Bitcoin transaction, and swaps between them are possible, but one contract can't read or change another's state.
 
-No, balances are not public.
-
-*Balance privacy to be expanded*
-
-## Troubleshooting
-
-### My transfer isn't showing up
-
-- Check Bitcoin transaction confirmed
-- Verify consignment was received
-- Sync wallet state
-
-*Transfer issues to be expanded*
-
-### Validation failing
-
-- Ensure consignment is complete
-- Check contract genesis in stash
-- Verify Bitcoin anchors
-
-*Validation issues to be expanded*
-
-## Related Documentation
+## Further reading
 
 - [Troubleshooting](./troubleshooting.md)
 - [Glossary](./glossary.md)
-- [Getting Started](../getting-started/quick-start.md)
+- The Line B [RGB FAQ](https://rgb.info/rgb-faq/) on rgb.info

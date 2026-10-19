@@ -1,214 +1,104 @@
 ---
 sidebar_position: 8
 title: Troubleshooting
-description: Common RGB issues and solutions
+description: Real error messages from the rgb CLIs of both RGB lines, what causes them, and the fix.
+rgb_line: both
+verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
+last_update:
+  date: 2026-10-19
 ---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
 # Troubleshooting
 
-:::danger `@rgbjs/*` packages don't exist
-The `@rgbjs/...` imports on this page refer to npm packages that were never published, and the `@rgbjs` scope isn't registered. Treat these examples as illustrative only and **don't install anything under that name**: anyone could register it. Real JavaScript options: Line B (RGB Protocol Association) has the [`rgb-lib`](https://www.npmjs.com/package/rgb-lib) bindings from RGB-Tools. Line A (RGB-WG v0.12) has no JavaScript SDK. This page is being rewritten.
+:::info Applies to both RGB lines
+The two lines have different CLIs that share the binary name `rgb`, so first check which one you are running. See [Two RGB lines](/getting-started/two-rgbs).
 :::
 
-Solutions to common RGB problems and error messages.
+The messages below are copied from the pinned binaries or their source.
 
-## Installation Issues
+## Which `rgb` is this?
 
-### Rust Build Failures
-
+{/* snippet:skip: meant to be run against either binary */}
 ```bash
-error: failed to compile rgb-std
+rgb --version
 ```
 
-**Solution:**
-```bash
-# Update Rust
-rustup update stable
+- `rgb-cmd 0.11.1`: Line B.
+- `error: unexpected argument '--version' found`: probably Line A, whose `rgb` has no `--version`. `rgb --help` lists `init`, `wallets`, `fund`, `seals`, `pay` and `script`.
+- Any other version: the wrong crate. The crate `rgb-cli` is the old 0.9.1 (2023) tool from before v0.10, and a plain `cargo install rgb-wallet` installs the unrelated 0.10.9. Reinstall with the exact version, as in [Installation](/getting-started/installation):
 
-# Install dependencies
-apt-get install build-essential pkg-config libssl-dev
+```bash line=B
+cargo install --locked rgb-cmd --version 0.11.1
 ```
 
-*Build issues to be expanded*
-
-### Node.js Module Errors
-
-```bash
-Error: Cannot find module '@rgbjs/core'
+```bash line=A
+cargo install --locked rgb-wallet --version 0.12.0-rc.3
 ```
 
-**Solution:** there's no `@rgbjs/core` package on npm, so don't install anything under that name. Line B's JavaScript bindings are the [`rgb-lib`](https://www.npmjs.com/package/rgb-lib) package from RGB-Tools. Line A has no JavaScript SDK.
+Both binaries are called `rgb`, so `which -a rgb` shows whether both are on your `PATH`.
 
-*Module issues to be expanded*
+## Errors by line
 
-## Runtime Errors
+<Tabs groupId="rgb-line">
+<TabItem value="b" label="v0.11 (rgb-cmd)">
 
-### Invalid Consignment
+| Message | Cause and fix |
+|---|---|
+| `Unable to find or parse config file; using config defaults` | Not an error. There is no `rgb.toml` yet |
+| `Error: no blockchain indexer specified; use either --esplora --mempool or --electrum argument` | The command needs chain data. `create` prints this and then **doesn't save the wallet** (exit 1). Pass an indexer, as in `--electrum=localhost:50001` |
+| Connection errors to `example.com:50001` | A bare `--electrum` without `=<URL>` uses a placeholder server. Always write `--electrum=<URL>` |
+| `ELECTRUM_SERVER` has no effect | The variable is misspelt `ELECRTUM_SERVER` in `bp-wallet` 0.11.1-alpha.2. Pass `--electrum=<URL>` |
+| `Loading descriptor from wallet default ... Error: No such file or directory (os error 2)` | No wallet named `default` (or the `-w` name) exists for this network and data directory. Check `-n` and `-d`; the default network is `testnet3` |
+| `blinded invoice requested but no suitable outpoint is available` | `rgb invoice` without `--address-based` needs an unspent output in the wallet. Fund it, or use `--address-based` |
+| `only amount or token data should be provided` | `invoice` got both `--amount` and `--token-index`, or neither |
+| `invalid assignment name for state type` | `--assignment-name` doesn't match the kind of state (`--amount` for fungible, `--token-index` for UDA) |
+| `error: invalid value '…' for '<CONTRACT_ID>': Invalid last symbol …` | A truncated or mistyped contract id. Copy the full `rgb:…` id from `rgb contracts` |
+| `Error: unexpected end of file` on `import` | The file isn't a strict-encoded kit or consignment, or is truncated |
+| `state provided via PSBT inputs is not sufficient to cover invoice state requirements` | Not enough of the asset in the selected UTXOs |
+| `the invoice has expired` | Ask the receiver for a new invoice |
+| `invoice requesting chain-network pair … but contract commits to a different one` | Invoice and contract are on different networks |
+| ``use `validate` and `accept` commands to work with …`` | `import` was given a transfer consignment. Use `rgb validate` and `rgb accept` |
 
-```
-Error: Consignment validation failed
-```
+The full error list is in `rgb-api` 0.11.1 `src/errors.rs` and `rgb-ops` 0.11.1 `src/persistence/stock.rs`. Errors exit with code 1, and usage errors with code 2.
 
-**Common causes:**
-- Corrupted file
-- Missing genesis
-- Invalid state transition
-- Bitcoin anchor not confirmed
+</TabItem>
+<TabItem value="a" label="v0.12 (rgb-wallet)">
 
-**Solutions:**
-- Re-request consignment
-- Verify Bitcoin transaction
-- Check contract state
+| Message | Cause and fix |
+|---|---|
+| ``Error: the data directory at '…/bitcoin.testnet' is not initialized; please initialize it with `init` command …`` | Run `rgb init` once, with the same `-d` and `-n` |
+| `Abnormal program termination through panic.` `Error: Non-testnet networks are not yet supported` (exit 101) | rc.3 refuses mainnet. Use `-n testnet4` (the default), `signet` or `regtest` |
+| ``Error: unable to load wallet from path `…/alice.wallet` `` `Details: No such file or directory` (exit 101) | The rc.3 `create` bug: `rgb create alice …` writes `…/alice`, but other commands read `…/alice.wallet`. Create it as `alice.wallet` and use `-w alice`. See [`create`](./cli.md#create) |
+| `Error: data directory at '…' is already initialized` | `init -q` fails on an existing directory, the opposite of what its help says. Run `init` without `-q` |
+| `Error: no xpub key origin information.` | The descriptor needs the key origin, as in `"[<fp>/84h/1h/0h]<tpub>/<0;1>/*"` |
+| ``a type of wallet descriptor must be specified either with `--tapret-key-only` or `--wpkh` `` | Add one of the two flags to `create` |
+| `Unable to connect to the indexing server` (panic) | The indexer URL is wrong or unreachable. A bare `--electrum` uses `mycitadel.io:50001` |
+| `ELECTRUM_SERVER` has no effect | The variable is misspelt `ELECRTUM_SERVER` in `cli/src/opts.rs`. Pass `--electrum=<URL>` |
+| `Error: unknown contract '…'` | The wallet doesn't know that contract name or id. Check `rgb contracts` |
+| ``Wallet has no unspent outputs; try `fund` first, or use `-w` flag to generate a witness output-based seal`` | `invoice` needs a UTXO for an `at:` seal. Fund the wallet, or use `--wout` (the message says `-w`, which is the wallet flag) |
+| `the state owned by the wallet is not enough to fulfill the invoice` | Not enough of the asset |
+| `unknown … can't be consumed; please import contract articles first` | `accept` got a transfer for a contract the wallet doesn't have. Accept the contract first, or use `accept -u` |
+| `PSBT still contains N non-finalized inputs, failing to extract transaction` | The PSBT isn't fully signed. Sign it with your Bitcoin wallet before `finalize` |
 
-*Consignment errors to be expanded*
+Errors exit with code 1, usage errors with 2 and panics with 101. Sources: `rgb-wallet` 0.12.0-rc.3 `cli/src/args.rs` and `cli/src/exec.rs`, `rgb-std` 0.12.0-rc.3 `src/popls/bp.rs` and `src/contract.rs`.
 
-### UTXO Not Found
+</TabItem>
+</Tabs>
 
-```
-Error: UTXO not found in stash
-```
+## Before you report a bug
 
-**Solution:**
-```bash
-# Sync wallet
-rgb-cli sync
+- Check the line and version (above), and the network (`-n`) and data directory (`-d`) of every command.
+- Neither CLI talks to Bitcoin Core RPC. Both need an Electrum, Esplora or (Line B) Mempool indexer for the right network.
+- A build failing on missing headers usually needs `build-essential`, `pkg-config` and `libssl-dev` (Debian and Ubuntu). Line B's sandbox also needs `libsqlite3-dev`.
 
-# Import missing state
-rgb-cli import genesis.rgb
-```
+:::danger Don't try to "fix" a stuck transfer by spending UTXOs
+If a transfer looks stuck, don't spend the wallet's UTXOs from another Bitcoin wallet, and don't delete the RGB data directory. Either can destroy the assets for good. Back up the data directory first, then ask for help.
+:::
 
-*UTXO errors to be expanded*
+Where to ask:
 
-### Insufficient Balance
-
-```
-Error: Insufficient RGB balance
-```
-
-**Check:**
-```bash
-rgb-cli balance --contract-id <id>
-```
-
-*Balance errors to be expanded*
-
-## Network Issues
-
-### Bitcoin RPC Connection Failed
-
-```
-Error: Cannot connect to Bitcoin RPC
-```
-
-**Solution:**
-```bash
-# Check bitcoind is running
-bitcoin-cli getblockcount
-
-# Verify RPC credentials
-# Check rgb.conf
-```
-
-*Network errors to be expanded*
-
-### Anchor Transaction Not Found
-
-```
-Error: Anchor transaction not in blockchain
-```
-
-**Solution:**
-- Wait for confirmation
-- Check transaction was broadcast
-- Verify transaction ID
-
-*Anchor errors to be expanded*
-
-## Performance Issues
-
-### Slow Validation
-
-Large consignments take time to validate:
-
-**Solutions:**
-- Use incremental validation
-- Enable caching
-- Increase memory allocation
-
-*Performance tuning to be expanded*
-
-### High Memory Usage
-
-**Solutions:**
-```bash
-# Prune old state
-rgb-cli prune --before <date>
-
-# Archive unused contracts
-rgb-cli archive --contract-id <id>
-```
-
-*Memory optimization to be expanded*
-
-## Data Issues
-
-### Corrupted Stash
-
-```
-Error: Stash data corrupted
-```
-
-**Recovery:**
-```bash
-# Restore from backup
-rgb-cli restore --backup stash-backup.tar.gz
-
-# Rebuild from consignments
-rgb-cli rebuild --from-consignments ./consignments/
-```
-
-*Data recovery to be expanded*
-
-### State Mismatch
-
-```
-Error: State validation mismatch
-```
-
-**Debug:**
-```bash
-rgb-cli validate-state --contract-id <id> --verbose
-```
-
-*State debugging to be expanded*
-
-## Getting Help
-
-### Enable Debugging
-
-```bash
-RGB_LOG_LEVEL=debug rgb-cli <command>
-```
-
-### Report Issues
-
-Include:
-- RGB version
-- Error message
-- Steps to reproduce
-- Relevant logs
-
-*Issue reporting to be expanded*
-
-### Community Support
-
-- GitHub Issues: https://github.com/RGB-WG/rgb
-- Telegram: @rgbtelegram
-- Discord: RGB Protocol
-
-*Community resources to be expanded*
-
-## Related Documentation
-
-- [CLI Reference](./cli.md)
-- [FAQ](./faq.md)
+- Line B: [rgb-protocol](https://github.com/rgb-protocol) and [RGB-Tools](https://github.com/RGB-Tools) issue trackers, and [docs.rgb.info](https://docs.rgb.info)
+- Line A: the [RGB-WG/rgb](https://github.com/RGB-WG/rgb/issues) issue tracker

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import styles from './Playground.module.css';
-import { generateExampleContractId } from './encodingUtils';
 
 export default function TransferSimulator() {
   const [senderAmount, setSenderAmount] = useState('100');
@@ -116,9 +115,9 @@ export default function TransferSimulator() {
             <h4 style={{marginTop: 0}}>🔐 Using Bitcoin's UTXO Model</h4>
             <ul style={{margin: '0.5rem 0', paddingLeft: '1.5rem', color: '#666'}}>
               <li>Input UTXO is <strong>spent</strong> (standard Bitcoin transaction)</li>
-              <li>Two new UTXOs are <strong>created</strong> for recipient and change</li>
+              <li>State is <strong>assigned</strong> to two seals: a UTXO of the recipient (often an existing, blinded one) and a change output of the sender</li>
               <li>State is preserved: {senderAmount} = {recipientAmount} + {changeAmount} ✓</li>
-              <li>RGB state validated client-side, Bitcoin only sees normal UTXO spend</li>
+              <li>The recipient validates the RGB state client-side; Bitcoin only sees an ordinary transaction with a small commitment</li>
             </ul>
           </div>
 

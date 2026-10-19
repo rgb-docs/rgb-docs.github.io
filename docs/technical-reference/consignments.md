@@ -1,136 +1,98 @@
 ---
 sidebar_position: 4
 title: Consignments
-description: RGB consignment format and transfer proof structure
+description: What an RGB consignment contains in v0.11 and v0.12, its file format, and when to send it.
+rgb_line: both
+verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
+last_update:
+  date: 2026-10-19
 ---
 
-# RGB Consignments
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
-Consignments are self-contained packages containing all data needed to validate an RGB transfer.
+# Consignments
 
-## Consignment Structure
+:::info Applies to both RGB lines
+Both lines move contract history in consignments, but the file formats differ and are incompatible. See [Two RGB lines](/getting-started/two-rgbs).
+:::
 
-```typescript
-interface Consignment {
-  // Contract identification
-  contractId: ContractId;
-  schema: SchemaId;
+A **consignment** is the package of contract data that one party sends another. It holds everything the receiver needs to [validate](/core-concepts/client-side-validation) the state they get: the contract's genesis, the operations from genesis to the receiver's seals, and the Bitcoin witness data and commitment proofs anchoring each one. The receiver checks it against Bitcoin through an indexer, then adds it to their stash.
 
-  // Genesis (if first transfer)
-  genesis?: Genesis;
+There are two uses:
 
-  // State history
-  transitions: Transition[];
+- **Contract consignment**: the whole contract, used to share or back up a contract (Line B `rgb export`, Line A `rgb backup`).
+- **Transfer consignment**: the history leading to the seals in one transfer, made by the payer and given to the receiver (Line B `rgb transfer`, Line A `rgb pay`).
 
-  // Seals and anchors
-  anchors: Anchor[];
-  seals: Seal[];
+A transfer consignment holds only the history that the receiver's new state depends on, not the whole contract. It still reveals that history, including earlier amounts and outpoints, to the receiver.
 
-  // Proofs
-  proofs: Proof[];
+Both formats are **binary [strict encoding](./strict-types.md)**, not JSON. Neither is compressed.
 
-  // Metadata
-  created: Timestamp;
-  version: Version;
-}
+<Tabs groupId="rgb-line">
+<TabItem value="b" label="v0.11 (rgb-cmd)">
+
+**Contents** (`rgb-ops` 0.11.1, `src/containers/consignment.rs`, struct `Consignment<TRANSFER>`):
+
+| Field | What it holds |
+|---|---|
+| `version` | The container version, `v0` |
+| `transfer` | Whether it is a transfer (`true`) or a contract consignment |
+| `terminals` | The blinded seals (`utxob`) the transfer ends at, by bundle |
+| `genesis` | The contract's genesis |
+| `bundles` | Each transition bundle with its witness: the Bitcoin transaction (`PubWitness`) and the anchor, i.e. the MPC proof and the tapret or opret proof |
+| `schema` | The contract's schema |
+| `types` | The strict type system used by the schema |
+| `scripts` | The AluVM libraries the schema calls |
+
+The consignment id is a tagged hash, shown in Baid64 with the `rgb:csg` HRI.
+
+**File format** (`src/containers/file.rs`): the bytes `RGB\x00`, then a 3-byte type marker, `CON` (contract), `TFR` (transfer) or `KIT` (schema kit), then the strict-encoded data. There is also an ASCII-armoured text form with the plate `RGB CONSIGNMENT` and headers for the version, type, contract id, schema id and terminals (the `StrictArmor` trait). The `rgb-schemas` examples write both, with `save_file("….rgb")` and `save_armored("….rgba")`.
+
+```bash line=B
+rgb transfer <INVOICE> transfer.rgb transfer.psbt   # payer
+rgb validate transfer.rgb                           # receiver: prints "The provided consignment is valid"
+rgb accept transfer.rgb                             # receiver: adds it to the stash
+rgb inspect transfer.rgb                            # dump any RGB file as YAML
+rgb armor transfer.rgb                              # print the ASCII-armoured form
 ```
 
-*Structure to be expanded*
+Commands are in the [CLI reference (v0.11)](./cli-v011.md#transfer).
 
-## Binary Format
+:::warning Coming next: consignment format v1
+Line B 0.11.2-rc.1 (2026-10-09) moves consignments from v0 to v1, and schemas are imported once instead of travelling with every consignment. 0.11.2 can still read v0 by converting it ([rgb.info, 2026-10-15](https://rgb.info/rgb-protocol-v0-11-2-rc1-update/)). This page is pinned to 0.11.1.
+:::
 
-Consignment binary encoding:
+</TabItem>
+<TabItem value="a" label="v0.12 (rgb-wallet)">
 
-```
-[Header]
-  - Magic bytes: 'RGB0'
-  - Version: u16
-  - Contract ID: [u8; 32]
+**Contents** (`rgb-std` 0.12.0-rc.3, `src/consignment.rs`):
 
-[Genesis] (optional)
-  - Schema ID
-  - Global state
-  - Allocations
+| Part | What it holds |
+|---|---|
+| Header | Extensions; the contract's **semantics** (its APIs, the zk-AluVM and AluVM libraries, the type system); the issuer's signature; the **issue** (the contract metadata, the codex and the genesis); and the seals genesis defines |
+| Operations | For each operation: the operation, the seals it defines, and an optional **seal witness**, i.e. the Bitcoin transaction and the commitment proof (`OperationSeals` in `rgb-core` 0.12.0) |
 
-[Transitions]
-  - Count: u32
-  - Transition data...
+The stream starts with a version byte (`0`) and the contract id, so a wallet can reject an unknown contract before reading the rest.
 
-[Anchors]
-  - Bitcoin TX proofs
+**File format:** a `binfile` container with the 8-byte magic `RGBCNSGN` and version `0` (`CONSIGN_MAGIC_NUMBER` and `CONSIGN_VERSION` in `src/contracts.rs`), then the strict-encoded stream. rc.3 has no ASCII-armoured form.
 
-[Proofs]
-  - State proofs
-  - Merkle paths
+```bash line=A
+rgb pay -w alice <INVOICE> transfer.rgb          # payer: writes transfer.rgb and transfer.rgb.psbt
+rgb accept -w bob transfer.rgb                    # receiver: validates and accepts
+rgb backup DemoToken demo.consignment             # a whole contract
 ```
 
-*Binary format to be expanded*
+On the receiving side, `accept` resolves the auth tokens in the consignment against the receiver's own invoices, and checks the issuer's signature over the contract articles (`Contract::consume`). Commands are in the [CLI reference (v0.12)](./cli.md#pay).
 
-## Creating Consignments
+</TabItem>
+</Tabs>
 
-```typescript
-const consignment = await transfer.createConsignment({
-  includeGenesis: true,
-  includeHistory: true,
-  compress: true
-});
+:::danger Send the consignment before you broadcast
+The transfer is final as soon as the Bitcoin transaction is mined. If the transaction is published and the consignment is then lost, nobody can prove the receiver's ownership, and the assets are gone. Give the receiver the consignment, and wait for them to validate it, before you sign and publish. Keep a copy of every consignment you send or receive: a wallet seed alone doesn't restore RGB assets.
+:::
 
-const data = consignment.serialize();
-await fs.writeFile('transfer.rgb', data);
-```
+## Further reading
 
-*Creation to be expanded*
-
-## Validating Consignments
-
-```typescript
-const consignment = Consignment.deserialize(data);
-
-const validation = await validator.validate(consignment);
-
-if (!validation.valid) {
-  throw new Error(`Invalid: ${validation.errors}`);
-}
-```
-
-*Validation to be expanded*
-
-## Consignment Types
-
-### Transfer Consignment
-
-Standard asset transfer:
-
-*To be expanded*
-
-### Genesis Consignment
-
-Initial contract distribution:
-
-*To be expanded*
-
-### State Consignment
-
-State query response:
-
-*To be expanded*
-
-## Compression
-
-```typescript
-const compressed = consignment.compress({
-  algorithm: 'zstd',
-  level: 9
-});
-
-console.log('Original:', consignment.size);
-console.log('Compressed:', compressed.size);
-```
-
-*Compression to be expanded*
-
-## Related Documentation
-
-- [State Transitions](../guides/contracts/state-transitions.md)
-- [RGB20 Transfers](../guides/rgb20/transferring-assets.md)
-- [Strict Types](./strict-types.md)
+- Line B: [Contract transfers](https://github.com/rgb-protocol/RGB-Documentation/blob/master/annexes/contract-transfers.md) in the official docs; `rgb-ops` on [docs.rs](https://docs.rs/rgb-ops/0.11.1)
+- Line A: `rgb-std` on [docs.rs](https://docs.rs/rgb-std/0.12.0-rc.3)
+- [Client-side validation](/core-concepts/client-side-validation)

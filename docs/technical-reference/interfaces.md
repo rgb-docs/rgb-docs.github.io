@@ -1,810 +1,95 @@
 ---
 sidebar_position: 3
-title: RGB Interfaces
-description: Standard RGB interfaces and integration points
+title: Interfaces, schemas and codexes
+description: The RGB "interface" API is gone from both current lines. How v0.11 (schemas and wrappers) and v0.12 (codexes, APIs and issuers) give wallets a standard view of a contract instead.
+rgb_line: both
+verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
+last_update:
+  date: 2026-10-19
 ---
 
-# RGB Interfaces
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
-Standard interfaces for RGB protocol integration and interoperability. RGB interfaces provide a uniform API across different schema implementations, enabling wallets and applications to work with contracts in a standardized way.
+# Interfaces, schemas and codexes
 
-## Interface Architecture
+:::info Applies to both RGB lines
+Neither current line has the old interface API. Line B uses schemas with Rust wrappers, and Line A uses codexes, APIs and issuers. See [Two RGB lines](/getting-started/two-rgbs).
+:::
 
-### What are RGB Interfaces?
+## A short history
 
-RGB interfaces define standard methods and state structures that contracts must implement. They act as an abstraction layer between:
-- **Schemas**: Low-level contract logic and validation
-- **Applications**: High-level contract interaction
+Up to the v0.11 betas (the last, beta.9, came out in November 2024), RGB-WG's `rgb-std` had **interfaces**: `Iface` definitions named RGB20, RGB21 and RGB25, and `IfaceImpl` values that mapped an interface onto a schema, so a wallet could read any fungible contract the same way. Code from that period uses calls such as `contract_iface_class::<Rgb20>()`.
 
-```rust
-// Interface provides standard API
-let rgb20: Rgb20 = stock.contract_iface_class::<Rgb20>(contract_id)?;
+Both lines dropped that design after the split:
 
-// Works with any schema that implements RGB20
-let ticker = rgb20.spec().ticker;  // Standardized access
-```
+- **Line B** (`rgb-ops` 0.11.1) has no `Iface` types. A grep for `IfaceImpl` or `contract_iface_class` in `rgb-ops`, `rgb-api` and `rgb-lib` finds nothing. Line B names its contract types after their schemas (NIA, IFA, UDA, CFA, PFA) and treats "RGB20" and "RGB21" as deprecated names.
+- **Line A** (v0.12) replaced schemas and interfaces with **codexes** and **APIs**. The name RGB20 survives in issuer names such as `RGB20-FNA`, and an API can list the interface standards it conforms to.
 
-### Interface Implementation
+Code or tutorials that use `Iface`, `IfaceImpl` or `rgbstd::interface` are for the old betas and won't compile against either line.
 
-Schemas map their internal state to interface requirements:
+<Tabs groupId="rgb-line">
+<TabItem value="b" label="v0.11 (rgb-cmd)">
 
-```rust
-pub struct IfaceImpl {
-    pub version: VerNo,
-    pub schema_id: SchemaId,
-    pub iface_id: IfaceId,
-    pub timestamp: i64,
-    pub developer: Identity,
-    pub metadata: Confined<BTreeMap<MetaKey, MetaValue>>,
-    pub global_state: Confined<BTreeSet<NamedField>>,
-    pub assignments: Confined<BTreeSet<NamedField>>,
-    pub valencies: Confined<BTreeSet<NamedField>>,
-    pub transitions: Confined<BTreeSet<NamedField>>,
-    pub extensions: Confined<BTreeSet<NamedField>>,
-    pub errors: Confined<BTreeSet<NamedVariant>>,
-}
-```
+## Line B: schemas and wrappers
 
-## RGB20: Fungible Assets {#rgb20}
+A **schema** defines a contract type: its global and owned state, its transitions and its AluVM validation scripts. The standard schemas are in [`rgb-schemas`](https://github.com/rgb-protocol/rgb-schemas) 0.11.1, and each comes as a compiled `.rgb` kit that a wallet imports. The [Schemas guide](/guides/contracts/schemas) covers the five standard schemas, their fields and their ids.
 
-### Overview
+In place of interfaces, `rgb-ops` 0.11.1 (`src/contract/schema.rs`) has two traits:
 
-RGB20 is the standard interface for fungible tokens (like ERC-20 on Ethereum). It supports:
-- Fixed or flexible supply
-- Fractional ownership (precision up to 18 decimals)
-- Transfer operations
-- Optional burn/reissue capabilities
+- `IssuerWrapper`, implemented by each schema type (`NonInflatableAsset`, `InflatableFungibleAsset`, `UniqueDigitalAsset`, `CollectibleFungibleAsset`, `PermissionedFungibleAsset`). It provides `schema()`, `types()`, `scripts()` and `kit()`.
+- `SchemaWrapper`, implemented by the matching read-only view (`NiaWrapper`, `IfaWrapper`, …), which has typed getters such as `spec()`, `contract_terms()`, `total_issued_supply()` and `allocations()`.
 
-### Interface Specification
-
-```typescript
-interface IRGB20 {
-  // Asset Specification
-  spec(): AssetSpec;
-
-  // Supply Queries
-  totalSupply(): Amount;
-  issuedSupply(): Amount;
-  burnedSupply(): Amount;
-
-  // Ownership Queries
-  allocations(filter: AllocationFilter): Iterator<FungibleAllocation>;
-  balance(filter: OutpointFilter): Amount;
-
-  // Operations (via state transitions)
-  // - transfer: Move tokens between owners
-  // - burn: Destroy tokens (if enabled)
-  // - issue: Mint new tokens (if enabled)
-}
-```
-
-### Asset Specification
+Reading a NIA contract, as in `examples/nia.rs` of `rgb-schemas` 0.11.1 (crates `rgb-ops` 0.11.1, imported as `rgbstd`, and `rgb-schemas` 0.11.1, imported as `schemata`):
 
 ```rust
-pub struct AssetSpec {
-    pub ticker: Ticker,      // 1-8 uppercase chars
-    pub name: Name,          // Human-readable name
-    pub details: Option<Details>,  // Optional description
-    pub precision: Precision,      // Decimal places (0-18)
+use rgbstd::contract::FilterIncludeAll;
+use schemata::NonInflatableAsset;
+
+let contract = stock.contract_wrapper::<NonInflatableAsset>(contract_id)?;
+let spec = contract.spec();                       // ticker, name, precision
+let supply = contract.total_issued_supply();
+for alloc in contract.allocations(&FilterIncludeAll) {
+    println!("{} at {}", alloc.state.value(), alloc.seal);
 }
 ```
 
-**Example:**
-```rust
-let spec = rgb20.spec();
-println!("Ticker: {}", spec.ticker);     // "USDT"
-println!("Name: {}", spec.name);         // "Tether USD"
-println!("Precision: {}", spec.precision); // 2 decimals
+`Stock::contract_wrapper` is in `src/persistence/stock.rs`. Apps built on [`rgb-lib`](https://github.com/RGB-Tools/rgb-lib) don't touch these traits: rgb-lib embeds the NIA, UDA, CFA and IFA schemas and exposes assets through its own API.
+
+</TabItem>
+<TabItem value="a" label="v0.12 (rgb-wallet)">
+
+## Line A: codexes, APIs and issuers
+
+v0.12 splits a contract type into a part that consensus checks and a part that only wallets use:
+
+| Piece | What it is | Source |
+|---|---|---|
+| **Codex** | The consensus part: a name, the developer's identity, the field order and VM settings, and one zk-AluVM **verifier** per call. Its id prints like `7C15w3W1-L0T~zXw-Aeh5~kV-Zquz729-HXQFKQW-_5lX9O8#heavy-cactus-quiet` | `ultrasonic` 0.12.0 `src/codex.rs` |
+| **API** | The interface part, outside consensus: how global and owned state are built from field elements, the aggregators that compute derived values (such as total supply), the map from method names to verifier calls, and the error texts. `conforms` lists the interface standards the API follows | `sonic-api` 0.12.0 `src/api.rs` |
+| **Semantics** | A default API plus named custom APIs, the libraries they use, and the type system | `sonic-api` 0.12.0 `src/api.rs` |
+| **Issuer** | A codex together with its semantics, optionally signed by the developer, saved as a `.issuer` file | `sonic-api` 0.12.0 `src/issuer.rs` |
+
+A wallet imports an issuer, then issues contracts from it with a YAML parameter file:
+
+```bash line=A
+rgb import examples/RGB20-FNA.issuer
+rgb issue -w alice examples/DemoToken.yaml
 ```
 
-### Supply Information
+Real output (rgb-wallet 0.12.0-rc.3, offline, 2026-10-19):
 
-```rust
-// Total issued supply (including burned)
-let total = rgb20.total_supply();
-
-// Currently issued (not burned)
-let issued = rgb20.issued_supply();
-
-// Burned tokens
-let burned = rgb20.burned_supply();
-
-// Circulating = issued - burned
-let circulating = issued - burned;
+```text
+Processing 'RGB20-FNA.issuer' ... codex id 7C15w3W1-L0T~zXw-Aeh5~kV-Zquz729-HXQFKQW-_5lX9O8#heavy-cactus-quiet ... success
+A new contract issued with ID contract:nztjpjRX-_NVDDgd-EHENsqL-AKsGsyV-F6LzljB-X4WTv0Y
 ```
 
-### Allocations
+The parameter file names the codex, the method (`issue`) and the initial global and owned state by their API names (`ticker`, `name`, `precision`, `issued`, `balance`). Issuers are published in [pandora-prime/rgb-issuers](https://github.com/pandora-prime/rgb-issuers). See [`import`](./cli.md#import) and [`issue`](./cli.md#issue) in the CLI reference, and the [Quick Start](/getting-started/quick-start).
 
-```rust
-use rgbstd::interface::{FilterIncludeAll, FungibleAllocation};
+</TabItem>
+</Tabs>
 
-// Get all allocations
-for FungibleAllocation {
-    seal,      // Output seal
-    state,     // Amount
-    witness,   // Transaction witness
-    ..
-} in rgb20.allocations(&FilterIncludeAll) {
-    println!("Amount: {}, Owner: {}", state, seal);
-}
-```
+## Further reading
 
-### Schema Implementation: NonInflatableAsset (NIA)
-
-Fixed-supply RGB20 implementation:
-
-```rust
-pub struct NonInflatableAsset;
-
-impl IssuerWrapper for NonInflatableAsset {
-    const FEATURES: Rgb20 = Rgb20::FIXED;
-    type IssuingIface = Rgb20;
-
-    fn schema() -> Schema {
-        Schema {
-            name: tn!("NonInflatableAsset"),
-            global_types: tiny_bmap! {
-                GS_NOMINAL => GlobalStateSchema::once("AssetSpec"),
-                GS_TERMS => GlobalStateSchema::once("ContractTerms"),
-                GS_ISSUED_SUPPLY => GlobalStateSchema::once("Amount"),
-            },
-            owned_types: tiny_bmap! {
-                OS_ASSET => OwnedStateSchema::Fungible(FungibleType::Unsigned64Bit),
-            },
-            transitions: tiny_bmap! {
-                TS_TRANSFER => TransitionSchema { /* ... */ }
-            },
-            // ...
-        }
-    }
-}
-```
-
-**Interface Mapping:**
-```rust
-fn nia_rgb20() -> IfaceImpl {
-    IfaceImpl {
-        schema_id: nia_schema().schema_id(),
-        iface_id: Rgb20::FIXED.iface_id(),
-        global_state: tiny_bset! {
-            NamedField::with(GS_NOMINAL, fname!("spec")),
-            NamedField::with(GS_TERMS, fname!("terms")),
-            NamedField::with(GS_ISSUED_SUPPLY, fname!("issuedSupply")),
-        },
-        assignments: tiny_bset! {
-            NamedField::with(OS_ASSET, fname!("assetOwner")),
-        },
-        transitions: tiny_bset! {
-            NamedField::with(TS_TRANSFER, fname!("transfer")),
-        },
-        errors: tiny_bset![
-            NamedVariant::with(ERRNO_ISSUED_MISMATCH, vname!("issuedMismatch")),
-            NamedVariant::with(ERRNO_NON_EQUAL_IN_OUT, vname!("nonEqualAmounts")),
-        ],
-    }
-}
-```
-
-### Validation Logic
-
-NIA uses AluVM for validation:
-
-```rust
-pub fn nia_lib() -> Lib {
-    let code = rgbasm! {
-        // Transfer validation
-        put     a8[0],ERRNO_NON_EQUAL_IN_OUT;
-        pcvs    OS_ASSET;  // Pedersen commitment verification
-        test;
-        ret;
-
-        // Genesis validation
-        put     a8[0],ERRNO_ISSUED_MISMATCH;
-        put     a8[1],0;
-        put     a16[0],0;
-        ldg     GS_ISSUED_SUPPLY,a8[1],s16[0];  // Load global state
-        extr    s16[0],a64[0],a16[0];            // Extract amount
-        pcas    OS_ASSET;  // Verify commitments vs. issued supply
-        test;
-        ret;
-    };
-    Lib::assemble(&code).expect("invalid NIA script")
-}
-```
-
-**Validation Rules:**
-- **Genesis**: Sum of output amounts must equal declared issued supply
-- **Transfer**: Sum of input amounts must equal sum of output amounts
-- **Pedersen Commitments**: Cryptographically verify amounts without revealing them
-
-## RGB21: Non-Fungible Tokens {#rgb21}
-
-### Overview
-
-RGB21 is the standard interface for unique digital assets (NFTs). It supports:
-- Unique token identifiers
-- Rich metadata (embedded or external)
-- Media attachments
-- Fractionalization (optional)
-
-### Interface Specification
-
-```typescript
-interface IRGB21 {
-  // Collection Specification
-  spec(): AssetSpec;
-
-  // Token Queries
-  tokens(filter: AllocationFilter): Iterator<Allocation>;
-  tokenData(index: TokenIndex): TokenData;
-
-  // Ownership
-  balance(filter: OutpointFilter): Amount;
-  allocations(filter: AllocationFilter): Iterator<Allocation>;
-}
-```
-
-### Token Data
-
-```rust
-pub struct TokenData {
-    pub index: TokenIndex,           // Unique token ID
-    pub preview: Option<EmbeddedMedia>,  // Preview image/media
-    pub media: Option<Attachment>,   // Full media attachment
-    pub attachments: Confined<BTreeMap<u8, Attachment>>,  // Additional files
-    pub reserves: Option<ProofOfReserves>,  // Proof of reserves
-}
-```
-
-**Example:**
-```rust
-let token_data = TokenData {
-    index: TokenIndex::from_inner(1),
-    preview: Some(EmbeddedMedia {
-        ty: MediaType::with("image/png"),
-        data: SmallBlob::try_from_iter(image_bytes)?,
-    }),
-    media: Some(Attachment {
-        ty: MediaType::with("image/jpeg"),
-        digest: Bytes::from_byte_array(sha256_hash),
-    }),
-    attachments: none!(),
-    reserves: None,
-};
-```
-
-### Embedded Media
-
-Small media can be embedded directly in contract:
-
-```rust
-pub struct EmbeddedMedia {
-    pub ty: MediaType,       // MIME type
-    pub data: SmallBlob,     // Up to 64KB
-}
-
-// Example
-let preview = EmbeddedMedia {
-    ty: MediaType::with("image/png"),
-    data: SmallBlob::try_from_iter(thumbnail_bytes)?,
-};
-```
-
-### External Attachments
-
-Large media referenced via content hash:
-
-```rust
-pub struct Attachment {
-    pub ty: MediaType,       // MIME type
-    pub digest: Bytes,       // Content hash (SHA-256)
-}
-
-// Link to external media
-let attachment = Attachment {
-    ty: MediaType::with("video/mp4"),
-    digest: Bytes::from_byte_array(file_hash),
-};
-```
-
-### Schema Implementation: UniqueDigitalAsset (UDA)
-
-```rust
-pub struct UniqueDigitalAsset;
-
-impl IssuerWrapper for UniqueDigitalAsset {
-    type IssuingIface = Rgb21;
-    const FEATURES: Rgb21 = Rgb21::NONE;
-
-    fn schema() -> Schema {
-        Schema {
-            name: tn!("UniqueDigitalAsset"),
-            global_types: tiny_bmap! {
-                GS_TOKENS => GlobalStateSchema::once("Rgb21.TokenData"),
-                GS_NOMINAL => GlobalStateSchema::once("AssetSpec"),
-                GS_TERMS => GlobalStateSchema::once("ContractTerms"),
-            },
-            owned_types: tiny_bmap! {
-                OS_ASSET => OwnedStateSchema::Structured("Rgb21.Allocation"),
-            },
-            transitions: tiny_bmap! {
-                TS_TRANSFER => TransitionSchema { /* ... */ }
-            },
-            // ...
-        }
-    }
-}
-```
-
-### Creating RGB21 Tokens
-
-```rust
-use schemata::UniqueDigitalAsset;
-use ifaces::Rgb21;
-
-// Define asset spec
-let spec = AssetSpec::new("UNIQ", "Unique Art", Precision::Indivisible);
-
-// Define token data
-let token_data = TokenData {
-    index: TokenIndex::from_inner(1),
-    preview: Some(preview_media),
-    media: Some(media_attachment),
-    ..Default::default()
-};
-
-// Create contract
-let contract = stock.contract_builder(
-        "ssi:artist",
-        UniqueDigitalAsset::schema().schema_id(),
-        "RGB21",
-    )?
-    .add_global_state("spec", spec)?
-    .add_global_state("tokens", token_data)?
-    .add_data("assetOwner", seal, Allocation::with(index, 1))?
-    .issue_contract()?;
-
-// Query via RGB21 interface
-let rgb21 = stock.contract_iface_class::<Rgb21>(contract_id)?;
-let tokens: Vec<_> = rgb21.tokens(&FilterIncludeAll).collect();
-```
-
-## RGB25: Collectible Fungible Assets {#rgb25}
-
-### Overview
-
-RGB25 combines aspects of RGB20 and RGB21, providing:
-- Fungible fractional ownership
-- Rich metadata (like NFTs)
-- Collection management
-- Proof of reserves
-
-Use cases: Fractionalized NFTs, tokenized real-world assets, game items
-
-### Interface Specification
-
-```typescript
-interface IRGB25 {
-  // Collection Info
-  name(): Name;
-  details(): Option<Details>;
-  precision(): Precision;
-
-  // Asset Specification
-  art(): Option<Attachment>;  // Collection artwork
-
-  // Supply & Ownership (like RGB20)
-  totalSupply(): Amount;
-  allocations(filter: AllocationFilter): Iterator<FungibleAllocation>;
-  balance(filter: OutpointFilter): Amount;
-}
-```
-
-### Schema Implementation: CollectibleFungibleAsset (CFA)
-
-```rust
-pub struct CollectibleFungibleAsset;
-
-impl IssuerWrapper for CollectibleFungibleAsset {
-    type IssuingIface = Rgb25;
-    const FEATURES: Rgb25 = Rgb25::NONE;
-
-    fn schema() -> Schema {
-        Schema {
-            name: tn!("CollectibleFungibleAsset"),
-            global_types: tiny_bmap! {
-                GS_ART => GlobalStateSchema::once("Article"),
-                GS_NAME => GlobalStateSchema::once("Name"),
-                GS_DETAILS => GlobalStateSchema::once("Details"),
-                GS_PRECISION => GlobalStateSchema::once("Precision"),
-                GS_TERMS => GlobalStateSchema::once("ContractTerms"),
-                GS_ISSUED_SUPPLY => GlobalStateSchema::once("Amount"),
-            },
-            owned_types: tiny_bmap! {
-                OS_ASSET => OwnedStateSchema::Fungible(FungibleType::Unsigned64Bit),
-            },
-            // Uses same validation as NIA
-            genesis: GenesisSchema {
-                validator: Some(LibSite::with(FN_NIA_GENESIS_OFFSET, nia_lib_id)),
-                // ...
-            },
-            transitions: tiny_bmap! {
-                TS_TRANSFER => TransitionSchema {
-                    validator: Some(LibSite::with(FN_NIA_TRANSFER_OFFSET, nia_lib_id)),
-                    // ...
-                }
-            },
-        }
-    }
-}
-```
-
-### Creating RGB25 Assets
-
-```rust
-// Example: Fractionalized artwork
-let contract = stock.contract_builder(
-        "ssi:gallery",
-        CollectibleFungibleAsset::schema().schema_id(),
-        "RGB25",
-    )?
-    .add_global_state("name", Name::from("Mona Lisa Fraction"))?
-    .add_global_state("details", Details::from("1/1000 ownership"))?
-    .add_global_state("precision", Precision::Centi)?  // 2 decimals
-    .add_global_state("art", artwork_attachment)?
-    .add_fungible_state("assetOwner", seal, 1000_00)?  // 1000 fractions
-    .issue_contract()?;
-```
-
-## Interface Compliance
-
-### Checking Implementation
-
-Verify that a schema correctly implements an interface:
-
-```rust
-let iface = Rgb20::FIXED.iface();
-let schema = NonInflatableAsset::schema();
-let iface_impl = NonInflatableAsset::issue_impl();
-
-if let Err(errors) = iface_impl.check(&iface, &schema) {
-    for error in errors {
-        eprintln!("Compliance error: {}", error);
-    }
-    panic!("Invalid interface implementation");
-}
-```
-
-### Runtime Interface Detection
-
-```rust
-// Check if contract implements RGB20
-fn implements_rgb20(contract: &Contract) -> bool {
-    contract.iface_id() == Rgb20::FIXED.iface_id()
-}
-
-// Query via interface
-if implements_rgb20(&contract) {
-    let rgb20 = stock.contract_iface_class::<Rgb20>(contract_id)?;
-    println!("Token: {}", rgb20.spec().ticker);
-}
-```
-
-## Custom Interfaces
-
-### Defining Custom Interfaces
-
-For specialized use cases, define custom interfaces:
-
-```rust
-use rgbstd::interface::{Iface, IfaceOp, OpName, GlobalStateName, AssignmentName};
-
-fn stablecoin_iface() -> Iface {
-    Iface {
-        name: tn!("Stablecoin"),
-        timestamp: 1713343888,
-        developer: Identity::from("ssi:developer"),
-        global_state: tiny_bset! {
-            GlobalStateName::from("spec"),
-            GlobalStateName::from("collateralRatio"),
-            GlobalStateName::from("oraclePrice"),
-        },
-        assignments: tiny_bset! {
-            AssignmentName::from("assetOwner"),
-        },
-        transitions: tiny_bset! {
-            IfaceOp {
-                name: OpName::from("mint"),
-                global: tiny_bset![GlobalStateName::from("collateral")],
-                assignments: tiny_bset![AssignmentName::from("assetOwner")],
-                // ...
-            },
-            IfaceOp {
-                name: OpName::from("redeem"),
-                // ...
-            },
-        },
-        // ...
-    }
-}
-```
-
-### Implementing Custom Interface
-
-```rust
-fn stablecoin_impl() -> IfaceImpl {
-    let schema = stablecoin_schema();
-
-    IfaceImpl {
-        schema_id: schema.schema_id(),
-        iface_id: stablecoin_iface().iface_id(),
-        global_state: tiny_bset! {
-            NamedField::with(0, fname!("spec")),
-            NamedField::with(1, fname!("collateralRatio")),
-            NamedField::with(2, fname!("oraclePrice")),
-        },
-        transitions: tiny_bset! {
-            NamedField::with(0, fname!("mint")),
-            NamedField::with(1, fname!("redeem")),
-        },
-        // ...
-    }
-}
-```
-
-## Interface Versioning
-
-### Version Compatibility
-
-```rust
-pub enum VerNo {
-    V1,   // Version 1
-    V2,   // Version 2
-    // Future versions
-}
-
-// Interface implementations specify version
-impl IfaceImpl {
-    pub version: VerNo = VerNo::V1;
-}
-```
-
-### Backward Compatibility
-
-```rust
-// Check interface version
-match iface_impl.version {
-    VerNo::V1 => {
-        // Handle V1 interface
-    }
-    VerNo::V2 => {
-        // Handle V2 interface (backward compatible)
-    }
-}
-```
-
-## State Filters
-
-### Allocation Filters
-
-Query specific subsets of contract state:
-
-```rust
-use rgbstd::interface::{AllocationFilter, OutpointFilter};
-
-// Include all allocations
-let filter = FilterIncludeAll;
-let all: Vec<_> = rgb20.allocations(&filter).collect();
-
-// Filter by outpoint
-let outpoint_filter = OutpointFilter::with(specific_outpoint);
-let balance = rgb20.balance(&outpoint_filter);
-
-// Custom filters
-pub trait AllocationFilter {
-    fn include_outpoint(&self, outpoint: &Outpoint) -> bool;
-    fn include_witness(&self, witness: &XWitnessId) -> bool;
-}
-```
-
-### State Access
-
-```rust
-// Global state (immutable)
-for (name, state) in contract.state().immutable {
-    println!("Global {}: {:?}", name, state);
-}
-
-// Owned state (mutable)
-for (name, allocations) in contract.state().owned {
-    for alloc in allocations {
-        println!("Owned {}: {:?}", name, alloc);
-    }
-}
-
-// Aggregated state (computed)
-for (name, value) in contract.state().aggregated {
-    println!("Aggregated {}: {:?}", name, value);
-}
-```
-
-## Error Variants
-
-### Interface-Defined Errors
-
-Interfaces can define standard error codes:
-
-```rust
-// RGB20 errors
-pub const ERRNO_ISSUED_MISMATCH: u8 = 1;     // Issued supply mismatch
-pub const ERRNO_NON_EQUAL_IN_OUT: u8 = 2;    // Input != Output amounts
-
-// Map to named variants
-errors: tiny_bset![
-    NamedVariant::with(ERRNO_ISSUED_MISMATCH, vname!("issuedMismatch")),
-    NamedVariant::with(ERRNO_NON_EQUAL_IN_OUT, vname!("nonEqualAmounts")),
-]
-```
-
-### Handling Errors
-
-```rust
-use rgb::validation::ValidationStatus;
-
-match contract.validate_operation(opid) {
-    ValidationStatus::Valid => {
-        println!("Operation valid");
-    }
-    ValidationStatus::Invalid { error_code } => {
-        match error_code {
-            ERRNO_ISSUED_MISMATCH => {
-                eprintln!("Issued supply doesn't match allocations");
-            }
-            ERRNO_NON_EQUAL_IN_OUT => {
-                eprintln!("Transfer amounts don't balance");
-            }
-            _ => {
-                eprintln!("Unknown error: {}", error_code);
-            }
-        }
-    }
-}
-```
-
-## Best Practices
-
-### Interface Design
-
-**Do:**
-- Keep interfaces focused and minimal
-- Use clear, descriptive names
-- Version interfaces for evolution
-- Document all methods and state
-
-**Don't:**
-- Mix unrelated functionality
-- Change interface semantics in new versions
-- Break backward compatibility
-
-### Schema Implementation
-
-```rust
-// Good: Clear mapping between schema and interface
-fn clear_mapping() -> IfaceImpl {
-    IfaceImpl {
-        global_state: tiny_bset! {
-            NamedField::with(SCHEMA_TICKER, fname!("ticker")),
-            NamedField::with(SCHEMA_NAME, fname!("name")),
-        },
-        // Clear 1:1 mapping
-    }
-}
-
-// Bad: Confusing or arbitrary mappings
-fn confusing_mapping() -> IfaceImpl {
-    IfaceImpl {
-        global_state: tiny_bset! {
-            NamedField::with(17, fname!("x")),  // What is 17? What is x?
-        },
-    }
-}
-```
-
-### Performance Considerations
-
-```rust
-// Cache interface queries
-let rgb20 = stock.contract_iface_class::<Rgb20>(contract_id)?;
-let spec = rgb20.spec();  // Query once
-println!("Ticker: {}", spec.ticker);
-println!("Name: {}", spec.name);
-
-// Avoid repeated interface instantiation
-for i in 0..1000 {
-    // Bad: Creates interface 1000 times
-    let rgb20 = stock.contract_iface_class::<Rgb20>(contract_id)?;
-}
-
-// Good: Reuse interface
-let rgb20 = stock.contract_iface_class::<Rgb20>(contract_id)?;
-for i in 0..1000 {
-    // Use rgb20
-}
-```
-
-## Testing Interfaces
-
-### Interface Compliance Tests
-
-```rust
-#[test]
-fn test_rgb20_compliance() {
-    let iface = NonInflatableAsset::FEATURES.iface();
-    let schema = NonInflatableAsset::schema();
-    let impl = NonInflatableAsset::issue_impl();
-
-    // Should not have errors
-    assert!(impl.check(&iface, &schema).is_ok());
-}
-```
-
-### Interface Behavior Tests
-
-```rust
-#[test]
-fn test_rgb20_behavior() {
-    let contract = create_test_rgb20_contract();
-    let mut stock = Stock::in_memory();
-    stock.import_contract(contract, NoResolver).unwrap();
-
-    let rgb20 = stock.contract_iface_class::<Rgb20>(contract_id).unwrap();
-
-    // Test standard behavior
-    assert!(rgb20.total_supply() > 0);
-    assert_eq!(rgb20.spec().ticker.to_string(), "TEST");
-
-    let allocations: Vec<_> = rgb20.allocations(&FilterIncludeAll).collect();
-    assert!(allocations.len() > 0);
-}
-```
-
-## Future Interfaces
-
-### Planned Standards
-
-- **RGB22**: Identity & Authentication
-- **RGB23**: Audit & Compliance Tokens
-- **RGB24**: Decentralized Name Service
-- **RGB30**: Decentralized Identities
-- **RGB40**: Payment Channels
-
-### Extending Existing Interfaces
-
-New versions can add optional features:
-
-```rust
-// RGB20 V2 (future)
-interface IRGB20_V2 extends IRGB20 {
-    // V1 methods remain
-    spec(): AssetSpec;
-    totalSupply(): Amount;
-
-    // V2 additions
-    metadata(): ContractMetadata;  // New
-    proofOfReserves(): Option<Proof>;  // New
-}
-```
-
-## Related Documentation
-
-- [Creating RGB20 Tokens](../guides/rgb20/creating-tokens.md)
-- [RGB21 NFTs](../guides/rgb21/creating-nfts.md)
-- [Contract API](../guides/development/rust-sdk.md)
-- [Schema Design](../guides/contracts/schemas.md)
-
----
-
-**Source Code**:
-- RGB20 (NIA): `/tmp/rgb-repos/rgb-schemata/src/nia.rs`
-- RGB21 (UDA): `/tmp/rgb-repos/rgb-schemata/src/uda.rs`
-- RGB25 (CFA): `/tmp/rgb-repos/rgb-schemata/src/cfa.rs`
+- Line B: [Schemas guide](/guides/contracts/schemas); [Schema](https://github.com/rgb-protocol/RGB-Documentation/blob/master/rgb-contract-implementation/schema/README.md) in the official docs; `rgb-ops` on [docs.rs](https://docs.rs/rgb-ops/0.11.1)
+- Line A: `sonic-api` on [docs.rs](https://docs.rs/sonic-api/0.12.0) and `ultrasonic` on [docs.rs](https://docs.rs/ultrasonic/0.12.0); [Genesis](/guides/contracts/genesis)
