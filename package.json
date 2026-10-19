@@ -1,7 +1,7 @@
 {
   "name": "rgb-docs",
   "version": "0.12.0",
-  "description": "RGB Protocol Technical Documentation",
+  "description": "Community documentation for both RGB lines (v0.12 and v0.11)",
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
