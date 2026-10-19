@@ -480,5 +480,5 @@ describe('Voting Schema', () => {
 - [Genesis Contracts](./genesis.md)
 - [State Transitions](./state-transitions.md)
 - [Strict Types](../../technical-reference/strict-types.md)
-- [RGB20 Guide](../rgb20/issuing-assets.md)
+- [RGB20 Guide](../rgb20/creating-tokens.md)
 - [RGB21 Guide](../rgb21/creating-nfts.md)

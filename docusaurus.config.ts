@@ -15,8 +15,8 @@ const config: Config = {
   projectName: 'rgb-docs.github.io',
 
   // Recommended settings
-  onBrokenLinks: 'warn',
-  onBrokenMarkdownLinks: 'warn',
+  onBrokenLinks: 'throw',
+  onBrokenAnchors: 'throw',
 
   // Future-proof
   future: {
@@ -32,6 +32,9 @@ const config: Config = {
   themes: ['@docusaurus/theme-mermaid'],
   markdown: {
     mermaid: true,
+    hooks: {
+      onBrokenMarkdownLinks: 'throw',
+    },
   },
 
   // Head tags for additional SEO and OGP

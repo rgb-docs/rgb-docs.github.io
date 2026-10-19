@@ -2262,7 +2262,7 @@ describe('Wallet Integration Tests', () => {
 - [Rust SDK](./rust-sdk.md) - Core RGB Rust implementation
 - [Testing Guide](./testing.md) - Testing RGB applications
 - [RGB20 Transfers](../rgb20/transferring-assets.md) - Token transfer workflow
-- [Privacy Guide](../advanced/privacy.md) - RGB privacy best practices
+- [Privacy Guide](../../core-concepts/client-side-validation.md) - RGB privacy best practices
 
 ---
 

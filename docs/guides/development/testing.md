@@ -2821,7 +2821,7 @@ describe('Proper Cleanup', () => {
 - [Rust SDK](./rust-sdk.md) - Rust RGB implementation
 - [Wallet Integration](./wallet-integration.md) - Building RGB wallets
 - [RGB20 Tokens](../rgb20/creating-tokens.md) - Fungible token testing
-- [RGB21 NFTs](../rgb21/nft-basics.md) - NFT testing
+- [RGB21 NFTs](../rgb21/creating-nfts.md) - NFT testing
 
 ---
 

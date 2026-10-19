@@ -435,5 +435,5 @@ Optimize channel liquidity:
 - [Asset Channels](./asset-channels.md)
 - [Routing](./routing.md)
 - [RGB20 Transfers](../rgb20/transferring-assets.md)
-- [Lightning Integration](../../technical-reference/lightning.md)
-- [Channel Management](../../technical-reference/channels.md)
+- [Lightning Integration](overview.md)
+- [Channel Management](asset-channels.md)

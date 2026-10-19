@@ -86,7 +86,7 @@ Use regtest or testnet. See [Testing Guide](../guides/development/testing.md).
 
 ### How do I create an RGB20 token?
 
-See [Creating RGB20 Tokens](../guides/rgb20/issuing-assets.md).
+See [Creating RGB20 Tokens](../guides/rgb20/creating-tokens.md).
 
 *Token creation to be expanded*
 
@@ -153,4 +153,4 @@ No, balances are not public.
 
 - [Troubleshooting](./troubleshooting.md)
 - [Glossary](./glossary.md)
-- [Getting Started](../guides/getting-started.md)
+- [Getting Started](../getting-started/quick-start.md)

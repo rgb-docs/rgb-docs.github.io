@@ -3348,7 +3348,7 @@ async function createToken(params: Rgb20Params): Promise<Rgb20Contract> {
 - [Wallet Integration](./wallet-integration.md) - Building RGB-enabled wallets
 - [Testing Guide](./testing.md) - Testing RGB applications
 - [RGB20 Fungible Tokens](../rgb20/creating-tokens.md)
-- [RGB21 NFTs](../rgb21/nft-basics.md)
+- [RGB21 NFTs](../rgb21/creating-nfts.md)
 - [Transfer Workflow](../rgb20/transferring-assets.md)
 
 ## Further Resources

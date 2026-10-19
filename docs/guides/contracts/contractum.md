@@ -580,5 +580,5 @@ validate {
 - [Genesis Contracts](./genesis.md)
 - [State Transitions](./state-transitions.md)
 - [Strict Types](../../technical-reference/strict-types.md)
-- [AluVM](../../core-concepts/aluvm.md)
+- [AluVM](../../core-concepts/aluvm/overview.md)
 - [Rust SDK](../development/rust-sdk.md)

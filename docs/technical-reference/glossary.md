@@ -94,6 +94,6 @@ See State Transition.
 
 ## Related Documentation
 
-- [Core Concepts](../core-concepts/)
+- [Core Concepts](../core-concepts/overview.md)
 - [FAQ](./faq.md)
-- [Getting Started](../guides/getting-started.md)
+- [Getting Started](../getting-started/quick-start.md)
