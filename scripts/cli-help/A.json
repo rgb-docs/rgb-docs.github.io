@@ -1,0 +1,658 @@
+{
+ "line": "A",
+ "pin": "rgb-wallet 0.12.0-rc.3",
+ "version": null,
+ "commands": {
+  "": {
+   "flags": [
+    "--data-dir",
+    "--help",
+    "--min-confirmations",
+    "--network",
+    "--no-network-prefix",
+    "-d",
+    "-h",
+    "-n"
+   ],
+   "takes": [
+    "--data-dir",
+    "--min-confirmations",
+    "--network",
+    "-d",
+    "-n"
+   ],
+   "subs": [
+    "accept",
+    "backup",
+    "complete",
+    "consign",
+    "contracts",
+    "create",
+    "exec",
+    "export",
+    "finalize",
+    "fund",
+    "import",
+    "init",
+    "invoice",
+    "issue",
+    "pay",
+    "purge",
+    "script",
+    "seals",
+    "state",
+    "sync",
+    "wallets"
+   ],
+   "aliases": {
+    "init": [],
+    "wallets": [],
+    "create": [],
+    "sync": [],
+    "fund": [],
+    "seals": [],
+    "import": [],
+    "export": [],
+    "contracts": [],
+    "issue": [],
+    "purge": [],
+    "backup": [],
+    "state": [
+     "s"
+    ],
+    "invoice": [
+     "i"
+    ],
+    "pay": [
+     "p"
+    ],
+    "script": [],
+    "exec": [
+     "x"
+    ],
+    "complete": [],
+    "consign": [],
+    "finalize": [],
+    "accept": [
+     "a"
+    ]
+   }
+  },
+  "init": {
+   "flags": [
+    "--data-dir",
+    "--help",
+    "--min-confirmations",
+    "--network",
+    "--no-network-prefix",
+    "--quiet",
+    "-d",
+    "-h",
+    "-n",
+    "-q"
+   ],
+   "takes": [
+    "--data-dir",
+    "--min-confirmations",
+    "--network",
+    "-d",
+    "-n"
+   ],
+   "subs": [],
+   "aliases": {}
+  },
+  "wallets": {
+   "flags": [
+    "--data-dir",
+    "--help",
+    "--min-confirmations",
+    "--network",
+    "--no-network-prefix",
+    "-d",
+    "-h",
+    "-n"
+   ],
+   "takes": [
+    "--data-dir",
+    "--min-confirmations",
+    "--network",
+    "-d",
+    "-n"
+   ],
+   "subs": [],
+   "aliases": {}
+  },
+  "create": {
+   "flags": [
+    "--data-dir",
+    "--help",
+    "--min-confirmations",
+    "--network",
+    "--no-network-prefix",
+    "--tapret-key-only",
+    "--wpkh",
+    "-d",
+    "-h",
+    "-n"
+   ],
+   "takes": [
+    "--data-dir",
+    "--min-confirmations",
+    "--network",
+    "-d",
+    "-n"
+   ],
+   "subs": [],
+   "aliases": {}
+  },
+  "sync": {
+   "flags": [
+    "--data-dir",
+    "--electrum",
+    "--esplora",
+    "--help",
+    "--min-confirmations",
+    "--network",
+    "--no-network-prefix",
+    "-d",
+    "-h",
+    "-n"
+   ],
+   "takes": [
+    "--data-dir",
+    "--electrum",
+    "--esplora",
+    "--min-confirmations",
+    "--network",
+    "-d",
+    "-n"
+   ],
+   "subs": [],
+   "aliases": {}
+  },
+  "fund": {
+   "flags": [
+    "--data-dir",
+    "--help",
+    "--min-confirmations",
+    "--network",
+    "--no-network-prefix",
+    "-d",
+    "-h",
+    "-n"
+   ],
+   "takes": [
+    "--data-dir",
+    "--min-confirmations",
+    "--network",
+    "-d",
+    "-n"
+   ],
+   "subs": [],
+   "aliases": {}
+  },
+  "seals": {
+   "flags": [
+    "--data-dir",
+    "--electrum",
+    "--esplora",
+    "--help",
+    "--min-confirmations",
+    "--network",
+    "--no-network-prefix",
+    "--sync",
+    "--wallet",
+    "-d",
+    "-h",
+    "-n",
+    "-w"
+   ],
+   "takes": [
+    "--data-dir",
+    "--electrum",
+    "--esplora",
+    "--min-confirmations",
+    "--network",
+    "--wallet",
+    "-d",
+    "-n",
+    "-w"
+   ],
+   "subs": [],
+   "aliases": {}
+  },
+  "import": {
+   "flags": [
+    "--data-dir",
+    "--help",
+    "--min-confirmations",
+    "--network",
+    "--no-network-prefix",
+    "-d",
+    "-h",
+    "-n"
+   ],
+   "takes": [
+    "--data-dir",
+    "--min-confirmations",
+    "--network",
+    "-d",
+    "-n"
+   ],
+   "subs": [],
+   "aliases": {}
+  },
+  "export": {
+   "flags": [
+    "--data-dir",
+    "--force",
+    "--help",
+    "--min-confirmations",
+    "--network",
+    "--no-network-prefix",
+    "-d",
+    "-f",
+    "-h",
+    "-n"
+   ],
+   "takes": [
+    "--data-dir",
+    "--min-confirmations",
+    "--network",
+    "-d",
+    "-n"
+   ],
+   "subs": [],
+   "aliases": {}
+  },
+  "contracts": {
+   "flags": [
+    "--data-dir",
+    "--help",
+    "--issuers",
+    "--min-confirmations",
+    "--network",
+    "--no-network-prefix",
+    "-d",
+    "-h",
+    "-i",
+    "-n"
+   ],
+   "takes": [
+    "--data-dir",
+    "--min-confirmations",
+    "--network",
+    "-d",
+    "-n"
+   ],
+   "subs": [],
+   "aliases": {}
+  },
+  "issue": {
+   "flags": [
+    "--data-dir",
+    "--help",
+    "--min-confirmations",
+    "--network",
+    "--no-network-prefix",
+    "--quiet",
+    "--wallet",
+    "-d",
+    "-h",
+    "-n",
+    "-q",
+    "-w"
+   ],
+   "takes": [
+    "--data-dir",
+    "--min-confirmations",
+    "--network",
+    "--wallet",
+    "-d",
+    "-n",
+    "-w"
+   ],
+   "subs": [],
+   "aliases": {}
+  },
+  "purge": {
+   "flags": [
+    "--data-dir",
+    "--help",
+    "--min-confirmations",
+    "--network",
+    "--no-network-prefix",
+    "-d",
+    "-h",
+    "-n"
+   ],
+   "takes": [
+    "--data-dir",
+    "--min-confirmations",
+    "--network",
+    "-d",
+    "-n"
+   ],
+   "subs": [],
+   "aliases": {}
+  },
+  "backup": {
+   "flags": [
+    "--data-dir",
+    "--force",
+    "--help",
+    "--min-confirmations",
+    "--network",
+    "--no-network-prefix",
+    "-d",
+    "-f",
+    "-h",
+    "-n"
+   ],
+   "takes": [
+    "--data-dir",
+    "--min-confirmations",
+    "--network",
+    "-d",
+    "-n"
+   ],
+   "subs": [],
+   "aliases": {}
+  },
+  "state": {
+   "flags": [
+    "--all",
+    "--data-dir",
+    "--electrum",
+    "--esplora",
+    "--global",
+    "--help",
+    "--min-confirmations",
+    "--network",
+    "--no-network-prefix",
+    "--owned",
+    "--sync",
+    "--wallet",
+    "-a",
+    "-d",
+    "-g",
+    "-h",
+    "-n",
+    "-o",
+    "-w"
+   ],
+   "takes": [
+    "--data-dir",
+    "--electrum",
+    "--esplora",
+    "--min-confirmations",
+    "--network",
+    "--wallet",
+    "-d",
+    "-n",
+    "-w"
+   ],
+   "subs": [],
+   "aliases": {}
+  },
+  "invoice": {
+   "flags": [
+    "--api",
+    "--data-dir",
+    "--help",
+    "--method",
+    "--min-confirmations",
+    "--network",
+    "--no-network-prefix",
+    "--nonce",
+    "--seal-only",
+    "--state",
+    "--wallet",
+    "--wout",
+    "-a",
+    "-d",
+    "-h",
+    "-m",
+    "-n",
+    "-s",
+    "-w"
+   ],
+   "takes": [
+    "--api",
+    "--data-dir",
+    "--method",
+    "--min-confirmations",
+    "--network",
+    "--nonce",
+    "--state",
+    "--wallet",
+    "-a",
+    "-d",
+    "-m",
+    "-n",
+    "-s",
+    "-w"
+   ],
+   "subs": [],
+   "aliases": {}
+  },
+  "pay": {
+   "flags": [
+    "--data-dir",
+    "--electrum",
+    "--esplora",
+    "--fee",
+    "--force",
+    "--help",
+    "--min-confirmations",
+    "--network",
+    "--no-network-prefix",
+    "--print",
+    "--psbt2",
+    "--sats",
+    "--strategy",
+    "--sync",
+    "--wallet",
+    "-2",
+    "-d",
+    "-f",
+    "-h",
+    "-n",
+    "-p",
+    "-s",
+    "-w"
+   ],
+   "takes": [
+    "--data-dir",
+    "--electrum",
+    "--esplora",
+    "--fee",
+    "--min-confirmations",
+    "--network",
+    "--sats",
+    "--strategy",
+    "--wallet",
+    "-d",
+    "-n",
+    "-s",
+    "-w"
+   ],
+   "subs": [],
+   "aliases": {}
+  },
+  "script": {
+   "flags": [
+    "--data-dir",
+    "--electrum",
+    "--esplora",
+    "--help",
+    "--min-confirmations",
+    "--network",
+    "--no-network-prefix",
+    "--sats",
+    "--strategy",
+    "--sync",
+    "--wallet",
+    "-d",
+    "-h",
+    "-n",
+    "-s",
+    "-w"
+   ],
+   "takes": [
+    "--data-dir",
+    "--electrum",
+    "--esplora",
+    "--min-confirmations",
+    "--network",
+    "--sats",
+    "--strategy",
+    "--wallet",
+    "-d",
+    "-n",
+    "-s",
+    "-w"
+   ],
+   "subs": [],
+   "aliases": {}
+  },
+  "exec": {
+   "flags": [
+    "--data-dir",
+    "--help",
+    "--min-confirmations",
+    "--network",
+    "--no-network-prefix",
+    "--print",
+    "--psbt2",
+    "--wallet",
+    "-2",
+    "-d",
+    "-h",
+    "-n",
+    "-p",
+    "-w"
+   ],
+   "takes": [
+    "--data-dir",
+    "--min-confirmations",
+    "--network",
+    "--wallet",
+    "-d",
+    "-n",
+    "-w"
+   ],
+   "subs": [],
+   "aliases": {}
+  },
+  "complete": {
+   "flags": [
+    "--data-dir",
+    "--help",
+    "--min-confirmations",
+    "--network",
+    "--no-network-prefix",
+    "--wallet",
+    "-d",
+    "-h",
+    "-n",
+    "-w"
+   ],
+   "takes": [
+    "--data-dir",
+    "--min-confirmations",
+    "--network",
+    "--wallet",
+    "-d",
+    "-n",
+    "-w"
+   ],
+   "subs": [],
+   "aliases": {}
+  },
+  "consign": {
+   "flags": [
+    "--data-dir",
+    "--help",
+    "--min-confirmations",
+    "--network",
+    "--no-network-prefix",
+    "--terminals",
+    "-d",
+    "-h",
+    "-n",
+    "-t"
+   ],
+   "takes": [
+    "--data-dir",
+    "--min-confirmations",
+    "--network",
+    "--terminals",
+    "-d",
+    "-n",
+    "-t"
+   ],
+   "subs": [],
+   "aliases": {}
+  },
+  "finalize": {
+   "flags": [
+    "--broadcast",
+    "--data-dir",
+    "--electrum",
+    "--esplora",
+    "--help",
+    "--min-confirmations",
+    "--network",
+    "--no-network-prefix",
+    "--sync",
+    "--wallet",
+    "-b",
+    "-d",
+    "-h",
+    "-n",
+    "-w"
+   ],
+   "takes": [
+    "--data-dir",
+    "--electrum",
+    "--esplora",
+    "--min-confirmations",
+    "--network",
+    "--wallet",
+    "-d",
+    "-n",
+    "-w"
+   ],
+   "subs": [],
+   "aliases": {}
+  },
+  "accept": {
+   "flags": [
+    "--data-dir",
+    "--help",
+    "--min-confirmations",
+    "--network",
+    "--no-network-prefix",
+    "--unknown",
+    "--wallet",
+    "-d",
+    "-h",
+    "-n",
+    "-u",
+    "-w"
+   ],
+   "takes": [
+    "--data-dir",
+    "--min-confirmations",
+    "--network",
+    "--wallet",
+    "-d",
+    "-n",
+    "-w"
+   ],
+   "subs": [],
+   "aliases": {}
+  }
+ }
+}
