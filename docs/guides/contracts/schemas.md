@@ -77,6 +77,8 @@ Schema {
   ret;
   ```
 
+  The PFA transfer script also runs `vts`, an RGB opcode that verifies the transition's signature against the `pubkey` global set in genesis (`rgb-consensus` 0.11.1 `src/vm/op_contract.rs`). That is how PFA requires the issuer's approval of every transfer.
+
   Amounts are plain u64 values, visible to everyone who validates the consignment. Neither RGB line uses Pedersen commitments.
 - **The schema ID** is a commitment to the whole `Schema` value. Change one field and you get a different schema, so schemas can't be upgraded. IFA's `link` transition exists so that an issuer can point holders to a replacement contract.
 
