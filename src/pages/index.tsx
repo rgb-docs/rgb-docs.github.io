@@ -40,7 +40,7 @@ function HomepageHeader() {
           fontWeight: '500',
           letterSpacing: '0.05em'
         }}>
-          ⚡ Unlimited Scale • 🔒 Total Privacy • 💎 Bitcoin Security
+          Client-side validation • Single-use seals • Two implementations
         </div>
         <div style={{
           display: 'flex',
@@ -150,10 +150,10 @@ function StatsSection() {
           gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
           gap: '1.5rem'
         }}>
-          <StatCard emoji="⚡" number="100x Faster" label="5ms validation" />
-          <StatCard emoji="🌍" number="Unlimited Scale" label="Off-chain execution" />
-          <StatCard emoji="🔒" number="Total Privacy" label="Client-side validation" />
-          <StatCard emoji="💎" number="Bitcoin Security" label="Anchored to Bitcoin" />
+          <StatCard emoji="🅰️" number="v0.12" label="RGB-WG · rgb-wallet 0.12.0-rc.3" />
+          <StatCard emoji="🅱️" number="v0.11" label="RGB Protocol Association · rgb-cmd 0.11.1" />
+          <StatCard emoji="🔒" number="Off-chain state" label="Client-side validation" />
+          <StatCard emoji="₿" number="Bitcoin seals" label="Ownership is a UTXO" />
         </div>
       </div>
     </section>
@@ -208,39 +208,39 @@ function HomepageFeatures() {
           <Feature
             emoji="🔐"
             title="Client-Side Validation"
-            description="Revolutionary approach where validation happens on the client side, not on the blockchain. Ensures privacy, scalability, and efficiency."
+            description="Contract state and history are passed between the parties and validated by each client. Bitcoin only sees a commitment, so state stays private and off-chain."
             link="/core-concepts/client-side-validation"
           />
           <Feature
             emoji="🎯"
             title="Smart Contracts on Bitcoin"
-            description="Build complex, Turing-complete smart contracts on Bitcoin using AluVM and RGB protocol, without modifying Bitcoin consensus."
+            description="Contracts run on AluVM and are bound to Bitcoin UTXOs through single-use seals, without any change to Bitcoin consensus."
             link="/guides/contracts/schemas"
           />
           <Feature
             emoji="⚡"
-            title="Lightning Network Ready"
-            description="Seamless integration with Lightning Network enables instant, low-cost transfers of RGB assets across payment channels."
+            title="Lightning (v0.11 line)"
+            description="RGB Lightning Node runs RGB assets in Lightning channels on the v0.11 line. It is alpha and supports regtest and testnet. The v0.12 line has no Lightning implementation yet."
             link="/guides/lightning/overview"
           />
         </div>
         <div className="row">
           <Feature
             emoji="🪙"
-            title="Fungible Assets (RGB20)"
-            description="Create and manage fungible tokens like stablecoins, utility tokens, and securities on Bitcoin with the RGB20 interface."
+            title="Fungible assets"
+            description="Issue fixed-supply (NIA) and inflatable (IFA) tokens on the v0.11 line, or fungible tokens from an RGB20 issuer on the v0.12 line."
             link="/guides/rgb20/creating-tokens"
           />
           <Feature
             emoji="🖼️"
-            title="NFTs (RGB21)"
-            description="Issue non-fungible tokens with metadata attachments for digital art, collectibles, and unique digital assets using RGB21."
+            title="Unique assets (UDA)"
+            description="One-of-one assets with media attachments, using the UDA schema on the v0.11 line."
             link="/guides/rgb21/creating-nfts"
           />
           <Feature
             emoji="🎮"
-            title="Collectibles (RGB25)"
-            description="Create collectible fungible assets perfect for trading cards, game items, and limited edition merchandise."
+            title="Collectible fungible (CFA)"
+            description="Fungible assets with collectible metadata, using the CFA schema on the v0.11 line."
             link="/guides/rgb25/overview"
           />
         </div>
@@ -270,7 +270,7 @@ function CTASection() {
           marginBottom: '2rem',
           opacity: 0.9
         }}>
-          Start building with RGB v0.12 today. No blockchain fees. No gas. No waiting.
+          Pick a line, install its CLI and issue a test asset on regtest or testnet.
         </p>
         <div style={{
           display: 'flex',
