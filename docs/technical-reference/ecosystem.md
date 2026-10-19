@@ -20,7 +20,7 @@ Checked on 2026-10-19 against each project's own pages, GitHub and the npm and c
 | [rgb-sandbox](https://github.com/rgb-protocol/rgb-sandbox) | Docker regtest demo of `rgb-cmd` | The quickest way to try Line B. |
 | [Iris Wallet](https://github.com/RGB-Tools/iris-wallet-android) | Android wallet built on rgb-lib | On mainnet since July 2025. |
 | [KaleidoSwap](https://github.com/kaleidoswap) | Lightning DEX on RGB Lightning Node | First RGB asset swap on Lightning mainnet (Sept 2025). |
-| [Utexo](https://github.com/UTEXO-Protocol) | RGB infrastructure; Tether WDK modules | `@utexo/rgb-sdk`, `@utexo/rgb-lib-wasm`, `@utexo/wdk-rgb-lightning` on npm, all beta. |
+| [Utexo](https://github.com/UTEXO-Protocol) | RGB infrastructure; Tether WDK modules | `@utexo/rgb-sdk-core` / `-web` / `-rn`, `@utexo/rgb-lib-wasm`, `@utexo/wdk-rgb-lightning` on npm, all beta. (The older `@utexo/rgb-sdk` repo is archived.) |
 | BitMask (DIBA), LNFI, Bitcoin Tribe, Bihelix | Wallets and services | Listed as members on [rgbprotocol.org](https://rgbprotocol.org). |
 | Tether USD₮ | Stablecoin | Announced 2025-08-28. Reports in Oct 2026 say Utexo will issue it in October 2026; **not confirmed live** as of 2026-10-19. |
 
@@ -34,6 +34,6 @@ Checked on 2026-10-19 against each project's own pages, GitHub and the npm and c
 
 ## JavaScript and TypeScript
 
-- **Line B:** [`rgb-lib`](https://www.npmjs.com/package/rgb-lib) (Node bindings, RGB-Tools). Utexo's [`@utexo/rgb-sdk`](https://www.npmjs.com/package/@utexo/rgb-sdk) and [`@utexo/rgb-lib-wasm`](https://www.npmjs.com/package/@utexo/rgb-lib-wasm) are third-party betas.
+- **Line B:** [`rgb-lib`](https://www.npmjs.com/package/rgb-lib) (Node bindings, RGB-Tools). Utexo's [`@utexo/rgb-sdk-core`](https://www.npmjs.com/package/@utexo/rgb-sdk-core) and [`@utexo/rgb-lib-wasm`](https://www.npmjs.com/package/@utexo/rgb-lib-wasm) are third-party betas.
 - **Line A:** no JavaScript SDK.
 - The `@rgbjs/*` packages that this site once listed **don't exist**. Don't install anything under that name.
