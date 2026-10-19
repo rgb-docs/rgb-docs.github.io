@@ -16,23 +16,13 @@ Add RGB libraries to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-# Core RGB libraries
-rgb-std = "0.12"
-rgb-core = "0.12"
-rgb = "0.12"
-
-# Schemata for RGB20, RGB21, etc.
-rgb-schemata = "0.12"
-
-# Bitcoin integration
-bp-std = "0.12"
-bp-wallet = "0.12"
-
-# Persistence
-rgb-persist-fs = { version = "0.12", optional = true }
-
-# Optional: PSBT support
-rgbpsbt = "0.12"
+# Line A (RGB-WG v0.12): only release candidates exist, so pin them exactly.
+# Don't add `rgb = ...`: the crate called `rgb` is an unrelated pixel-colour library.
+rgb-runtime = "=0.12.0-rc.3"
+rgb-std = "=0.12.0-rc.3"
+rgb-core = "=0.12.0"
+rgb-persist-fs = { version = "=0.12.0-rc.3", optional = true }
+rgb-psbt = "=0.12.0-rc.3"
 
 [features]
 fs = ["rgb-persist-fs"]

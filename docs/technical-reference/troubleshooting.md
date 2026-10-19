@@ -6,6 +6,10 @@ description: Common RGB issues and solutions
 
 # Troubleshooting
 
+:::danger `@rgbjs/*` packages don't exist
+The `@rgbjs/...` imports on this page refer to npm packages that were never published, and the `@rgbjs` scope isn't registered. Treat these examples as illustrative only and **don't install anything under that name**: anyone could register it. Real JavaScript options: Line B (RGB Protocol Association) has the [`rgb-lib`](https://www.npmjs.com/package/rgb-lib) bindings from RGB-Tools. Line A (RGB-WG v0.12) has no JavaScript SDK. This page is being rewritten.
+:::
+
 Solutions to common RGB problems and error messages.
 
 ## Installation Issues
@@ -33,12 +37,7 @@ apt-get install build-essential pkg-config libssl-dev
 Error: Cannot find module '@rgbjs/core'
 ```
 
-**Solution:**
-```bash
-npm install @rgbjs/core
-# or
-npm run rebuild
-```
+**Solution:** there's no `@rgbjs/core` package on npm, so don't install anything under that name. Line B's JavaScript bindings are the [`rgb-lib`](https://www.npmjs.com/package/rgb-lib) package from RGB-Tools. Line A has no JavaScript SDK.
 
 *Module issues to be expanded*
 

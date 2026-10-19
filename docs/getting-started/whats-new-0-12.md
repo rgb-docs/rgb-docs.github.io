@@ -329,8 +329,8 @@ Additional privacy features:
 # 1. Export v0.11 contract data
 rgb-v0.11 export --contract <ID> --output old-data.json
 
-# 2. Upgrade to v0.12
-cargo install rgb-cli@0.12
+# 2. Install the v0.12 CLI (release candidate; crate rgb-wallet, not rgb-cli)
+cargo install --locked rgb-wallet --version 0.12.0-rc.3
 
 # 3. Re-issue contract
 # Create new params file with your token specs

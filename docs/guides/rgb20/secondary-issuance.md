@@ -6,6 +6,10 @@ description: Implement controlled secondary issuance for RGB20 tokens including 
 
 # Secondary Issuance
 
+:::danger `@rgbjs/*` packages don't exist
+The `@rgbjs/...` imports on this page refer to npm packages that were never published, and the `@rgbjs` scope isn't registered. Treat these examples as illustrative only and **don't install anything under that name**: anyone could register it. Real JavaScript options: Line B (RGB Protocol Association) has the [`rgb-lib`](https://www.npmjs.com/package/rgb-lib) bindings from RGB-Tools. Line A (RGB-WG v0.12) has no JavaScript SDK. This page is being rewritten.
+:::
+
 RGB20 tokens support sophisticated secondary issuance mechanisms allowing controlled token supply management. This guide covers inflation schedules, token burning, and governance-controlled issuance.
 
 ## Overview

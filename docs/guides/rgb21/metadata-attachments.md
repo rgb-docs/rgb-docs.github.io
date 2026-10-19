@@ -573,7 +573,11 @@ async fn fetch_and_verify(
 - No ongoing pinning costs
 - Good for archival
 
-**Upload:**
+:::danger Never send a wallet key to a server
+An earlier version of this example sent the wallet key in an `Authorization` header. Arweave transactions are signed locally; use an Arweave client library (or a bundler service), and keep keys on the device. Don't put any Bitcoin or RGB wallet key in an HTTP request.
+:::
+
+**Upload (illustrative; the key handling is wrong, see the warning above):**
 
 ```rust
 use reqwest::Client;

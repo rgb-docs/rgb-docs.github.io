@@ -6,55 +6,17 @@ description: Building RGB applications with JavaScript and TypeScript
 
 # RGB.js SDK
 
+:::danger `@rgbjs/*` packages don't exist
+The `@rgbjs/...` imports on this page refer to npm packages that were never published, and the `@rgbjs` scope isn't registered. Treat these examples as illustrative only and **don't install anything under that name**: anyone could register it. Real JavaScript options: Line B (RGB Protocol Association) has the [`rgb-lib`](https://www.npmjs.com/package/rgb-lib) bindings from RGB-Tools. Line A (RGB-WG v0.12) has no JavaScript SDK. This page is being rewritten.
+:::
+
 RGB.js brings RGB smart contracts to JavaScript and TypeScript. Build web applications, mobile apps, and Node.js services with RGB.
 
 ## Installation
 
 ### Package Manager Setup
 
-RGB.js is distributed as a collection of npm packages. Install them based on your needs:
-
-```bash
-# Core package (required)
-npm install @rgbjs/core
-
-# Wallet utilities
-npm install @rgbjs/wallet
-
-# React hooks and components
-npm install @rgbjs/react
-
-# TypeScript types (included automatically)
-npm install --save-dev @types/rgbjs
-```
-
-Using yarn:
-
-```bash
-yarn add @rgbjs/core @rgbjs/wallet @rgbjs/react
-```
-
-Using pnpm:
-
-```bash
-pnpm add @rgbjs/core @rgbjs/wallet @rgbjs/react
-```
-
-### Monorepo Workspace Setup
-
-For monorepo projects using npm workspaces:
-
-```json
-{
-  "workspaces": [
-    "packages/*"
-  ],
-  "dependencies": {
-    "@rgbjs/core": "^0.12.0",
-    "@rgbjs/wallet": "^0.12.0"
-  }
-}
-```
+The `@rgbjs/*` packages this page used to tell you to install don't exist on npm, so the commands have been removed. See the warning at the top of the page.
 
 ### Version Compatibility
 
@@ -131,22 +93,6 @@ import {
 - Balance and asset hooks
 - Transfer components
 - QR code integration
-
-### Optional Packages
-
-```bash
-# React Native support
-npm install @rgbjs/react-native
-
-# Electron integration
-npm install @rgbjs/electron
-
-# Testing utilities
-npm install --save-dev @rgbjs/testing
-
-# CLI tools
-npm install -g @rgbjs/cli
-```
 
 ## Quick Start
 
