@@ -329,7 +329,7 @@ Controlled token releases from project treasury:
 
 ## Related Documentation
 
-- [Creating RGB20 Tokens](./issuing-assets.md)
+- [Creating RGB20 Tokens](creating-tokens.md)
 - [Transferring Assets](./transferring-assets.md)
 - [RGB20 Schema](../contracts/schemas.md)
 - [Genesis Contracts](../contracts/genesis.md)

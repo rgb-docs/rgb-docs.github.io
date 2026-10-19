@@ -598,7 +598,5 @@ rgb bundle status --txid a1b2c3d4...
 ## See Also
 
 - [State Transitions](/guides/contracts/state-transitions) - Creating transitions
-- [Anchors](/technical-reference/api#anchors) - Bitcoin commitment mechanism
+- [Deterministic Commitments](/core-concepts/bitcoin/deterministic-commitments) - Bitcoin commitment mechanism
 - [Multi-Protocol Commitments](/core-concepts/bitcoin/multi-protocol-commitments) - MPC trees
-- [PSBT Integration](/guides/development/wallet-integration#psbt) - Partially Signed Bitcoin Transactions
-- [Atomic Swaps](/guides/rgb20/transferring-assets#atomic-swaps) - Cross-contract swaps

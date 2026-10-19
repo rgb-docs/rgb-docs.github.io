@@ -601,4 +601,4 @@ try {
 - [Asset Channels](./asset-channels.md)
 - [RGB20 Transfers](../rgb20/transferring-assets.md)
 - [Invoices](../../technical-reference/invoices.md)
-- [Lightning Network](../../core-concepts/lightning.md)
+- [Lightning Network](overview.md)

@@ -945,8 +945,8 @@ const genesis = builder
 - [RGB Schemas](./schemas.md) - Understanding contract schemas
 - [State Transitions](./state-transitions.md) - How to modify contract state
 - [Contractum Language](./contractum.md) - High-level contract definition
-- [RGB20 Token Creation](../rgb20/issuing-assets.md) - Fungible token guide
+- [RGB20 Token Creation](../rgb20/creating-tokens.md) - Fungible token guide
 - [RGB21 NFT Creation](../rgb21/creating-nfts.md) - NFT creation guide
-- [Bitcoin Integration](../../core-concepts/bitcoin-utxos.md) - UTXO and anchoring
+- [Bitcoin Integration](../../core-concepts/single-use-seals.md) - UTXO and anchoring
 - [Client-Side Validation](../../core-concepts/client-side-validation.md) - Validation principles
 - [Consignments](../../technical-reference/consignments.md) - State transfer format

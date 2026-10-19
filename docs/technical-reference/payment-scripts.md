@@ -55,5 +55,5 @@ const script = buildCommitmentScript({
 
 ## Related Documentation
 
-- [Bitcoin UTXOs](../core-concepts/bitcoin-utxos.md)
+- [Bitcoin UTXOs](../core-concepts/single-use-seals.md)
 - [State Transitions](../guides/contracts/state-transitions.md)

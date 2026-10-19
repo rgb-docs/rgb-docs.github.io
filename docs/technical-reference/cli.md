@@ -2095,23 +2095,23 @@ done
 - [RGB Protocol Specification](https://rgb.tech)
 - [API Reference](./api.md) - Programmatic RGB interfaces
 - [Interfaces](./interfaces.md) - RGB interface standards
-- [Schema Documentation](./schemas.md) - RGB20, RGB21 schemas
+- [Schema Documentation](../guides/contracts/schemas.md) - RGB20, RGB21 schemas
 
 ### Guides and Tutorials
-- [Getting Started](../guides/getting-started.md) - First steps with RGB
-- [Token Issuance](../guides/token-issuance.md) - Creating RGB tokens
-- [NFT Guide](../guides/nfts.md) - Working with RGB21 NFTs
-- [Advanced Workflows](../guides/advanced-workflows.md) - Complex operations
+- [Getting Started](../getting-started/quick-start.md) - First steps with RGB
+- [Token Issuance](../guides/rgb20/creating-tokens.md) - Creating RGB tokens
+- [NFT Guide](../guides/rgb21/creating-nfts.md) - Working with RGB21 NFTs
+- [Advanced Workflows](../guides/contracts/state-transitions.md) - Complex operations
 
 ### Troubleshooting and Support
 - [Troubleshooting Guide](./troubleshooting.md) - Common issues and solutions
-- [FAQ](../faq.md) - Frequently asked questions
-- [Community Resources](../community.md) - Support channels
+- [FAQ](faq.md) - Frequently asked questions
+- Community Resources - Support channels
 
 ### Development Resources
 - [RGB Repository](https://github.com/RGB-WG/rgb) - Source code
-- [Integration Guide](../guides/integration.md) - Integrate RGB in apps
-- [Testing Guide](../guides/testing.md) - Testing RGB applications
+- [Integration Guide](../guides/development/wallet-integration.md) - Integrate RGB in apps
+- [Testing Guide](../guides/development/testing.md) - Testing RGB applications
 
 ### External Resources
 - [RGB.tech](https://rgb.tech) - Official website
