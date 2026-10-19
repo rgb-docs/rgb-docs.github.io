@@ -1,267 +1,73 @@
 ---
 sidebar_position: 1
 title: Core Concepts Overview
-description: Understanding the fundamental concepts of RGB Protocol
+description: The ideas behind RGB, how they fit together, and where the two RGB lines differ.
+rgb_line: both
+verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
+last_update:
+  date: 2026-10-19
 ---
 
 # Core Concepts Overview
 
-RGB is built on revolutionary distributed computing concepts that enable smart contracts on Bitcoin without modifying the blockchain itself. This section introduces the core architectural principles.
+:::info Applies to both RGB lines
+The core ideas are shared by both lines; the table below lists where they differ. See [Two RGB lines](/getting-started/two-rgbs).
+:::
 
-## The RGB Paradigm
+RGB is a system of smart contracts for Bitcoin in which **contract data stays off chain**. It rests on three ideas.
 
-RGB fundamentally reverses traditional blockchain validation through three key concepts:
+1. **[Client-side validation](./client-side-validation.md).** The contract's history is kept and checked by the people who hold its state, not by every node. A recipient validates everything from genesis to the state they receive.
+2. **[Single-use seals](./single-use-seals.md).** Owned state is bound to Bitcoin transaction outputs. Moving the state means spending the output in a transaction that commits to the new state, and Bitcoin ensures an output can be spent only once. This stops double spends without a separate consensus layer.
+3. **[Deterministic Bitcoin commitments](./bitcoin/deterministic-commitments.md).** Each witness transaction carries exactly one 32-byte commitment, in an [opret](./bitcoin/opret.md) or [tapret](./bitcoin/tapret.md) output. [Multi-protocol commitments](./bitcoin/multi-protocol-commitments.md) let many contracts share it.
 
-### 1. Client-Side Validation
+On top of these sit:
 
-Unlike traditional blockchains where every node validates every transaction, RGB uses **client-side validation**:
+- the **[state model](./state/unified-state.md)**: [owned state](./state/owned-state.md) bound to seals, and append-only [global state](./state/global-state.md);
+- the contract rules: a **schema** in Line B, a **codex** in Line A;
+- **[AluVM](./aluvm/overview.md)**, a deterministic VM for the programmable parts of those rules;
+- **[strict types](/technical-reference/strict-types)**, the deterministic binary encoding of all of this data, and [Baid64](/technical-reference/encodings) for printing ids.
 
-- Only parties involved in a transaction validate its history
-- Validation data is transferred off-chain via consignments
-- Bitcoin blockchain contains only cryptographic commitments
-- Privacy is preserved as others can't see your transactions
+## What a transfer looks like
 
-[Learn more about Client-Side Validation →](/core-concepts/client-side-validation)
-
-### 2. Bitcoin UTXO Binding
-
-RGB prevents double-spending by binding state to Bitcoin UTXOs:
-
-- Each RGB state is bound to a specific Bitcoin UTXO
-- Spending the UTXO commits the new RGB state
-- Bitcoin consensus prevents double-spending UTXOs
-- Therefore: RGB state cannot be double-spent
-- No RGB-specific consensus needed (Bitcoin handles it)
-
-[Learn more about UTXO binding →](/core-concepts/single-use-seals)
-
-### 3. PRISM Computing
-
-RGB implements **Partially-Replicated Infinite State Machines** (PRISM):
-
-- Not all participants replicate the entire state
-- Each party maintains only their relevant state fragment
-- State evolves as a directed acyclic graph (DAG)
-- Enables massive scalability
-
-
-## RGB Architecture Layers
-
-```mermaid
-%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#667eea','primaryTextColor':'#fff','primaryBorderColor':'#764ba2','lineColor':'#764ba2','secondaryColor':'#f8f9fa','tertiaryColor':'#fff'}}}%%
-graph TB
-    subgraph layer7[" "]
-        A["<b>Contractum Smart Contract Language</b><br/>High-level contract definition"]
-    end
-    subgraph layer6[" "]
-        B["<b>RGB Schema & Interfaces</b><br/>Contract templates & APIs<br/>(RGB20, RGB21, RGB22, ...)"]
-    end
-    subgraph layer5[" "]
-        C["<b>zk-AluVM Virtual Machine</b><br/>Contract execution & validation<br/>(40 instructions, non-von-Neumann)"]
-    end
-    subgraph layer4[" "]
-        D["<b>Client-Side Validation</b><br/>State validation logic<br/>(Consignments, State Transitions)"]
-    end
-    subgraph layer3[" "]
-        E["<b>UTXO Binding</b><br/>Ownership & double-spend prevention<br/>(Bitcoin UTXOs)"]
-    end
-    subgraph layer2[" "]
-        F["<b>Deterministic Bitcoin Commitments</b><br/>Commitment layer<br/>(Tapret, Opret, MPC)"]
-    end
-    subgraph layer1[" "]
-        G["<b>Bitcoin & Lightning Network</b><br/>Settlement & publication layer"]
-    end
-
-    A --> B --> C --> D --> E --> F --> G
-
-    style layer7 fill:#667eea,stroke:#764ba2,stroke-width:2px,color:#fff
-    style layer6 fill:#7c8ff0,stroke:#764ba2,stroke-width:2px,color:#fff
-    style layer5 fill:#92a0f3,stroke:#764ba2,stroke-width:2px,color:#fff
-    style layer4 fill:#a8b1f6,stroke:#764ba2,stroke-width:2px,color:#fff
-    style layer3 fill:#bec2f9,stroke:#764ba2,stroke-width:2px,color:#fff
-    style layer2 fill:#d4d3fc,stroke:#764ba2,stroke-width:2px,color:#333
-    style layer1 fill:#eae4ff,stroke:#764ba2,stroke-width:2px,color:#333
-    style A fill:transparent,stroke:none,color:#fff
-    style B fill:transparent,stroke:none,color:#fff
-    style C fill:transparent,stroke:none,color:#fff
-    style D fill:transparent,stroke:none,color:#fff
-    style E fill:transparent,stroke:none,color:#333
-    style F fill:transparent,stroke:none,color:#333
-    style G fill:transparent,stroke:none,color:#333
+```text
+Alice owns 1000 on utxo_A.  Bob sends Alice an invoice naming a seal (his UTXO, hidden).
+Alice writes a transition:  spend utxo_A → 600 to Bob's seal, 400 to her change seal.
+Alice builds a Bitcoin tx:  spends utxo_A; its first OP_RETURN or P2TR output commits to the transition.
+Alice sends Bob a consignment: the history from genesis to his 600, plus the anchors.
+Bob validates it, accepts it, and the Bitcoin tx confirms. The 600 is now Bob's.
 ```
 
-## Key Components
+Nothing on chain says "RGB", shows amounts or names the contract. An observer sees an ordinary Bitcoin transaction with an `OP_RETURN` output (opret) or a taproot output (tapret).
 
-### AluVM Virtual Machine
+## Where the two lines differ
 
-RGB uses **zk-AluVM**, a revolutionary VM designed for zk-STARK compatibility:
+| | Line B: v0.11 (rgb-cmd 0.11.1) | Line A: v0.12 (rgb-wallet 0.12.0-rc.3) |
+|---|---|---|
+| Contract rules | Schemas NIA, IFA, CFA, UDA, PFA (`rgb-schemas` 0.11.1); no separate interfaces | Codex plus API (SONIC / UltraSONIC), e.g. the `RGB20-FNA` codex |
+| State | Typed: owned `Declarative` / `Fungible` (u64) / `Structured`, global values, metadata | Memory cells of up to four 256-bit field elements, plus raw bytes the VM can't read; no metadata |
+| VM | `rgb-aluvm` 0.11.1 (a, f, r and s registers) | zk-AluVM 0.12 (field-element registers) |
+| Seals in invoices | `utxob:` (blinded UTXO), `wvout:` (witness output) | `at:` (auth token), `wout:` (witness output) |
+| Contract id | `rgb:Ca0d5l5K-Cr4Wm6I-…` | `contract:XgHwkqS4-RcYeRtr-…` |
+| Tapret leaf prefix | 29 × `OP_RESERVED` (0x50) | 29 × `OP_NOP` (0x61) |
+| Opret, MPC | Byte-identical in both | Byte-identical in both |
+| MPC leaf message | Transition `BundleId` | Multi-message bundle (input → operation) |
+| Lightning | [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) (alpha) | None |
+| Networks | Mainnet, testnet, signet, regtest | Testnet, signet, regtest; the CLI refuses mainnet |
 
-- **40 instructions** total (vs thousands in traditional VMs)
-- **Non-von-Neumann** architecture
-- **Read-once memory** compatible with single-use seals
-- **Turing-complete** despite simplicity
-- **Formally verifiable** code analysis
+Shared by both: no confidential amounts (Pedersen commitments were removed), no state extensions or valencies, and no zero-knowledge proofs of history yet.
 
-[Explore AluVM →](/core-concepts/aluvm/overview)
+:::danger Line A is testnet-only
+`rgb-wallet` 0.12.0-rc.3 is a release candidate and refuses mainnet. Don't move real value with it.
+:::
 
-### State Management
+## Vocabulary you may meet
 
-RGB v0.12 unified all state into a single type of finite field elements:
+- **SONIC, UltraSONIC, codex, Prism** are RGB-WG (Line A) terms for parts of the v0.12 design. Line B doesn't use them.
+- **Contractum** is a contract language RGB-WG proposed. No compiler has been released (`RGB-WG/contractum-lang` was last updated 2022-12-24), and neither line uses it. Contracts are written in Rust.
+- **RGB20, RGB21, RGB25** were interface names in RGB v0.10 and the v0.11 betas. Line B 0.11.1 has no interfaces and names schemas directly (NIA, IFA, UDA, CFA, PFA). Line A uses the label in codex names such as `RGB20-FNA`.
 
-- **Owned State**: Rights controlled by Bitcoin script
-- **Global State**: Public information accessible to all
-- **Metadata**: Additional contract-specific data
+## Further reading
 
-[Learn about State Management →](/core-concepts/state/unified-state)
-
-### Bitcoin Integration
-
-RGB leverages Bitcoin through deterministic commitments:
-
-- **Tapret**: Taproot-based commitments (preferred)
-- **Opret**: OP_RETURN-based commitments (fallback)
-- **MPC**: Multi-Protocol Commitments for efficiency
-
-[Understand Bitcoin Integration →](/core-concepts/bitcoin/deterministic-commitments)
-
-## Data Flow
-
-### Contract Issuance
-
-```mermaid
-graph LR
-    A[Issuer] -->|Creates Genesis| B[Contract]
-    B -->|Commits to Bitcoin| C[Blockchain]
-    B -->|Distributes| D[Recipients]
-```
-
-### Asset Transfer
-
-```mermaid
-graph LR
-    A[Recipient] -->|Creates Invoice| B[Sender]
-    B -->|Creates Consignment| C[Transfer Data]
-    C -->|Validates| A
-    B -->|Commits to Bitcoin| D[Blockchain]
-```
-
-## Design Principles
-
-### Privacy by Design
-
-- Original transaction details are never published
-- Only cryptographic hashes visible on-chain
-- State distributed only to relevant parties
-- Optional blinding for UTXO allocations
-
-### Scalability
-
-- Validation complexity grows with personal history, not global state
-- Parallel validation across different assets
-- No blockchain bloat from smart contract execution
-- Lightning Network integration for instant transfers
-
-### Simplicity
-
-RGB v0.12 achieved dramatic simplification:
-
-- **4x reduction** in codebase size
-- **Single unified state type**
-- **40-instruction VM**
-- Easier to audit and verify
-
-### Bitcoin-Native
-
-- No altcoins or separate consensus
-- Leverages Bitcoin's security
-- Compatible with Lightning Network
-- Uses existing Bitcoin primitives
-
-## RGB vs Traditional Smart Contracts
-
-| Aspect | Traditional (Ethereum) | RGB |
-|--------|----------------------|-----|
-| Validation | Global (all nodes) | Client-side (parties only) |
-| State Storage | On-chain (public) | Off-chain (private) |
-| Privacy | Minimal | Strong |
-| Scalability | Limited | Massive |
-| Fees | Variable, often high | Bitcoin TX fees only |
-| Execution | On-chain | Off-chain |
-| Blockchain | Purpose-built | Bitcoin |
-
-## Understanding RGB Through Use Cases
-
-### Fungible Tokens (RGB20)
-
-```
-Issue stablecoins, securities, utility tokens
-↓
-Transfer instantly on Lightning
-↓
-Maintain complete privacy
-↓
-Pay only Bitcoin transaction fees
-```
-
-### Non-Fungible Tokens (RGB21)
-
-```
-Create unique digital assets
-↓
-Attach rich metadata
-↓
-Transfer ownership via Bitcoin
-↓
-Prove authenticity through validation
-```
-
-### Complex Contracts
-
-```
-Write in Contractum language
-↓
-Compile to AluVM bytecode
-↓
-Execute validation logic
-↓
-Enforce rules via single-use seals
-```
-
-## zk-STARK Future
-
-RGB v0.12 was designed for future zk-STARK integration:
-
-```
-Current: ~100 lines of validation code
-↓
-Future: Single zk-STARK proof
-↓
-Result: Constant-size validation
-+ Ultimate privacy
-+ Instant verification
-```
-
-## Key Takeaways
-
-1. **Client-side validation** keeps data off-chain and private
-2. **Bitcoin UTXO binding** leverages existing double-spend prevention
-3. **PRISM computing** enables massive scalability
-4. **AluVM** provides Turing-complete contract execution
-5. **Bitcoin-native** design leverages existing security
-6. **zk-ready** architecture prepares for zero-knowledge future
-
-## Next Steps
-
-Dive deeper into specific concepts:
-
-- [**Client-Side Validation**](/core-concepts/client-side-validation) - How RGB validates without blockchain
-- [**UTXO Binding**](/core-concepts/single-use-seals) - Using Bitcoin's UTXO model
-- [**AluVM**](/core-concepts/aluvm/overview) - The RGB virtual machine
-- [**State Management**](/core-concepts/state/unified-state) - How RGB manages state
-- [**Bitcoin Integration**](/core-concepts/bitcoin/deterministic-commitments) - RGB's Bitcoin layer
-
-## Additional Resources
-
-- [RGB Blueprint](https://rgb-org.github.io/) - Comprehensive technical specification
-- [RGB FAQ](https://www.rgbfaq.com) - Common questions answered
-- [Academic Papers](https://rgb.tech/research) - Research publications
+- Line B: [docs.rgb.info](https://docs.rgb.info), the official documentation of the RGB Protocol Association.
+- Line A: [rgb.tech](https://rgb.tech) and the [RGB black paper](https://black-paper.rgb.tech).
+- Peter Todd, [Commitments and single-use seals](https://petertodd.org/2016/commitments-and-single-use-seals) (2016), where single-use seals were introduced.

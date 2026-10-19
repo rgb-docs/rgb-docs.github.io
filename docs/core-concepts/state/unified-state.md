@@ -1,492 +1,141 @@
 ---
 sidebar_position: 1
-title: Unified State Model
-description: RGB's unified approach to state management
+title: State model
+description: How each RGB line represents contract state. Typed owned, global and metadata state in v0.11, and field-element memory cells in v0.12.
+rgb_line: both
+verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
+last_update:
+  date: 2026-10-19
 ---
 
-# Unified State Model
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
-RGB v0.12 introduces a unified state model that elegantly combines owned and global state into a single coherent framework. This model provides the flexibility needed for complex smart contracts while maintaining the privacy and scalability advantages of client-side validation.
+# State model
 
-## Overview
+:::info Applies to both RGB lines
+Both lines split contract state into an owned part bound to Bitcoin outputs and a public part, but they encode it very differently. See [Two RGB lines](/getting-started/two-rgbs).
+:::
 
-The unified state model in RGB allows contracts to manage:
+An RGB contract's state is built up by **operations**: genesis, then the operations that follow it. Each operation can create two kinds of state:
 
-- **Owned state**: State attached to specific UTXOs
-- **Global state**: State shared across all contract instances
-- **Hybrid state**: Combinations of owned and global state
+- **Owned state** is assigned to a [single-use seal](../single-use-seals.md), a Bitcoin output. Whoever can spend the output can move the state, by spending the output in a transaction that commits to a new operation. Balances, NFTs and issuance rights are owned state. See [Owned state](./owned-state.md).
+- **Global state** is data that the operation publishes to the contract and that nobody owns: ticker, name, issued supply, terms. It is append-only. See [Global state](./global-state.md).
 
-This flexibility enables RGB to support a wide range of applications from simple token transfers to complex DeFi protocols and DAOs.
+Both are client-side data. Nothing but a 32-byte commitment reaches the blockchain, and each holder sees only the history they received.
 
-## State Architecture
+## The two encodings
 
-### Unified Design
+<Tabs groupId="rgb-line">
+<TabItem value="b" label="v0.11 (rgb-cmd)">
 
-*To be expanded: How owned and global state work together*
+State is **typed by the schema**. Each owned or global state type has a number and a declared type (`rgb-consensus` 0.11.1 `src/schema/state.rs`):
 
-```
-[Placeholder for state architecture diagram]
+| Kind | Declared as | Holds |
+|---|---|---|
+| Owned, declarative | `OwnedStateSchema::Declarative` | Nothing: a right with no value (e.g. the IFA `linkRight`) |
+| Owned, fungible | `OwnedStateSchema::Fungible(FungibleType::Unsigned64Bit)` | A `u64` amount; it's the only fungible type |
+| Owned, structured | `OwnedStateSchema::Structured(SemId)` | A strict-typed value, e.g. an NFT allocation |
+| Global | `GlobalStateSchema { sem_id, max_items: u24 }` | Up to `max_items` strict-typed values of that type |
+| Metadata | `MetaDetails { sem_id, .. }` | Per-operation strict-typed data that isn't kept as state |
 
-┌─────────────────────────────────────┐
-│         RGB Contract                │
-│                                     │
-│  ┌───────────────────────────────┐ │
-│  │     Global State              │ │
-│  │  - Shared across all UTXOs    │ │
-│  │  - Consensus-based updates    │ │
-│  │  - DAO governance             │ │
-│  └───────────────────────────────┘ │
-│                                     │
-│  ┌───────────────────────────────┐ │
-│  │     Owned State               │ │
-│  │  - Attached to UTXOs          │ │
-│  │  - Private transfers          │ │
-│  │  - Individual balances        │ │
-│  └───────────────────────────────┘ │
-│                                     │
-│  ┌───────────────────────────────┐ │
-│  │     State Transitions         │ │
-│  │  - Validate both state types  │ │
-│  │  - Coordinate updates         │ │
-│  │  - Maintain consistency       │ │
-│  └───────────────────────────────┘ │
-└─────────────────────────────────────┘
-```
-
-### State Types
-
-*To be expanded: Different kinds of state*
-
-See individual documentation:
-- [Owned State](./owned-state.md) - UTXO-attached state
-- [Global State](./global-state.md) - Shared contract state
-
-## State Definitions
-
-### Schema-Level Definition
-
-*To be expanded: Defining state in schemas*
-
-State is defined in RGB schemas:
+A transition carries all three (`src/operation/operations.rs`):
 
 ```rust
-// Placeholder for schema definition
-schema MyContract {
-    // Global state
-    global TotalSupply: U64
-
-    // Owned state
-    owned Balance: U64
-    owned AssetData: Bytes
-
-    // State transitions can modify both
+pub struct Transition {
+    pub ffv: Ffv,
+    pub contract_id: ContractId,
+    pub nonce: u64,
+    pub transition_type: TransitionType,
+    pub metadata: Metadata,
+    pub globals: GlobalState,
+    pub inputs: Inputs,                      // NonEmptyOrdSet<Opout, U16>: at least one spent seal
+    pub assignments: Assignments<GraphSeal>, // new owned state
+    pub signature: Option<Signature>,
 }
 ```
 
-### State Types and Semantics
+Here is the real state of a NIA (non-inflatable asset) contract issued offline with `rgb-cmd` 0.11.1:
 
-*To be expanded: State type system*
-
-Supported state types:
-- **Unsigned integers**: U8, U16, U32, U64, U128, U256
-- **Signed integers**: I8, I16, I32, I64, I128, I256
-- **Bytes**: Fixed and variable-length byte arrays
-- **Strings**: UTF-8 encoded text
-- **Structured data**: Custom types via Strict Types
-- **Collections**: Arrays, sets, maps
-
-## State Transitions
-
-### Modifying State
-
-*To be expanded: How state changes*
-
-State transitions define rules for modifying state:
-
-```rust
-// Placeholder for state transition definition
-transition Transfer {
-    // Inputs: owned state being consumed
-    inputs: [Balance]
-
-    // Outputs: new owned state being created
-    outputs: [Balance, Balance]
-
-    // Global state updates
-    updates: []
-
-    // Validation logic
-    validate: {
-        // Sum of outputs must equal sum of inputs
-        sum(outputs.Balance) == sum(inputs.Balance)
-    }
-}
+```bash line=B
+rgb -n regtest state -a rgb:Ca0d5l5K-Cr4Wm6I-owUkn6t-2NHrgjk-R1KRreF-tVBhAR0
 ```
 
-### Validation Rules
+```text
+Global:
+  spec := ticker "DEMO", name "Demo asset", details ~, precision centi
+  terms := text "Demo terms", media ~
+  issuedSupply := 100000000
 
-*To be expanded: State transition validation*
-
-Every state transition must:
-1. Consume valid inputs (owned state)
-2. Reference current global state
-3. Produce valid outputs
-4. Satisfy validation predicates
-5. Maintain state invariants
-
-### Atomicity
-
-*To be expanded: All-or-nothing updates*
-
-State transitions are atomic:
-- Either all state updates succeed
-- Or none take effect
-- No partial updates
-- Consistency maintained
-
-## State History
-
-### Tracking Changes
-
-*To be expanded: State evolution over time*
-
-RGB maintains complete history of state changes:
-
-```
-[Placeholder for state history diagram]
-
-Genesis
-  │
-  ├─→ Transition 1 → State 1
-  │
-  ├─→ Transition 2 → State 2
-  │
-  ├─→ Transition 3 → State 3
-  │
-  └─→ Current State
+Owned:
+  State      	Seal                                                                          	Witness
+  assetOwner:
+    100000000	b449f7eaa3f98c145b27ad0eeb7b5679ceb567faef7a52479bc995792b65f804:1	~ -- third-party
 ```
 
-### History Pruning
+</TabItem>
+<TabItem value="a" label="v0.12 (rgb-wallet)">
 
-*To be expanded: Optimizing history storage*
+State lives in **UltraSONIC memory cells** made of field elements. Their meaning comes from the contract's codex and API, not from the consensus layer (`ultrasonic` 0.12.0 `src/state.rs`, `src/operation.rs`):
 
-- Recipients only need relevant history
-- Old state can be pruned
-- Cryptographic commitments remain
-- Verification still possible
+```text
+data StateValue : none () | single Fe256 | double (Fe256, Fe256)
+                | triple (Fe256, Fe256, Fe256) | quadruple (Fe256, Fe256, Fe256, Fe256)
 
-## State Commitment
+data StateCell  : data StateValue, auth AuthToken, lock CellLock?   -- destructible ("owned")
+data StateData  : value StateValue, raw RawData?                    -- immutable ("global")
 
-### Merkle Tree Structure
-
-*To be expanded: How state is committed*
-
-State is committed using Merkle trees:
-
-```
-[Placeholder for Merkle tree diagram]
-
-          Root Hash
-         /          \
-    Hash(A,B)    Hash(C,D)
-     /    \       /    \
-  Hash(A) Hash(B) Hash(C) Hash(D)
-    |      |       |       |
-  State  State   State   State
-    A      B       C       D
+data Operation  : version, contractId, callId U16, nonce Fe256, witness StateValue
+                , destructibleIn [Input], immutableIn [CellAddr]
+                , destructibleOut [StateCell], immutableOut [StateData]
 ```
 
-**Properties**:
-- Compact representation
-- Efficient updates
-- Proof of inclusion
-- Tamper resistance
+(Excerpt from `ultrasonic` 0.12.0 `stl/UltraSONIC@0.12.0.sty`, the strict-types definition of these types.)
 
-### Bitcoin Anchoring
+- A **destructible** cell is owned state. Its `auth` token is derived from the seal (see [single-use seals](../single-use-seals.md)). It is destroyed when an operation spends it. An optional `CellLock` adds a script condition.
+- An **immutable** cell is global state. Its `raw` bytes are stored and committed to, but the VM can't read them.
+- The VM sees at most four 256-bit field elements per cell.
+- Operations have **no metadata field**.
+- `rgb-std` presents the state to wallets as `immutable`, `owned` and `aggregated` (values computed from the others by the API, e.g. total supply) (`rgb-std` 0.12.0-rc.3 `src/contracts.rs`).
 
-*To be expanded: Committing to Bitcoin*
+Here is the real state of a demo `RGB20-FNA` contract issued offline with `rgb-wallet` 0.12.0-rc.3 from the examples in the `RGB-WG/rgb` repo:
 
-State commitments are anchored to Bitcoin:
-
-1. Compute state Merkle root
-2. Combine with other protocol commitments
-3. Embed in Bitcoin transaction
-4. Achieve Bitcoin-level security
-
-See [Deterministic Commitments](../bitcoin/deterministic-commitments.md) for details.
-
-## State Queries
-
-### Reading Current State
-
-*To be expanded: Querying state*
-
-Applications query current state:
-
-```typescript
-// Placeholder for query example
-const balance = await contract.getOwnedState(utxo, 'Balance');
-const totalSupply = await contract.getGlobalState('TotalSupply');
+```bash line=A
+rgb -n testnet4 state -a -g -o
 ```
 
-### Historical Queries
-
-*To be expanded: Querying past state*
-
-Query state at specific points:
-
-```typescript
-// State at specific transition
-const pastBalance = await contract.getOwnedStateAt(
-  utxo,
-  'Balance',
-  transitionId
-);
+```text
+contract:XgHwkqS4-RcYeRtr-Mizxpov-FobureK-sx0~AD5-xAt5jV4	DemoToken
+Global: State name      	Conf. height	Verifiable state                	Unverifiable state              	RGB output
+	issued          	genesis     	10000                           	~                               	rtVWyitimkZyM4bDei2AcftvX0HKur8kfdf~0Ku2Ry8:3
+	name            	genesis     	"Demo Token"                    	~                               	rtVWyitimkZyM4bDei2AcftvX0HKur8kfdf~0Ku2Ry8:1
+	precision       	genesis     	centiMilli                      	~                               	rtVWyitimkZyM4bDei2AcftvX0HKur8kfdf~0Ku2Ry8:2
+	ticker          	genesis     	"DEMO"                          	~                               	rtVWyitimkZyM4bDei2AcftvX0HKur8kfdf~0Ku2Ry8:0
+Aggr.:  State name      	Value                           	name            	"Demo Token"
+	precision       	centiMilli
+	supply          	10000
+	ticker          	"DEMO"
+Owned:  State name      	Conf. height	Value                           	RGB output                                    	Bitcoin outpoint
+	balance         	genesis     	10000                           	rtVWyitimkZyM4bDei2AcftvX0HKur8kfdf~0Ku2Ry8:0	b7116550736fbe5d3e234d0141c6bc8d1825f94da78514a3cede5674e9a5eae9:1
 ```
 
-### State Proofs
+"Verifiable state" is what the VM can check. "Unverifiable state" is the raw data.
 
-*To be expanded: Proving state values*
+</TabItem>
+</Tabs>
 
-Generate proofs for state values:
-- Merkle inclusion proofs
-- Historical state proofs
-- Ownership proofs
-- Verification without full history
+## Removed in both lines
 
-## State Synchronization
+- **State extensions and valencies** (public "anyone can claim" operations in RGB v0.10) exist in neither line. Every Line B transition must spend at least one owned input.
+- **Confidential amounts.** Pedersen commitments and bulletproofs are gone. Amounts are explicit to everyone who receives the history; privacy comes from client-side validation and blinded seals.
+- **Zero-knowledge proofs** of state or history are not implemented in either line. Line A's zk-AluVM is designed to make them possible later.
 
-### Client State Management
+## Where contract rules live
 
-*To be expanded: Managing state on clients*
+| | v0.11 (rgb-cmd) | v0.12 (rgb-wallet) |
+|---|---|---|
+| Rules | A **schema** (NIA, IFA, CFA, UDA, PFA in `rgb-schemas` 0.11.1), written in Rust, plus optional [AluVM](../aluvm/overview.md) scripts | A **codex** (verifier scripts in zk-AluVM) plus an **API** that gives names and types to the field elements |
+| Typed meaning | In consensus, through `SemId` | In the API layer, outside consensus |
+| See | [Schemas](/guides/contracts/schemas) | [What's new in v0.12](/getting-started/whats-new-0-12) |
 
-Clients maintain:
-- Relevant owned state (their UTXOs)
-- Current global state
-- Pending transitions
-- Validation history
-
-### State Updates
-
-*To be expanded: Receiving state updates*
-
-When receiving assets:
-1. Receive consignment
-2. Validate state history
-3. Update local state database
-4. Accept or reject transfer
-
-### Conflict Resolution
-
-*To be expanded: Handling conflicts*
-
-**Owned state conflicts**: Impossible (UTXO model)
-**Global state conflicts**: Resolved by consensus rules
-
-## Privacy Considerations
-
-### Owned State Privacy
-
-*To be expanded: Privacy of owned state*
-
-Owned state is private:
-- Only parties to a transfer see it
-- No global visibility
-- Selective disclosure possible
-- Confidential amounts (optional)
-
-### Global State Visibility
-
-*To be expanded: Global state transparency*
-
-Global state may be public:
-- Visible to all participants
-- Necessary for coordination
-- Can still use commitments
-- Zero-knowledge proofs possible
-
-### Balance Privacy vs. Transparency
-
-*To be expanded: Design tradeoffs*
-
-Choosing between privacy and transparency:
-
-| Use Case | Owned State | Global State |
-|----------|-------------|--------------|
-| Private transfers | ✓ High privacy | Limited |
-| Public auditability | Limited | ✓ Full transparency |
-| DAO voting | Can be private | Vote counts public |
-| Supply cap | Can be private | Cap is public |
-
-## Performance Optimization
-
-### State Storage
-
-*To be expanded: Efficient state storage*
-
-- Compact serialization
-- Deduplication
-- Compression
-- Indexed access
-
-### State Caching
-
-*To be expanded: Caching strategies*
-
-- Cache current state
-- Lazy loading of history
-- Incremental updates
-- Memory-mapped databases
-
-### Parallel Validation
-
-*To be expanded: Concurrent validation*
-
-- Independent UTXO validation
-- Parallel history verification
-- Batch processing
-- Multi-core utilization
-
-## Use Cases
-
-### Token Balances (Owned State)
-
-*To be expanded: Token balance management*
-
-```rust
-// Simple token with owned balances
-schema RGB20 {
-    owned Balance: U64
-
-    transition Transfer {
-        inputs: [Balance]
-        outputs: [Balance+]
-        validate: sum(inputs) == sum(outputs)
-    }
-}
-```
-
-### Supply Management (Global State)
-
-*To be expanded: Global supply tracking*
-
-```rust
-// Token with global supply cap
-schema RGB20Extended {
-    global TotalSupply: U64
-    global SupplyCap: U64
-    owned Balance: U64
-
-    transition Issue {
-        outputs: [Balance+]
-        updates: [TotalSupply += sum(outputs)]
-        validate: TotalSupply <= SupplyCap
-    }
-}
-```
-
-### DAO Governance (Hybrid State)
-
-*To be expanded: Combining state types*
-
-```rust
-// DAO with voting
-schema DAO {
-    global ProposalCount: U64
-    global Proposal: Map<U64, ProposalData>
-    owned VotingPower: U64
-
-    transition CreateProposal { /* ... */ }
-    transition Vote { /* ... */ }
-    transition Execute { /* ... */ }
-}
-```
-
-## Migration and Upgrades
-
-### Schema Evolution
-
-*To be expanded: Evolving state schemas*
-
-- Adding new state fields
-- Deprecating old fields
-- Migrating data
-- Backward compatibility
-
-### State Migration
-
-*To be expanded: Migrating state between schemas*
-
-- Migration transactions
-- Data transformation
-- Validation during migration
-- Rollback capabilities
-
-## Error Handling
-
-### Invalid State Transitions
-
-*To be expanded: Handling validation failures*
-
-Common validation errors:
-- Insufficient balance
-- Invalid state type
-- Constraint violation
-- Missing signatures
-
-### Recovery Mechanisms
-
-*To be expanded: Error recovery*
-
-- Reject invalid transitions
-- Maintain last valid state
-- Provide error diagnostics
-- Allow retry with corrections
-
-## Testing State Logic
-
-### Unit Testing
-
-*To be expanded: Testing state transitions*
-
-```rust
-// Placeholder for test example
-#[test]
-fn test_transfer_validation() {
-    let mut state = State::new();
-    state.owned.insert("Balance", 1000);
-
-    let transition = Transfer {
-        inputs: vec![1000],
-        outputs: vec![600, 400],
-    };
-
-    assert!(transition.validate(&state));
-}
-```
-
-### Property-Based Testing
-
-*To be expanded: Invariant testing*
-
-Test state invariants:
-- Sum preservation
-- Non-negative balances
-- Supply cap enforcement
-- Access control rules
-
-## Related Documentation
-
-- [Owned State](./owned-state.md) - UTXO-attached state details
-- [Global State](./global-state.md) - Shared state details
-- [State Transitions](../../guides/contracts/state-transitions.md) - Creating transitions
-- [Schemas](../../guides/contracts/schemas.md) - Schema design
-- [Strict Types](../../technical-reference/strict-types.md) - Type system
-
-## References
-
-*Coming soon: State model specifications and research papers*
-
----
-
-**Status**: Draft outline - To be expanded with detailed state management patterns and examples.
+Both lines describe state values with [strict types](/technical-reference/strict-types).

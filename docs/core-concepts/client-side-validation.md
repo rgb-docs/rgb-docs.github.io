@@ -1,439 +1,127 @@
 ---
 sidebar_position: 2
 title: Client-Side Validation
-description: Understanding RGB's revolutionary validation paradigm
+description: Why RGB state is checked by the people who receive it, not by every node, and what a recipient has to verify.
+rgb_line: both
+verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
+last_update:
+  date: 2026-10-19
 ---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
 # Client-Side Validation
 
-Client-side validation is the foundational concept that makes RGB unique. It fundamentally reverses how blockchain systems work by moving validation from the network to the client.
+:::info Applies to both RGB lines
+Both lines validate client-side the same way; the data containers differ. See [Two RGB lines](/getting-started/two-rgbs).
+:::
 
-## The Paradigm Shift
+On a blockchain like Bitcoin or Ethereum, every full node checks every transaction and keeps the whole state. RGB works the other way round. **The contract data never goes on chain.** Bitcoin carries only a 32-byte [commitment](./bitcoin/deterministic-commitments.md) per witness transaction, and each party checks the part of the contract history that concerns them.
 
-### Traditional Blockchain Validation
+| | Global validation (L1 blockchain) | Client-side validation (RGB) |
+|---|---|---|
+| Who validates | Every full node | The recipient of the state |
+| What is stored | Everything, by everyone | Your own contracts' history |
+| What the chain sees | All data | A 32-byte commitment hidden in an opret or tapret output |
+| Ordering and double-spend protection | The chain's consensus | Bitcoin, through [single-use seals](./single-use-seals.md) |
 
-```
-Every node validates every transaction
-↓
-Global state replication
-↓
-Limited scalability
-↓
-No privacy
-```
+Every RGB transfer still needs a Bitcoin transaction. [MPC](./bitcoin/multi-protocol-commitments.md) lets many contracts share one, but on-chain throughput is still bounded by Bitcoin.
 
-### RGB Client-Side Validation
+## How a transfer is checked
 
-```
-Only involved parties validate
-↓
-Partial state replication
-↓
-Massive scalability
-↓
-Strong privacy
-```
+1. **State lives on Bitcoin outputs.** Each piece of owned state is assigned to a seal, i.e. a UTXO (see [owned state](./state/owned-state.md)).
+2. **The sender builds a consignment.** It holds everything the recipient needs: the contract's genesis and its rules, every operation from genesis to the new state, and the anchors that tie each operation to a Bitcoin transaction.
+3. **The recipient validates it.** It checks the whole graph from genesis to the outputs it now owns:
+   - each operation follows the contract's rules (schema in Line B, codex in Line A), including any [AluVM](./aluvm/overview.md) scripts;
+   - each spent seal was closed by a witness transaction that commits to that operation (commitment, MPC proof, and in Line A the multi-message bundle);
+   - each witness transaction exists on Bitcoin, which the wallet looks up through an indexer.
+4. **The recipient accepts it** into its local stash. Only then does the state count as received.
 
-## How It Works
+Nothing in history can be skipped or pruned. The recipient needs every operation back to genesis on the path to their state, but not operations on unrelated branches. Consignments grow with that history.
 
-### 1. State Ownership
+## What's in a consignment
 
-In RGB, you only need to know about state that belongs to you:
-
-```typescript
-// Alice doesn't know about Bob's assets
-// Bob doesn't know about Charlie's assets
-// Each validates only what they own
-```
-
-### 2. Consignment Transfer
-
-When transferring assets, the sender provides a **consignment** - a data package containing all validation data:
-
-```
-Sender creates consignment containing:
-├── Asset origin (genesis)
-├── Full ownership history
-├── State transitions
-├── Witness data
-└── Bitcoin commitments
-```
-
-### 3. Recipient Validation
-
-The recipient validates the consignment independently:
+<Tabs groupId="rgb-line">
+<TabItem value="b" label="v0.11 (rgb-cmd)">
 
 ```rust
-// Pseudocode validation flow
-fn validate_consignment(consignment: Consignment) -> Result<()> {
-    // 1. Verify genesis is valid
-    verify_genesis(&consignment.genesis)?;
-
-    // 2. Verify all state transitions
-    for transition in &consignment.transitions {
-        verify_transition(transition)?;
-        verify_bitcoin_commitment(transition)?;
-    }
-
-    // 3. Verify UTXOs are properly spent
-    verify_utxos_spent(&consignment)?;
-
-    // 4. Verify I'm the recipient
-    verify_ownership(&consignment, my_utxo)?;
-
-    Ok(())
+// rgb-ops 0.11.1, src/containers/consignment.rs
+pub struct Consignment<const TRANSFER: bool> {
+    pub version: ContainerVer,
+    pub transfer: bool,
+    pub terminals: SmallOrdMap<BundleId, SecretSeals>,
+    pub genesis: Genesis,
+    pub bundles: LargeVec<WitnessBundle>,  // transitions + anchor + witness tx
+    pub schema: Schema,
+    pub types: TypeSystem,
+    pub scripts: Confined<BTreeSet<Lib>, 0, CONSIGNMENT_MAX_LIBS>,
 }
 ```
 
-## Benefits
+Validation code lives in [`rgb-consensus`](https://github.com/rgb-protocol/rgb-consensus) 0.11.1, `src/validation/`.
 
-### Privacy
-
-Since only involved parties see the data:
-
-- **No public transaction history**
-- **No public balances**
-- **No public contract state**
-- Third parties can't track your assets
-
-### Scalability
-
-Validation complexity is O(personal history), not O(global state):
-
-```
-Traditional: Validate ALL transactions ever
-RGB: Validate only YOUR transaction history
-```
-
-This enables:
-- Parallel validation across different assets
-- No global state synchronization
-- Unlimited number of contracts
-
-### Efficiency
-
-```
-Memory usage: Hundreds of bytes (not gigabytes)
-Validation time: Milliseconds (not seconds)
-Network bandwidth: Minimal
-```
-
-## Consignment Structure
-
-### Anatomy of a Consignment
+</TabItem>
+<TabItem value="a" label="v0.12 (rgb-wallet)">
 
 ```rust
-struct Consignment {
-    // Contract origin
-    genesis: Genesis,
-
-    // All state transitions in ownership chain
-    transitions: Vec<StateTransition>,
-
-    // Bitcoin transaction witnesses
-    witnesses: Vec<BitcoinTx>,
-
-    // Extension data (optional)
-    extensions: Vec<Extension>,
-
-    // Terminal states
-    terminals: Vec<Terminal>,
+// rgb-std 0.12.0-rc.3, src/consignment.rs
+pub struct Consignment<Seal: RgbSeal> {
+    header: ConsignmentHeader<Seal>,   // extensions, semantics, sig, issue (codex + genesis),
+                                       // genesis_seals, op_count
+    operation_seals: LargeVec<OperationSeals<Seal>>,
 }
 ```
 
-### Stream-Based Validation (v0.12)
+The consignment is read as a stream, operation by operation. Verification lives in [`rgb-core`](https://github.com/RGB-WG/rgb-core) 0.12.0, `src/verify.rs`. The header's `extensions` field is a list of opaque blobs, not v0.10-style "state extensions".
 
-RGB v0.12 introduced streaming validation:
+</TabItem>
+</Tabs>
 
-```rust
-// Don't load entire consignment into memory
-let mut stream = ConsignmentStream::new(file)?;
+State extensions were removed in both lines. Both encode consignments in binary [strict encoding](/technical-reference/strict-types). Line B's `rgb armor` can also wrap a file in ASCII armor for transport. See [Consignments](/technical-reference/consignments).
 
-// Validate on-the-fly
-while let Some(chunk) = stream.next()? {
-    validate_chunk(chunk)?;
-}
+## Commands
 
-// Memory usage: ~200 bytes throughout
+<Tabs groupId="rgb-line">
+<TabItem value="b" label="v0.11 (rgb-cmd)">
+
+```bash line=B
+rgb validate transfer.rgb   # check only (needs an indexer to look up witness txs)
+rgb accept transfer.rgb     # check and add to the stash
 ```
 
-## Validation Rules
+`rgb accept --force` accepts a consignment whose last witness transaction isn't mined yet. Don't use it for payments you haven't otherwise confirmed.
 
-### 1. Genesis Validation
+</TabItem>
+<TabItem value="a" label="v0.12 (rgb-wallet)">
 
-```rust
-fn validate_genesis(genesis: &Genesis) -> Result<()> {
-    // Verify schema compliance
-    verify_schema(&genesis.schema)?;
-
-    // Verify initial state allocations
-    verify_initial_state(&genesis.assignments)?;
-
-    // Verify metadata
-    verify_metadata(&genesis.metadata)?;
-
-    Ok(())
-}
+```bash line=A
+rgb accept transfer.rgb     # verify and accept a contract or transfer consignment
 ```
 
-### 2. Transition Validation
+`rgb accept --unknown` allows contracts the wallet hasn't seen before.
 
-```rust
-fn validate_transition(transition: &Transition) -> Result<()> {
-    // Verify inputs exist and are unspent
-    verify_inputs(&transition.inputs)?;
+</TabItem>
+</Tabs>
 
-    // Execute AluVM validation code
-    execute_validation_script(&transition.script)?;
+Full flag lists: [CLI reference (v0.11)](/technical-reference/cli-v011) and [CLI reference (v0.12)](/technical-reference/cli).
 
-    // Verify state transformation rules
-    verify_state_change(&transition)?;
+## Trust model
 
-    // Verify Bitcoin commitment
-    verify_commitment(&transition.commitment)?;
+- **You don't trust the sender.** Anything that fails validation is rejected, whatever the sender claims.
+- **You don't need a blockchain node for the contract**, only a Bitcoin indexer (your own or a third party's) to confirm that witness transactions exist and are mined. A dishonest indexer can hide or delay transactions, but it can't make invalid state look valid.
+- **Privacy.** Only the people a history passes through learn about it. Each recipient sees the history back to genesis for the state they receive, but nothing about other branches or other contracts.
 
-    Ok(())
-}
-```
+:::danger Back up RGB data, not just the seed
+Your seed restores your bitcoin keys, **not** your RGB state. The consignments and the stash are stored only on your device. If you lose them, a restored seed shows the UTXOs but not the assets on them. Back up the RGB data directory (or use your wallet's RGB backup feature) after every receive and send.
+:::
 
-### 3. UTXO Verification
+:::danger Send the consignment before broadcasting
+In an interactive transfer the recipient should validate the consignment **before** the sender broadcasts the witness transaction. Keep a copy of every consignment you send or receive. If the transaction confirms but the recipient never got the consignment, the state can only be recovered from your copy.
+:::
 
-```rust
-fn verify_utxos_spent(consignment: &Consignment) -> Result<()> {
-    for transition in &consignment.transitions {
-        for utxo in &transition.inputs {
-            // Verify UTXO was spent (standard Bitcoin validation)
-            verify_utxo_spent(utxo)?;
+## Further reading
 
-            // Verify Bitcoin transaction witness
-            verify_tx_witness(utxo)?;
-        }
-    }
-    Ok(())
-}
-```
-
-## Client-Side Validation in Practice
-
-### Example: Token Transfer
-
-```mermaid
-%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#667eea','primaryTextColor':'#fff','primaryBorderColor':'#764ba2','lineColor':'#764ba2','secondaryColor':'#f8f9fa','tertiaryColor':'#fff','actorBkg':'#667eea','actorBorder':'#764ba2','actorTextColor':'#fff','signalColor':'#764ba2','signalTextColor':'#333','sequenceNumberColor':'white'}}}%%
-sequenceDiagram
-    participant R as Recipient
-    participant S as Sender
-    participant B as Bitcoin
-
-    Note over R: 1. Generate Invoice
-    R->>R: Create blinded UTXO
-    R->>S: Share invoice
-
-    Note over S: 2. Create Transfer
-    S->>S: Select tokens to spend
-    S->>S: Create state transition
-    S->>S: Create consignment
-
-    Note over S: 3. Deliver Consignment
-    S->>R: Send consignment (off-chain)
-    S->>B: Broadcast Bitcoin tx
-
-    Note over R: 4. Validate
-    R->>R: Check full history
-    R->>R: Verify Bitcoin commitments
-    R->>R: Verify UTXOs spent
-    R->>R: Accept if valid
-
-    Note over B: 5. Confirmation
-    B->>B: Confirm transaction
-    B-->>R: UTXOs spent (finalized)
-    B-->>S: Transfer complete
-```
-
-## Comparison with On-Chain Validation
-
-| Aspect | On-Chain | Client-Side |
-|--------|----------|-------------|
-| Validator | All nodes | Only parties involved |
-| Privacy | Public | Private |
-| Scalability | Limited | Massive |
-| State Storage | Blockchain | Off-chain |
-| Validation Cost | Network-wide | Individual |
-| Throughput | ~10 TPS (Bitcoin) | Unlimited |
-
-## Advanced Concepts
-
-### Proof Compression
-
-Future zk-STARK integration will compress consignments:
-
-```
-Current: ~100 lines of validation code
-Future: Single zk-STARK proof
-Size: Constant regardless of history length
-```
-
-### Partial Disclosure
-
-You can prove specific facts without revealing full history:
-
-```rust
-// Prove balance without revealing transactions
-let proof = create_balance_proof(
-    balance: 1000,
-    without_revealing_history: true
-);
-```
-
-### History Pruning
-
-Consignments can be "merged" to reduce size:
-
-```
-Long history: A → B → C → D → E (5 transitions)
-Pruned: A → E (1 transition)
-Validity: Same cryptographic guarantees
-```
-
-## Implementation Details
-
-### Validation Order
-
-```rust
-// Topological sort of DAG
-let ordered = topological_sort(&consignment.transitions);
-
-// Validate in dependency order
-for transition in ordered {
-    validate_transition(transition)?;
-}
-```
-
-### Caching
-
-```rust
-// Cache validation results
-let mut cache = ValidationCache::new();
-
-// Reuse previous validations
-if let Some(result) = cache.get(&transition_id) {
-    return result;
-}
-```
-
-### Parallel Validation
-
-```rust
-// Validate independent branches in parallel
-let results = transitions
-    .par_iter()
-    .map(|t| validate_transition(t))
-    .collect::<Result<Vec<_>>>()?;
-```
-
-## Security Considerations
-
-### Double-Spend Prevention {#single-use-seals}
-
-Client-side validation prevents double-spending by leveraging Bitcoin's UTXO model:
-
-1. **UTXO spending** - UTXOs can only be spent once (standard Bitcoin property)
-2. **Bitcoin confirmation** - UTXO spend is final
-3. **Cryptographic commitment** - RGB state linked to specific UTXO
-
-### Validation Completeness
-
-Recipients must validate:
-
-- ✓ All transitions from genesis
-- ✓ All Bitcoin commitments
-- ✓ All UTXO spends
-- ✓ Schema compliance
-- ✓ AluVM execution
-
-**Incomplete validation = Risk of invalid assets**
-
-### Trust Model
-
-```
-Don't trust, verify!
-
-You validate:
-├── Full ownership history
-├── Bitcoin commitments
-├── Cryptographic proofs
-└── Smart contract logic
-
-You don't trust:
-├── Sender's claims
-├── Third party validation
-└── Network consensus
-```
-
-## Best Practices
-
-### For Wallet Developers
-
-```typescript
-// Always validate before accepting
-async function acceptTransfer(consignment: Consignment) {
-    // Validate consignment
-    await validateConsignment(consignment);
-
-    // Check Bitcoin confirmation
-    await waitForConfirmation(consignment.txid);
-
-    // Update local state
-    await updateBalances();
-}
-```
-
-### For Users
-
-```
-1. Always wait for Bitcoin confirmation
-2. Verify consignment size is reasonable
-3. Keep backup of consignment files
-4. Validate immediately upon receipt
-```
-
-## Common Pitfalls
-
-### ❌ Trusting Without Validating
-
-```typescript
-// WRONG: Assuming sender is honest
-function unsafeAccept(consignment: Consignment) {
-    // Just accept without validation
-    updateBalance(+100); // Dangerous!
-}
-
-// RIGHT: Always validate
-async function safeAccept(consignment: Consignment) {
-    await fullValidation(consignment);
-    updateBalance(validated_amount);
-}
-```
-
-### ❌ Partial Validation
-
-```typescript
-// WRONG: Only checking some transitions
-function partialValidation(consignment: Consignment) {
-    validate(consignment.latest); // Incomplete!
-}
-
-// RIGHT: Full history validation
-function fullValidation(consignment: Consignment) {
-    validateFromGenesis(consignment); // Complete!
-}
-```
-
-## Next Steps
-
-- [**UTXO Binding**](/core-concepts/single-use-seals) - How RGB uses Bitcoin's UTXO model
-- [**Consignments**](/technical-reference/consignments) - Technical specification
-
-## Additional Resources
-
-- [Client-Side Validation Whitepaper](https://rgb-org.github.io/)
-- [Validation Implementation](https://github.com/RGB-WG/rgb-core/tree/master/src/validation)
+- [Client-side validation](https://docs.rgb.info/distributed-computing-concepts/client-side-validation) on docs.rgb.info (Line B).
+- [RGB black paper](https://black-paper.rgb.tech) (Line A).
+- [`client_side_validation`](https://github.com/LNP-BP/client_side_validation) libraries (Line A).

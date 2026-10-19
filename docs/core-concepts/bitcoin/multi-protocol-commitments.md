@@ -1,425 +1,85 @@
 ---
 sidebar_position: 4
 title: Multi-Protocol Commitments
-description: Sharing Bitcoin commitments across multiple protocols
+description: How one 32-byte Bitcoin commitment covers many RGB contracts. The MPC tree, leaf placement by contract id, entropy leaves, and Line A's extra multi-message bundle layer.
+rgb_line: both
+verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
+last_update:
+  date: 2026-10-19
 ---
 
-# Multi-Protocol Commitments (MPC)
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
-Multi-Protocol Commitments (MPC) enable multiple Layer 2 and Layer 3 protocols to share a single Bitcoin transaction commitment. This architecture allows RGB, Lightning, and other protocols to coexist efficiently while reducing blockchain footprint and transaction costs.
+# Multi-Protocol Commitments
 
-## Overview
+:::info Applies to both RGB lines
+The MPC tree and its commitment are byte-identical in both lines. Line A adds one extra layer inside each leaf. See [Two RGB lines](/getting-started/two-rgbs).
+:::
 
-MPC provides:
+A witness transaction has room for exactly one [deterministic commitment](./deterministic-commitments.md). **Multi-protocol commitments (MPC)** let many RGB contracts share it. Each contract gets one leaf in a Merkle tree, and only the tree's 32-byte commitment goes on chain.
 
-- **Shared commitments**: Multiple protocols in one Bitcoin transaction
-- **Protocol independence**: Each protocol operates independently
-- **Cost efficiency**: Amortized transaction fees
-- **Scalability**: Reduced blockchain usage
-- **Flexibility**: Easy addition of new protocols
+A verifier of one contract sees only that contract's leaf and a Merkle path. It learns nothing about the other contracts in the tree, or even how many there are.
 
-## MPC Architecture
+The design comes from [LNPBP-4](https://github.com/LNP-BP/LNPBPs/blob/master/lnpbp-0004.md). In RGB, the "protocol" is the contract: the 32-byte `ProtocolId` of a leaf **is the `ContractId`**. There are no protocol tags, versions or per-protocol subtrees.
 
-### Merkle Tree Structure
+## What a leaf holds
 
-*To be expanded: MPC tree organization*
+<Tabs groupId="rgb-line">
+<TabItem value="b" label="v0.11 (rgb-cmd)">
 
-```
-[Placeholder for MPC tree diagram]
+The leaf message is the contract's **`BundleId`**: the id of the transition bundle that holds every state transition of that contract closed by this witness transaction (`rgb-consensus` 0.11.1 `src/validation/validator.rs`, `mpc::Message::from(bundle_id)`).
 
-Bitcoin Transaction Commitment
-         │
-    MPC Root Hash
-         │
-    ┌────┴────┐
-    │         │
-Hash(P1,P2) Hash(P3,P4)
- │      │    │      │
-P1     P2   P3     P4
-RGB   LNP  ...    ...
-```
+</TabItem>
+<TabItem value="a" label="v0.12 (rgb-wallet)">
 
-Each protocol has:
-- Unique protocol identifier
-- Independent sub-tree
-- Own commitment data
-- Separate validation
+The leaf message is the commitment of a **multi-message bundle**, `mmb::BundleProof`. This is a map from witness-transaction input index to message (an operation id), tagged `urn:lnp-bp:mmb:bundle#2024-11-18`.
 
-### Protocol Identification
+Verifying a seal therefore checks two things: that the witness transaction spends the seal's outpoint at some input `i`, and that the bundle maps `i` to this operation (`bp-core` 0.12.0 `seals/src/txout.rs`). Line A's `MerkleProof` and `MerkleBlock` also carry a `method` field (`Sha256t`) in their serialized form. The commitment value doesn't change.
 
-*To be expanded: Identifying protocols*
+</TabItem>
+</Tabs>
 
-Protocols identified by:
-- **Protocol tag**: Unique 4-byte identifier
-- **Version**: Protocol version number
-- **Position**: Location in Merkle tree
+## Building the tree
 
-Example tags:
-```
-RGB: 0x524742
-LNP: 0x4C4E50
-Custom: 0x????????
-```
+Source: `commit_verify` 0.12.0 `src/mpc/` (Line A) and `rgb-consensus` 0.11.1 `src/commit_verify/mpc/` (Line B). The [docs.rgb.info MPC page](https://docs.rgb.info/commitment-layer/multi-protocol-commitments-mpc) describes the same construction.
 
-## Creating MPC Commitments
+1. **Pick a size.** Start at depth `d = 3`, the minimum (`MPC_MINIMAL_DEPTH`), so that the tree doesn't reveal how few contracts it holds. The width is `w = 2^d`.
+2. **Place each contract.** A contract with id `c` goes to leaf position
+   ```text
+   pos(c) = c mod (w − cofactor)
+   ```
+   where `c` is read as a 256-bit little-endian integer. The tree builder tries `cofactor = 0, 1, 2, …` (at most 500 tries) until every contract lands in a different position. If none works, it adds one level of depth and tries again.
+3. **Fill the leaves.** Occupied leaves commit to the contract:
+   ```text
+   tH_merkle(0x10 || contract_id || message)
+   ```
+   Empty leaves commit to random **entropy**:
+   ```text
+   tH_merkle(0x11 || entropy || pos)
+   ```
+   `entropy` is a `u64` (8 bytes) picked by whoever builds the tree, and `pos` is a little-endian `u32`. docs.rgb.info calls entropy "a 64-byte random value". In the code it is 64 *bits* (`Leaf::Entropy { entropy: u64, pos: u32 }`).
+4. **Hash the nodes.** Each branch is
+   ```text
+   tH_merkle(branching || depth || width || left || right)
+   ```
+   `tH_merkle` is a tagged SHA-256 with tag `urn:ubideco:merkle:node#2024-01-31`. Children are **not** sorted; their position comes from the leaf index.
+5. **Commit.** The value that goes into the opret or tapret script is
+   ```text
+   mpc::Commitment = tH("urn:ubideco:mpc:commitment#2024-01-31", depth || cofactor || root)
+   ```
+   with `depth` as one byte and `cofactor` as a little-endian `u16`.
 
-### Construction Process
+## Proofs
 
-*To be expanded: Building MPC trees*
+The sender gives each recipient an **MPC proof** (`MerkleProof`): the leaf position, the cofactor and the sibling hashes along the path. The recipient recomputes the commitment from their own contract's leaf and checks it against the witness transaction. The tree builder keeps the full `MerkleBlock` and can reveal or conceal individual leaves.
 
-```
-1. Collect protocol commitments
-   ├─> RGB: Merkle root of state transitions
-   ├─> LNP: Lightning commitment
-   └─> Others: Protocol-specific data
+The Rust types live in `commit_verify::mpc` (Line A crate `commit_verify` 0.12.0) and `rgbcore::commit_verify::mpc` (Line B crate `rgb-consensus` 0.11.1, library name `rgbcore`): `MultiSource`, `MerkleTree`, `MerkleBlock`, `MerkleProof`, `ProtocolId`, `Message` and `Commitment`.
 
-2. Build protocol sub-trees
-   └─> Each protocol creates own Merkle tree
+## What MPC does and doesn't do
 
-3. Combine into MPC tree
-   ├─> Order protocols deterministically
-   ├─> Build combined Merkle tree
-   └─> Calculate MPC root
-
-4. Embed in Bitcoin transaction
-   └─> Via Tapret or Opret
-```
-
-### Code Example
-
-*To be expanded: MPC implementation*
-
-```rust
-// Placeholder example
-use mpc::{MpcTree, ProtocolCommitment};
-
-let rgb_commitment = ProtocolCommitment {
-    tag: RGB_TAG,
-    version: 1,
-    data: rgb_merkle_root,
-};
-
-let lnp_commitment = ProtocolCommitment {
-    tag: LNP_TAG,
-    version: 1,
-    data: lnp_data,
-};
-
-let mpc_tree = MpcTree::new()
-    .add_protocol(rgb_commitment)?
-    .add_protocol(lnp_commitment)?;
-
-let mpc_root = mpc_tree.root();
-
-// Embed in Bitcoin transaction
-let commitment = create_tapret_commitment(mpc_root);
-```
-
-## Protocol Coordination
-
-### Independent Operation
-
-*To be expanded: Protocol independence*
-
-Each protocol:
-- Operates independently
-- Has own validation rules
-- Manages own state
-- Doesn't need to know about others
-
-**Key property**: Adding/removing protocols doesn't affect others
-
-### Shared Transaction Space
-
-*To be expanded: Coordinating Bitcoin usage*
-
-Protocols share:
-- Single Bitcoin transaction
-- Transaction fees
-- Blockchain space
-- Confirmation time
-
-Benefits:
-- Cost sharing
-- Efficiency
-- Reduced blockchain bloat
-
-## Verification Process
-
-### MPC Proof Generation
-
-*To be expanded: Creating protocol proofs*
-
-For each protocol, generate:
-- Merkle proof from protocol commitment to MPC root
-- Protocol-specific validation data
-- Bitcoin transaction reference
-
-```
-Proof for RGB:
-  - RGB commitment
-  - Merkle path: RGB → MPC root
-  - Bitcoin transaction
-  - Other protocols (optional)
-```
-
-### Verification Steps
-
-*To be expanded: Verifying MPC commitments*
-
-```
-1. Extract commitment from Bitcoin transaction
-   └─> Parse Tapret or Opret
-
-2. Obtain MPC tree structure
-   └─> Provided by sender in consignment
-
-3. Locate protocol subtree
-   └─> Find RGB (or other protocol)
-
-4. Verify Merkle proof
-   ├─> Hash protocol data
-   ├─> Apply Merkle path
-   └─> Compare with extracted commitment
-
-5. Validate protocol-specific data
-   └─> Run protocol validation logic
-```
-
-## Use Cases
-
-### RGB + Lightning
-
-*To be expanded: RGB and Lightning together*
-
-Common combination:
-- RGB assets in Lightning channels
-- Same Bitcoin transaction commits both
-- Coordinated updates
-- Shared security model
-
-Example:
-```
-Bitcoin TX commits:
-  ├─> RGB: Token transfer
-  └─> LNP: Channel update
-```
-
-### Multi-Asset Operations
-
-*To be expanded: Multiple RGB contracts*
-
-Single transaction with multiple RGB operations:
-```
-MPC Tree:
-  └─> RGB
-      ├─> Contract A: Token transfer
-      ├─> Contract B: NFT transfer
-      └─> Contract C: New issuance
-```
-
-### Cross-Protocol Atomic Operations
-
-*To be expanded: Atomic cross-protocol operations*
-
-Coordinated operations:
-- RGB transfer + Lightning payment
-- Multiple protocol updates
-- Atomic success/failure
-- Simplified implementation
-
-## Efficiency Benefits
-
-### Cost Amortization
-
-*To be expanded: Sharing transaction costs*
-
-Single Bitcoin transaction for:
-- 100 RGB transfers
-- 10 Lightning updates
-- 5 other protocol operations
-
-**Cost per operation**: Total fees / 115 operations
-
-### Blockchain Efficiency
-
-*To be expanded: Reducing blockchain impact*
-
-Without MPC:
-- 115 separate transactions
-- 115 separate commitments
-- High blockchain usage
-
-With MPC:
-- 1 transaction
-- 1 commitment
-- Minimal blockchain usage
-
-**Savings**: ~99% reduction in blockchain space
-
-## Privacy Considerations
-
-### Protocol Privacy
-
-*To be expanded: MPC privacy implications*
-
-**Tapret MPC** (high privacy):
-- Entire MPC tree hidden
-- No protocol identification on-chain
-- Selective revelation to recipients
-- Only involved parties see their protocol
-
-**Opret MPC** (moderate privacy):
-- MPC root visible
-- Individual protocols hidden
-- Need proof to identify which protocols
-- Better than separate commitments
-
-### Selective Disclosure
-
-*To be expanded: Revealing partial MPC trees*
-
-Can prove participation without revealing:
-- Other protocols in tree
-- Other RGB contracts
-- Unrelated operations
-- Full tree structure
-
-Example:
-```
-Prove RGB transfer without revealing:
-  - Lightning update also in transaction
-  - Other RGB contracts
-  - Full MPC tree structure
-```
-
-## Adding New Protocols
-
-### Protocol Registration
-
-*To be expanded: Adding protocols to MPC*
-
-Steps to add new protocol:
-1. Define protocol tag (unique 4 bytes)
-2. Specify commitment format
-3. Implement Merkle tree integration
-4. Provide verification logic
-5. Publish specification
-
-### Backwards Compatibility
-
-*To be expanded: Maintaining compatibility*
-
-Adding protocols doesn't break:
-- Existing protocols
-- Existing validators
-- Existing commitments
-- Previous specifications
-
-**Key**: Each protocol validates independently
-
-## Implementation Details
-
-### MPC Tree Format
-
-*To be expanded: Binary format specification*
-
-```
-MPC Tree Node:
-  - Version: 1 byte
-  - Node type: 1 byte (leaf/branch)
-  - Data: variable
-
-Leaf Node (Protocol):
-  - Protocol tag: 4 bytes
-  - Protocol version: 2 bytes
-  - Commitment: 32+ bytes
-
-Branch Node:
-  - Left child hash: 32 bytes
-  - Right child hash: 32 bytes
-```
-
-### Deterministic Ordering
-
-*To be expanded: Protocol ordering rules*
-
-Protocols ordered:
-- Lexicographically by tag
-- Deterministic for all implementations
-- Same tree structure always
-- Enables verification
-
-### Proof Format
-
-*To be expanded: Merkle proof structure*
-
-```
-MPC Merkle Proof:
-  - Protocol tag: 4 bytes
-  - Commitment: 32 bytes
-  - Merkle path: [32 bytes] * depth
-  - Sibling positions: [bool] * depth
-```
-
-## Error Handling
-
-### Invalid MPC Trees
-
-*To be expanded: Handling malformed trees*
-
-Common errors:
-- Duplicate protocol tags
-- Invalid Merkle structure
-- Missing protocol data
-- Incorrect ordering
-
-**Resolution**: Reject entire commitment
-
-### Proof Verification Failures
-
-*To be expanded: Failed verification*
-
-When proof doesn't verify:
-- Check proof completeness
-- Verify hash calculations
-- Confirm MPC root matches Bitcoin commitment
-- Validate protocol data format
-
-## Testing
-
-### Test Vectors
-
-*To be expanded: MPC test cases*
-
-Test scenarios:
-- Single protocol MPC
-- Multi-protocol MPC
-- Maximum tree depth
-- All protocol combinations
-- Edge cases
-
-### Compatibility Testing
-
-*To be expanded: Cross-implementation tests*
-
-Ensure compatibility between:
-- Different RGB implementations
-- Different Lightning implementations
-- Various Bitcoin libraries
-- Multiple protocol versions
-
-## Related Documentation
-
-- [Deterministic Commitments](./deterministic-commitments.md) - Commitment architecture
-- [Tapret](./tapret.md) - Tapret with MPC
-- [Opret](./opret.md) - Opret with MPC
-- [Lightning Integration](../../guides/lightning/overview.md) - RGB + Lightning
-
-## References
-
-*Coming soon: MPC specifications and protocol registry*
-
----
-
-**Status**: Draft outline - To be expanded with detailed MPC specifications and protocol registry.
+- Different contracts' state moves can share one Bitcoin transaction, and so one fee.
+- Each contract's data stays private from the holders of other contracts in the same tree.
+- Within one contract, all transitions closed by the transaction share a single leaf: the bundle (B) or the multi-message bundle (A).
+- No Lightning or other non-RGB protocol occupies MPC leaves in either line.
+- Opret and tapret reveal the same thing: one 32-byte commitment. The difference is that opret's `OP_RETURN` output is visible as such, while tapret hides in a taproot key.

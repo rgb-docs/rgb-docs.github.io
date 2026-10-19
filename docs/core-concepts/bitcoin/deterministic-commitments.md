@@ -1,530 +1,106 @@
 ---
 sidebar_position: 1
 title: Deterministic Bitcoin Commitments
-description: RGB's system for committing contract data to Bitcoin transactions
+description: How RGB anchors client-side data in a Bitcoin transaction, and the one-commitment-per-transaction rule both lines enforce.
+rgb_line: both
+verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
+last_update:
+  date: 2026-10-19
 ---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
 # Deterministic Bitcoin Commitments
 
-RGB uses Deterministic Bitcoin Commitments (DBC) to anchor client-side validated contracts to the Bitcoin blockchain. This system enables RGB to inherit Bitcoin's security and finality while keeping contract data off-chain and private.
+:::info Applies to both RGB lines
+Both lines use the same commitment rules; the only byte-level difference is the tapret script prefix. See [Two RGB lines](/getting-started/two-rgbs).
+:::
 
-## Overview
+A **deterministic Bitcoin commitment (DBC)** puts a 32-byte hash of RGB client-side data into a Bitcoin transaction so that:
 
-Deterministic Bitcoin Commitments provide:
+- the transaction provably carries **one and only one** commitment, and
+- anyone holding the data and a short proof can check that commitment against the transaction.
 
-- **Secure anchoring**: Contract state committed to Bitcoin transactions
-- **Multi-protocol support**: Multiple protocols can share same Bitcoin transaction
-- **Deterministic**: Same commitment always produces same result
-- **Efficient**: Minimal on-chain footprint
-- **Flexible**: Supports different commitment methods (Tapret, Opret)
+That uniqueness is what makes a [single-use seal](../single-use-seals.md) safe. If a transaction could hold two commitments, its owner could show different histories to different people.
 
-This architecture allows RGB and other client-side validation protocols to leverage Bitcoin's security without bloating the blockchain.
+The transaction that closes a seal and carries the commitment is called the **witness transaction**.
 
-## Commitment Concept
+## What gets committed
 
-### What is a Commitment?
+The 32 bytes in the transaction are an **MPC commitment**, the root of a [multi-protocol commitment](./multi-protocol-commitments.md) tree. Each leaf of the tree belongs to one RGB contract. The leaf holds:
 
-*To be expanded: Basic commitment concept*
+<Tabs groupId="rgb-line">
+<TabItem value="b" label="v0.11 (rgb-cmd)">
 
-A commitment is a cryptographic binding:
+The `BundleId` of the contract's transition bundle: all state transitions of that contract closed by this witness transaction (`rgb-consensus` 0.11.1 `src/validation/validator.rs`).
 
-```
-[Placeholder for commitment diagram]
+</TabItem>
+<TabItem value="a" label="v0.12 (rgb-wallet)">
 
-RGB Contract Data (Off-chain)
-         │
-         ├─> Hash/Merkle Root
-         │
-         └─> Embedded in Bitcoin TX
-                    │
-                    └─> Bitcoin Blockchain
-```
+The commitment of a **multi-message bundle** (`mmb::BundleProof`): a map from each witness-transaction input index to the operation it closes. Tag `urn:lnp-bp:mmb:bundle#2024-11-18` (`bp-core` 0.12.0 `seals/src/txout.rs`).
 
-**Properties**:
-- **Binding**: Can't change committed data without changing commitment
-- **Hiding**: Commitment reveals nothing about data
-- **Verifiable**: Anyone can verify data matches commitment
-- **Compact**: Small size regardless of data size
+</TabItem>
+</Tabs>
 
-### Why Commit to Bitcoin?
+Genesis, schemas, codexes and contract metadata are not anchored. They reach the verifier inside the consignment and are checked by hash.
 
-*To be expanded: Benefits of Bitcoin anchoring*
+## The first-output rule
 
-Bitcoin provides:
+> The only output that can hold an RGB commitment is the **first** output of the witness transaction that is either an `OP_RETURN` or a P2TR (taproot) output.
 
-1. **Immutability**: Once confirmed, extremely hard to reverse
-2. **Timestamping**: Proof of when data existed
-3. **Ordering**: Determines transaction order
-4. **Security**: Protected by massive hash power
-5. **Finality**: Probabilistic finality after confirmations
-6. **Censorship resistance**: Hard to prevent commitments
+- If that output is `OP_RETURN`, it must hold an [opret](./opret.md) commitment.
+- If it is P2TR, it must hold a [tapret](./tapret.md) commitment.
+- Every later `OP_RETURN` or P2TR output is ignored.
 
-### RGB's Use of Commitments
+Both lines enforce this in the verifier:
 
-*To be expanded: How RGB uses Bitcoin commitments*
+- Line A: `bp-core` 0.12.0 `seals/src/txout.rs`, `verify_commitment` takes the first output where `is_op_return() || is_p2tr()`.
+- Line B: `rgb-consensus` 0.11.1 `src/validation/validator.rs` does the same search, and the proof type must match the output type.
 
-RGB commits:
-- State transition hashes
-- Contract genesis
-- Schema identifiers
-- Merkle roots of state changes
+Line B genesis also records the rule as `SealClosingStrategy::FirstOpretOrTapret`, its only variant (`src/operation/operations.rs`).
 
-## Commitment Structure
+:::danger Output order matters
+If a wallet places a P2TR payment output (change, or the recipient's taproot address) **before** the intended `OP_RETURN` commitment, the verifier looks for the commitment in the wrong output and the anchor fails. The RGB state that transaction tried to move is then lost. Let the RGB wallet build the transaction, and don't reorder its outputs in another tool.
+:::
 
-### Single Protocol Commitment
+## Commitment schemes
 
-*To be expanded: Committing one protocol*
+| | Opret | Tapret |
+|---|---|---|
+| Where | A zero-value `OP_RETURN` output | A leaf in the taproot script tree of a P2TR output |
+| Script | `OP_RETURN OP_PUSHBYTES_32 <mpc::Commitment>`, 34 bytes | 64-byte leaf script: 29-byte prefix, `OP_RETURN OP_PUSHBYTES_33`, the commitment, a 1-byte nonce |
+| Extra output | Yes | No, it reuses a P2TR output |
+| Visible on chain | Yes, as a 32-byte `OP_RETURN` | No, the output looks like any taproot output |
+| Spending | No key change | The output key is tweaked; the wallet must keep the tweak to spend it |
+| Line A vs B | Identical | Prefix differs: A uses 29 × `OP_NOP` (0x61), B uses 29 × `OP_RESERVED` (0x50) |
 
-Basic commitment structure:
+Which one gets used depends on the wallet:
 
-```
-[Placeholder for single commitment]
+<Tabs groupId="rgb-line">
+<TabItem value="b" label="v0.11 (rgb-cmd)">
 
-┌─────────────────────────────┐
-│  Bitcoin Transaction        │
-│  ┌───────────────────────┐  │
-│  │  OP_RETURN output or  │  │
-│  │  Taproot commitment   │  │
-│  │                       │  │
-│  │  RGB_HASH             │  │
-│  └───────────────────────┘  │
-└─────────────────────────────┘
-```
+`rgb-lib`, the library behind most Line B wallets, always sets `CloseMethod::OpretFirst` (`rgb-lib` `src/wallet/online.rs`). `rgb-cmd` can also run a taproot wallet: `rgb create` takes `--tapret-key-only <KEY>` or `--wpkh <KEY>`.
 
-### Multi-Protocol Commitments (MPC)
+</TabItem>
+<TabItem value="a" label="v0.12 (rgb-wallet)">
 
-*To be expanded: Multiple protocols in one transaction*
+`rgb create <NAME> <DESCRIPTOR>` takes the switch `--tapret-key-only` (tapret) or `--wpkh` (opret) (`RGB-WG/rgb` `cli/src/exec.rs`).
 
-Multiple protocols sharing one Bitcoin transaction:
+</TabItem>
+</Tabs>
 
-```
-[Placeholder for MPC diagram]
+## How a verifier checks it
 
-┌─────────────────────────────────┐
-│  Bitcoin Transaction            │
-│  ┌───────────────────────────┐  │
-│  │  Single Commitment        │  │
-│  │  (Tapret or Opret)        │  │
-│  │                           │  │
-│  │  ┌─────────────────────┐  │  │
-│  │  │  MPC Tree           │  │  │
-│  │  │  ┌───┬───┬───┬───┐  │  │  │
-│  │  │  │RGB│LNP│...│...│  │  │  │
-│  │  │  └───┴───┴───┴───┘  │  │  │
-│  │  └─────────────────────┘  │  │
-│  └───────────────────────────┘  │
-└─────────────────────────────────┘
-```
-
-**Benefits**:
-- Share transaction costs
-- Reduce blockchain footprint
-- Enable cross-protocol coordination
-- Maintain protocol independence
-
-## Commitment Methods
-
-### Tapret (Taproot OP_RETURN)
+1. Find the first `OP_RETURN` or P2TR output of the witness transaction. If there is none, the anchor is invalid.
+2. Check that the proof type matches the output type: opret for `OP_RETURN`, tapret for P2TR.
+3. Rebuild the MPC commitment from the contract's leaf (B: the `BundleId`; A: the MMB commitment) and its Merkle path. Compare it with the output: the `OP_RETURN` payload for opret, or the taproot output key recomputed from the tapret proof.
+4. Check that the transaction spends the seals the operation claims to close. Line A also checks that the MMB maps each of those inputs to this operation.
 
-*To be expanded: Tapret commitment method*
+A witness transaction seen only in the mempool gives a **tentative** result. Wait for confirmations before treating a transfer as final.
 
-See [Tapret Details](./tapret.md) for full documentation.
+## Further reading
 
-**Overview**:
-- Embeds commitment in Taproot script tree
-- Unspendable script leaf contains commitment
-- Most private and efficient method
-- Recommended for new implementations
-
-**Example structure**:
-```
-Taproot Output:
-  Internal Key: <user_key>
-  Script Tree:
-    - Spending path (key path)
-    - Commitment leaf (OP_RETURN <commitment>)
-```
-
-### Opret (OP_RETURN)
-
-*To be expanded: OP_RETURN commitment method*
-
-See [Opret Details](./opret.md) for full documentation.
-
-**Overview**:
-- Traditional OP_RETURN output
-- Widely supported
-- Clearly identified as data
-- Lower privacy than Tapret
-
-**Example**:
-```
-Output:
-  Value: 0
-  Script: OP_RETURN <protocol_tag> <commitment>
-```
-
-### Comparison
-
-*To be expanded: Method comparison*
-
-| Feature | Tapret | Opret |
-|---------|--------|-------|
-| Privacy | High (hidden) | Low (obvious) |
-| Efficiency | High | Moderate |
-| Compatibility | Taproot required | Universal |
-| Cost | Lower | Slightly higher |
-| Recommended | Yes (new apps) | Legacy support |
-
-## Deterministic Commitment Scheme
-
-### Determinism Requirements
-
-*To be expanded: What makes commitments deterministic*
-
-For reproducibility, commitments must:
-
-1. **Canonical ordering**: Deterministic data ordering
-2. **Fixed encoding**: Standard serialization
-3. **Predictable hashing**: Same hash algorithm always
-4. **No randomness**: No random nonces or padding
-5. **Version-locked**: Commitment scheme version fixed
-
-### Commitment Calculation
-
-*To be expanded: How commitments are computed*
-
-**Process**:
-
-```
-1. Collect commitment data
-   ├─> State transitions
-   ├─> Contract operations
-   └─> Protocol messages
-
-2. Canonicalize data
-   ├─> Sort in defined order
-   ├─> Encode with Strict Types
-   └─> Remove any randomness
-
-3. Build Merkle tree
-   ├─> Hash individual items
-   ├─> Construct tree bottom-up
-   └─> Produce root hash
-
-4. Create final commitment
-   ├─> Combine with protocol tag
-   ├─> Add version information
-   └─> Produce commitment bytes
-
-5. Embed in Bitcoin transaction
-   ├─> Tapret or Opret
-   └─> Publish transaction
-```
-
-### Strict Encoding
-
-*To be expanded: Deterministic serialization*
-
-RGB uses [Strict Types](../../technical-reference/strict-types.md) for:
-- Canonical serialization
-- Platform-independent encoding
-- Deterministic byte representation
-- Schema versioning
-
-## Merkle Tree Construction
-
-### Tree Structure
-
-*To be expanded: Merkle tree organization*
-
-```
-[Placeholder for Merkle tree diagram]
-
-                Root
-              /      \
-          Hash(A,B)  Hash(C,D)
-           /    \      /    \
-       Hash(A) Hash(B) Hash(C) Hash(D)
-         |       |       |       |
-       Data A  Data B  Data C  Data D
-         |       |       |       |
-    Transition Contract State  Event
-```
-
-### Hashing Algorithm
-
-*To be expanded: Hash function details*
-
-RGB uses:
-- **SHA-256**: Primary hash function
-- **Tagged hashes**: Domain separation
-- **Merkle tree**: Efficient proofs
-- **Collision resistance**: Cryptographic security
-
-### Proof Generation
-
-*To be expanded: Creating Merkle proofs*
-
-Generate proofs of inclusion:
-
-```
-To prove Data B is in tree:
-Proof = [Hash(A), Hash(C,D)]
-
-Verification:
-  1. Hash(B)
-  2. Hash(Hash(A), Hash(B))
-  3. Hash(Hash(A,B), Hash(C,D))
-  4. Compare with Root
-```
-
-**Compact**: O(log n) proof size
-
-## Multi-Protocol Commitments
-
-### MPC Tree Structure
-
-*To be expanded: How multiple protocols share commitment space*
-
-See [Multi-Protocol Commitments](./multi-protocol-commitments.md) for details.
-
-**Structure**:
-```
-MPC Root
-  ├─> Protocol 1 (RGB)
-  ├─> Protocol 2 (Lightning)
-  ├─> Protocol 3 (...)
-  └─> Protocol N
-```
-
-Each protocol has independent subtree.
-
-### Protocol Identification
-
-*To be expanded: Identifying protocols in MPC*
-
-Protocols identified by:
-- Protocol tag (unique identifier)
-- Version number
-- Position in MPC tree
-
-### Adding Protocols
-
-*To be expanded: Extending MPC trees*
-
-New protocols can be added:
-- Without affecting existing protocols
-- Using same Bitcoin transaction
-- Maintaining independent validation
-
-## Commitment Verification
-
-### Verification Process
-
-*To be expanded: Verifying commitments*
-
-**Steps**:
-
-```
-1. Obtain Bitcoin transaction
-   └─> From blockchain or provided by sender
-
-2. Extract commitment
-   ├─> Parse Tapret or Opret
-   └─> Get commitment bytes
-
-3. Verify commitment structure
-   ├─> Check protocol tag
-   ├─> Validate version
-   └─> Parse MPC tree (if applicable)
-
-4. Reconstruct Merkle proof
-   ├─> Hash local data
-   ├─> Apply Merkle proof
-   └─> Calculate expected root
-
-5. Compare roots
-   ├─> Expected == Actual?
-   └─> Accept or reject
-```
-
-### Validation Requirements
-
-*To be expanded: What validators check*
-
-Validators verify:
-
-- Commitment exists in Bitcoin transaction
-- Transaction is confirmed (or in mempool)
-- Commitment matches expected value
-- Merkle proof is valid
-- No double-spend of source UTXO
-- Proper Bitcoin confirmations
-
-### Proofs of Publication
-
-*To be expanded: Proving data was published*
-
-Commitment proves:
-- Data existed at time of Bitcoin block
-- Data was committed to by transaction
-- Data matches provided commitment
-- No later tampering possible
-
-## Security Properties
-
-### Tamper Resistance
-
-*To be expanded: Protection against modification*
-
-Once committed:
-- Can't change data without changing commitment
-- Can't change commitment without changing Bitcoin tx
-- Can't change Bitcoin tx without mining new block
-- Bitcoin PoW protects commitment
-
-### Censorship Resistance
-
-*To be expanded: Preventing censorship*
-
-Commitments inherit Bitcoin's censorship resistance:
-- Hard to prevent transaction inclusion
-- No on-chain indication of protocol
-- Generic commitment format
-- Plausible deniability (Tapret)
-
-### Timeline Integrity
-
-*To be expanded: Temporal ordering*
-
-Bitcoin provides:
-- Proof of existence at time of block
-- Ordering between commitments
-- Relative timestamps
-- Fork-choice rule
-
-## Privacy Considerations
-
-### Commitment Privacy
-
-*To be expanded: What commitments reveal*
-
-**Tapret** (high privacy):
-- Commitment hidden in Taproot tree
-- Indistinguishable from other Taproot scripts
-- Only revealed when needed
-- No on-chain protocol indication
-
-**Opret** (lower privacy):
-- Clearly visible commitment
-- Protocol tag identifies RGB
-- Transaction flagged as "data carrier"
-- Still private data content (only hash)
-
-### Data Privacy
-
-*To be expanded: Protecting committed data*
-
-Commitments reveal:
-- ✗ No actual data content
-- ✓ Only cryptographic hash
-- ✗ No transaction amounts
-- ✗ No participant identities
-- ✓ Just proof of existence
-
-### Traffic Analysis
-
-*To be expanded: Mitigating traffic analysis*
-
-Considerations:
-- Timing correlation
-- Transaction graph analysis
-- UTXO linking
-- Mitigation strategies (CoinJoin, etc.)
-
-## Performance Optimization
-
-### Batching Commitments
-
-*To be expanded: Efficient commitment batching*
-
-Combine multiple state transitions:
-```
-Single Bitcoin TX commits:
-  - 100 RGB transfers
-  - 50 contract operations
-  - 10 genesis contracts
-  All in one Merkle tree
-```
-
-**Benefits**:
-- Amortized Bitcoin fees
-- Reduced blockchain footprint
-- Improved throughput
-
-### Commitment Scheduling
-
-*To be expanded: When to commit*
-
-Strategies:
-- Immediate commitment (highest security)
-- Batched commitment (lower cost)
-- Periodic commitment (regular intervals)
-- Threshold-based (when batch size reached)
-
-## Implementation Details
-
-### Commitment Format
-
-*To be expanded: Binary format specification*
-
-```
-Commitment bytes:
-  [Version: 1 byte]
-  [Protocol Tag: 4 bytes]
-  [Merkle Root: 32 bytes]
-  [Metadata: variable]
-```
-
-### Code Example
-
-*To be expanded: Creating commitments*
-
-```rust
-// Placeholder example
-use rgb::Commitment;
-
-let transitions = vec![transition1, transition2, transition3];
-let merkle_root = build_merkle_tree(&transitions);
-let commitment = Commitment::new(
-    protocol_tag,
-    version,
-    merkle_root
-);
-
-// Embed in Bitcoin transaction
-let tx = bitcoin::Transaction {
-    // ... transaction details
-    output: vec![
-        // ... other outputs
-        commitment.to_tapret_output(internal_key)
-    ]
-};
-```
-
-## Related Documentation
-
-- [Tapret](./tapret.md) - Taproot commitment method
-- [Opret](./opret.md) - OP_RETURN commitment method
-- [Multi-Protocol Commitments](./multi-protocol-commitments.md) - MPC details
-- [Client-Side Validation](../client-side-validation.md) - Overall validation model
-- [Strict Types](../../technical-reference/strict-types.md) - Deterministic encoding
-
-## References
-
-*Coming soon: DBC specifications and BIPs*
-
----
-
-**Status**: Draft outline - To be expanded with detailed specifications and implementation examples.
+- [Deterministic Bitcoin Commitments](https://docs.rgb.info/commitment-layer/deterministic-bitcoin-commitments-dbc) on docs.rgb.info, Line B's official docs. The first-output rule above follows that page.
+- [`bp-core`](https://github.com/BP-WG/bp-core) v0.12.0, crates `bp-dbc` and `bp-seals` (Line A).
+- [`rgb-consensus`](https://github.com/rgb-protocol/rgb-consensus) 0.11.1, modules `dbc` and `seals` (Line B). It carries its own copy of the commitment code instead of depending on `bp-core`.
