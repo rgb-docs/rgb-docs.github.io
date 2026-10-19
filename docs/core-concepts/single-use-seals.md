@@ -474,7 +474,6 @@ rgb seal verify \
 
 ## Next Steps
 
-- [**PRISM Computing**](/core-concepts/prism-computing) - How seals fit into the computing model
 - [**State Management**](/core-concepts/state/unified-state) - How state is bound to seals
 - [**Bitcoin Integration**](/core-concepts/bitcoin/deterministic-commitments) - How seals commit to Bitcoin
 

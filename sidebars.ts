@@ -1,5 +1,7 @@
 import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 
+// Every page says which RGB line it covers (front matter `rgb_line`): A = v0.12 (RGB-WG),
+// B = v0.11 (RGB Protocol Association), or both. See docs/getting-started/two-rgbs.md.
 const sidebars: SidebarsConfig = {
   mainSidebar: [
     {
@@ -8,6 +10,7 @@ const sidebars: SidebarsConfig = {
       collapsed: false,
       items: [
         'getting-started/introduction',
+        'getting-started/two-rgbs',
         'getting-started/installation',
         'getting-started/quick-start',
         'getting-started/whats-new-0-12',
@@ -21,20 +24,20 @@ const sidebars: SidebarsConfig = {
         'core-concepts/overview',
         'core-concepts/client-side-validation',
         'core-concepts/single-use-seals',
-        'core-concepts/prism-computing',
         {
           type: 'category',
-          label: 'AluVM',
+          label: 'Bitcoin Commitments',
           collapsed: true,
           items: [
-            'core-concepts/aluvm/overview',
-            'core-concepts/aluvm/instruction-set',
-            'core-concepts/aluvm/memory-model',
+            'core-concepts/bitcoin/deterministic-commitments',
+            'core-concepts/bitcoin/tapret',
+            'core-concepts/bitcoin/opret',
+            'core-concepts/bitcoin/multi-protocol-commitments',
           ],
         },
         {
           type: 'category',
-          label: 'State Management',
+          label: 'State',
           collapsed: true,
           items: [
             'core-concepts/state/unified-state',
@@ -44,13 +47,11 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'category',
-          label: 'Bitcoin Integration',
+          label: 'AluVM',
           collapsed: true,
           items: [
-            'core-concepts/bitcoin/deterministic-commitments',
-            'core-concepts/bitcoin/tapret',
-            'core-concepts/bitcoin/opret',
-            'core-concepts/bitcoin/multi-protocol-commitments',
+            'core-concepts/aluvm/overview',
+            'core-concepts/aluvm/instruction-set',
           ],
         },
       ],
@@ -63,17 +64,30 @@ const sidebars: SidebarsConfig = {
         'guides/overview',
         {
           type: 'category',
-          label: 'RGB20 (Fungible Assets)',
+          label: 'Contracts',
+          collapsed: true,
+          items: [
+            'guides/contracts/schemas',
+            'guides/contracts/genesis',
+            'guides/contracts/state-transitions',
+            'guides/contracts/bundles',
+            'guides/contracts/contractum',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Fungible Assets',
           collapsed: true,
           items: [
             'guides/rgb20/creating-tokens',
             'guides/rgb20/transferring-assets',
             'guides/rgb20/secondary-issuance',
+            'guides/rgb25/overview',
           ],
         },
         {
           type: 'category',
-          label: 'RGB21 (NFTs)',
+          label: 'Unique Assets (UDA)',
           collapsed: true,
           items: [
             'guides/rgb21/creating-nfts',
@@ -83,28 +97,7 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'category',
-          label: 'RGB25 (Collectibles)',
-          collapsed: true,
-          items: [
-            'guides/rgb25/overview',
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Smart Contracts',
-          collapsed: true,
-          items: [
-            'guides/contracts/schemas',
-            'guides/contracts/contractum',
-            'guides/contracts/genesis',
-            'guides/contracts/state-transitions',
-            'guides/contracts/bundles',
-            'guides/contracts/extensions',
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Lightning Network',
+          label: 'Lightning (v0.11)',
           collapsed: true,
           items: [
             'guides/lightning/overview',
@@ -127,17 +120,16 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'Technical Reference',
+      label: 'Reference',
       collapsed: true,
       items: [
-        'technical-reference/api',
         'technical-reference/cli',
-        'technical-reference/interfaces',
-        'technical-reference/encodings',
-        'technical-reference/consignments',
         'technical-reference/invoices',
-        'technical-reference/payment-scripts',
+        'technical-reference/consignments',
+        'technical-reference/interfaces',
         'technical-reference/strict-types',
+        'technical-reference/encodings',
+        'technical-reference/ecosystem',
         'technical-reference/troubleshooting',
         'technical-reference/faq',
         'technical-reference/glossary',

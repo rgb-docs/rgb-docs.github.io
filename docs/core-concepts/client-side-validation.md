@@ -431,7 +431,6 @@ function fullValidation(consignment: Consignment) {
 ## Next Steps
 
 - [**UTXO Binding**](/core-concepts/single-use-seals) - How RGB uses Bitcoin's UTXO model
-- [**PRISM Computing**](/core-concepts/prism-computing) - The computational model
 - [**Consignments**](/technical-reference/consignments) - Technical specification
 
 ## Additional Resources

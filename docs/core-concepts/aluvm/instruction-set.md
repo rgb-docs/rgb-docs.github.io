@@ -2389,8 +2389,6 @@ stop:
 ## Related Documentation
 
 - [AluVM Overview](./overview.md) - VM architecture and design philosophy
-- [Memory Model](./memory-model.md) - Memory organization and access patterns
-- [Prism Computing](../prism-computing.md) - RGB computing model
 - [Contractum Guide](../../guides/contracts/contractum.md) - High-level contract programming
 
 ## References

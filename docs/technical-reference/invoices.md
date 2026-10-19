@@ -88,4 +88,3 @@ const qr = await QRCode.toDataURL(invoice.toString());
 ## Related Documentation
 
 - [RGB20 Transfers](../guides/rgb20/transferring-assets.md)
-- [API Reference](./api.md)
