@@ -77,6 +77,7 @@ Contributions are welcome! To contribute:
   ```
 
   It checks `rgb` commands against the pinned CLIs' help trees (`scripts/cli-help/`), and install targets and crates against `scripts/install-allowlist.json`.
+- `node scripts/release-watch.mjs` reports newer releases of either line. A new stable means bump `scripts/rgb-lines.json` and regenerate `scripts/cli-help/`.
 - Date and source every version, status or ecosystem claim. Don't use numbers you can't source.
 
 ## Resources
