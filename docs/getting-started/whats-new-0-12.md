@@ -1,393 +1,76 @@
 ---
 sidebar_position: 4
-title: What's New in RGB v0.12
-description: Major changes and improvements in RGB Protocol version 0.12
+title: What's new in v0.12 (Line A)
+description: The changes RGB-WG made in RGB v0.12, as stated in its release posts, and what is still a release candidate.
+rgb_line: A
+verified_with: rgb-wallet 0.12.0-rc.3
+last_update:
+  date: 2026-10-19
 ---
 
-# What's New in RGB v0.12
+# What's new in v0.12 (Line A)
 
-<div style={{textAlign: 'center', margin: '2rem 0'}}>
-<div style={{fontSize: '3rem', fontWeight: 'bold', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '1rem'}}>
-100x Faster • 75% Less Code • Forward Compatible
-</div>
-<div style={{fontSize: '1.2rem', color: 'var(--ifm-color-emphasis-700)'}}>
-The complete protocol redesign with stability guarantees
-</div>
-</div>
-
-:::danger **Breaking Changes**
-RGB v0.12 includes **consensus-breaking changes**. All v0.11 contracts must be re-issued. See [Migration Guide](#-migration-guide) below.
+:::info RGB v0.12 line (rgb-wallet 0.12.0-rc.3, release candidate)
+This page covers only RGB-WG's v0.12 redesign. The other line continued v0.11. See [Two RGB lines](/getting-started/two-rgbs).
 :::
 
-<div style={{background: 'var(--ifm-color-info-contrast-background)', padding: '1.5rem', borderRadius: '8px', margin: '2rem 0', border: '2px solid var(--ifm-color-info)'}}>
+:::note Line B stayed on 0.11.x
+The RGB Protocol Association didn't adopt v0.12. It continued the v0.11 protocol: 0.11.1 has been final since 2026-09-16, and 0.11.2 is a release candidate (2026-10-09). Nothing on this page applies to Line B, and v0.12 can't read Line B contracts. See [Two RGB lines](/getting-started/two-rgbs).
+:::
 
-### 🔒 Forward Compatibility Guarantee
+Except where noted, everything below comes from RGB-WG's own posts: [v0.12 release candidate 1](https://rgb.tech/blog/release-v0-12-rc-1/) (2025-05-20), [release candidate 2](https://rgb.tech/blog/release-v0-12-rc-2/) (2025-06-01) and the [v0.12 consensus release](https://rgb.tech/blog/release-v0-12-consensus/) (2025-07-10). These are the project's own claims. This site hasn't benchmarked them.
 
-**All contracts issued with v0.12 will work with future RGB versions.**
+## Release status (2026-10-19)
 
-This is the first RGB version with this guarantee. Test on testnet first.
+| Component | Version | Date | Status |
+|---|---|---|---|
+| `rgb-core` (consensus) | 0.12.0 | 2025-07-10 | final |
+| `rgb-std`, `rgb-runtime`, `rgb-wallet` (CLI) | 0.12.0-rc.3 | 2025-07-15 | release candidate |
 
-</div>
+There has been no Line A release since 2025-07-15 (crates.io). The consensus post says the release candidate "will become a full release" once the ecosystem adopts it. The rc.3 CLI refuses mainnet: it panics with "Non-testnet networks are not yet supported".
 
-## 🚨 Breaking Changes
+## Breaking change
 
-### Contracts Not Compatible
+RC1 states that "contracts issued before this release will not be compatible with the new RGB version", and the consensus post recommends re-issuing all earlier contracts. There is no migration tool, and v0.11 contracts can't be imported into v0.12.
 
-**CRITICAL**: Contracts issued before v0.12 are **NOT compatible** due to consensus-level changes. All contracts must be re-issued.
+The consensus post also says that with consensus frozen, "contracts are now forward-compatible". That is RGB-WG's intention for its own consensus layer (`rgb-core` 0.12). It isn't a guarantee for the release-candidate libraries, and it says nothing about Line B.
 
-### Migration Required
+## What changed
 
-If you're upgrading from RGB v0.11 or earlier:
+**Consensus and VM**
 
-1. Export all asset data
-2. Upgrade to v0.12
-3. Re-issue all contracts
-4. Re-distribute assets
+- Consensus code is about four times smaller ("x4 reduction in the size of the consensus code and x2 reduction in standard libraries"). "The whole consensus validation was reduced to just a few hundred lines of code."
+- **zk-AluVM**, a VM "made of just 40 instructions", is designed so that validation can later be proven with zk-STARKs. See [AluVM](/core-concepts/aluvm/overview).
+- Fungible, structured and attachment state are merged into one type made of finite field elements. See [Unified state](/core-concepts/state/unified-state).
+- Tapret and opret seals are unified into a single seal type, with an `OP_RETURN` fallback.
+- RC2 added input-specific lock scripts and an operation-level `witness` field.
 
-## 🎯 Major Features
+**Removed**
 
-### 1. zk-STARK Readiness
+- Pedersen commitments and Bulletproofs.
+- Blank state transitions.
+- Multi-chain contracts: "each blockchain will have its own version of the contract".
+- Schemata. Contracts are now issued from *codexes* and *issuers*, with APIs on top. Interfaces left the standard library: "Interfaces are still present, but not in the standard library". The higher-level language Contractum, which is meant to compile into these APIs, hasn't been released ([RGB-WG/contractum-lang](https://github.com/RGB-WG/contractum-lang), last pushed 2022-12-24).
 
-RGB v0.12 was completely re-architected to support zero-knowledge STARK proofs:
+**Payments and storage**
 
-- **State Unification**: All state types unified into finite field elements
-- **Circuit-Compatible**: Validation logic representable as arithmetic circuits
-- **Future-Proof**: Ready for zk-compression when zk-STARKs mature
+- Richer invoices with a new `contract:` URI scheme. An example of real rc.3 output is `contract:tb@contract:<id>/10@at:<token>/` (see [CLI reference](/technical-reference/cli#invoice)).
+- Contracts can expose several tokens.
+- *Payment scripts* for multi-party and batched payments: the `rgb script` → `exec` → `complete` workflow ([Payments.md](https://github.com/RGB-WG/rgb/blob/v0.12.0-rc.3/doc/Payments.md)).
+- Consignments are streamed and validated as they are read. RC1 says this takes "a few hundred bytes of memory".
+- Chain-index sync is separated from consignment validation. The consensus post says validation "became order of magnitude faster", but publishes no benchmark.
+- Contract history is kept in an append-only embedded database.
 
-### 2. zk-AluVM Virtual Machine
+**Testing.** The consensus post reports unit-test coverage that "exceeds 66.7% for all RGB abstraction levels", "reaching >75% in the consensus libraries".
 
-Introduced a revolutionary VM with just **40 instructions**:
+## Lightning
 
-```rust
-// AluVM characteristics
-- Non-von-Neumann architecture
-- Read-once memory model
-- Turing-complete
-- Exception-less execution
-- Formally verifiable
-```
+v0.12 has no released Lightning implementation. RC1 lists Lightning channel operations as a use for payment scripts. As of 2026-10-19, the only RGB Lightning node that has been released is [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) (Line B, alpha).
 
-### 3. Enhanced Invoicing System
-
-Invoices now support more flexible seal types and better integration with payment workflows:
+## Try it
 
 ```bash
-# Generate invoice for receiving tokens
-rgb invoice --wallet my-wallet <CONTRACT_ID> 100
-
-# The invoice encodes: contract, amount, and destination seal
-```
-
-### 4. Payment Scripts
-
-New support for multi-beneficiary, multi-contract transactions:
-
-```typescript
-// Multiple recipients, multiple contracts
-const paymentScript = await rgb.createPaymentScript({
-  payments: [
-    { beneficiary: 'alice', contract: tokenA, amount: 100n },
-    { beneficiary: 'bob', contract: tokenB, amount: 50n },
-    { beneficiary: 'charlie', contract: nft, tokenId: 5n },
-  ]
-});
-```
-
-### 5. Contractum Language
-
-New functional declarative language for smart contracts:
-
-```contractum
-// Example Contractum contract
-contract StableCoin {
-  global supply: Amount
-  owned balance: Amount
-
-  transition transfer(amount: Amount) {
-    require(balance >= amount)
-    balance -= amount
-  }
-}
-```
-
-Compiles to AluVM bytecode for execution.
-
-## 🚀 Performance: Orders of Magnitude Better
-
-<div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', margin: '2rem 0', textAlign: 'center'}}>
-
-<div style={{padding: '1.5rem', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: '12px', color: 'white'}}>
-<div style={{fontSize: '3rem', fontWeight: 'bold'}}>100x</div>
-<div style={{fontSize: '1.1rem'}}>Faster Validation</div>
-<div style={{fontSize: '0.9rem', opacity: 0.9}}>5ms vs 500ms</div>
-</div>
-
-<div style={{padding: '1.5rem', background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', borderRadius: '12px', color: 'white'}}>
-<div style={{fontSize: '3rem', fontWeight: 'bold'}}>75%</div>
-<div style={{fontSize: '1.1rem'}}>Less Code</div>
-<div style={{fontSize: '0.9rem', opacity: 0.9}}>40k → 10k LOC</div>
-</div>
-
-<div style={{padding: '1.5rem', background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', borderRadius: '12px', color: 'white'}}>
-<div style={{fontSize: '3rem', fontWeight: 'bold'}}>250x</div>
-<div style={{fontSize: '1.1rem'}}>Less Memory</div>
-<div style={{fontSize: '0.9rem', opacity: 0.9}}>50MB → 200 bytes</div>
-</div>
-
-<div style={{padding: '1.5rem', background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', borderRadius: '12px', color: 'white'}}>
-<div style={{fontSize: '3rem', fontWeight: 'bold'}}>5x</div>
-<div style={{fontSize: '1.1rem'}}>Fewer Instructions</div>
-<div style={{fontSize: '0.9rem', opacity: 0.9}}>200 → 40 opcodes</div>
-</div>
-
-</div>
-
-### 📊 Before & After Comparison
-
-```rust
-// ❌ v0.11: Load entire consignment into memory
-let consignment = Consignment::load("transfer.rgb")?;
-// Memory usage: 50MB+
-// Time: ~500ms
-// Code: 40,000 lines
-
-// ✅ v0.12: Stream-based validation
-let stream = ConsignmentStream::new("transfer.rgb")?;
-stream.validate()?;
-// Memory usage: 200 bytes
-// Time: ~5ms
-// Code: 10,000 lines
-```
-
-### Why So Much Faster?
-
-| Optimization | Impact |
-|--------------|--------|
-| **State Unification** | Single field element type → 10x faster computation |
-| **Stream Processing** | No memory allocation → 250x less RAM |
-| **AluVM Redesign** | 40 instructions vs 200 → 5x smaller VM |
-| **NoSQL Backend** | Append-only database → Zero fragmentation |
-| **Type System Simplification** | Removed abstractions → Compiler optimizations |
-
-## 🔧 API Changes
-
-### Simplified State Types
-
-**Before (v0.11)**:
-```rust
-enum StateType {
-    Fungible(PedersenCommitment),
-    Structured(Data),
-    Attachment(Binary),
-}
-```
-
-**After (v0.12)**:
-```rust
-struct State {
-    data: FieldElement  // Single unified type
-}
-```
-
-### Unified Seals
-
-**Before**: Separate Tapret and Opret seal types
-**After**: Single seal type with method selection
-
-```rust
-// v0.12 unified seal
-let seal = Seal::new(txid, vout, method);
-```
-
-### Enhanced Interfaces
-
-Standard interfaces (RGB20, RGB21) now support:
-
-- Multiple token types per contract
-- Richer metadata
-- Complex state management
-
-```typescript
-// v0.12 RGB20 with multiple tokens
-const contract = await RGB20.issue({
-  tokens: [
-    { name: 'Token A', ticker: 'TKNA', supply: 1000000n },
-    { name: 'Token B', ticker: 'TKNB', supply: 500000n },
-  ]
-});
-```
-
-## 🔐 Security Enhancements
-
-### Comprehensive Test Coverage
-
-First RGB version with extensive testing:
-
-- **>66.7%** overall code coverage
-- **>75%** consensus library coverage
-- Unit, integration, and security tests
-- Attack scenario coverage
-
-### Re-org Protection
-
-Formal mathematical model for blockchain reorganization attacks:
-
-```rust
-// Configurable re-org depth protection
-// Set via --min-confirmations global option
-rgb --min-confirmations 6 <command>
-```
-
-### Deterministic Bitcoin Commitments (DBC)
-
-Enhanced commitment verification:
-
-```
-Rule: Exactly ONE valid commitment per transaction
-- First DBC-compatible output wins
-- Subsequent outputs ignored
-- Prevents ambiguity attacks
-```
-
-## 📦 Architectural Removals
-
-### Removed Features
-
-To achieve simplification, these were removed:
-
-- ❌ **Pedersen Commitments**: Replaced by zk-STARK preparation
-- ❌ **Bulletproofs**: No longer needed with new architecture
-- ❌ **Blank State Transitions**: Eliminated entirely
-- ❌ **Multi-Blockchain Support**: Each chain gets dedicated contracts
-- ❌ **Schema Complexity**: Replaced by Contractum
-
-### Deprecated APIs
-
-```rust
-// Removed in v0.12
-pub fn create_blank_transition() // Removed
-pub fn bulletproof_verify()     // Removed
-pub struct PedersenCommitment   // Removed
-```
-
-## 🌟 New Capabilities
-
-### Lightning Network Integration
-
-Enhanced Lightning Network support for RGB assets:
-
-- RGB-enabled Lightning channels
-- Multi-hop routing for RGB assets
-- Atomic swaps between Bitcoin and RGB assets
-- Instant settlement with minimal fees
-
-RGB Lightning integration is provided through compatible Lightning node implementations. See [RGB Lightning guide](/guides/lightning/overview) for details.
-
-### Multiple Token Standards
-
-Single contract can expose multiple interacting tokens:
-
-```typescript
-// DeFi pair contract
-const dexPair = await RGB.createContract({
-  interface: 'DexPair',
-  tokens: {
-    tokenA: RGB20Contract,
-    tokenB: RGB20Contract,
-    lpToken: RGB20Contract
-  },
-  logic: poolLogic
-});
-```
-
-### Enhanced Privacy
-
-Additional privacy features:
-
-- Blinded UTXO allocations in invoices
-- Optional clear allocations for specific use cases
-- Entropy leaves in MPC trees
-
-## 📊 Comparison Table
-
-| Feature | v0.11 | v0.12 |
-|---------|-------|-------|
-| State Types | 3 distinct types | 1 unified type |
-| VM Instructions | ~200 | 40 |
-| Code Size | ~40k LOC | ~10k LOC |
-| Validation Speed | 500ms | 5ms |
-| Memory Usage | 50MB+ | 200 bytes |
-| Test Coverage | Less than 30% | Greater than 66.7% |
-| zk-Ready | No | Yes |
-| Lightning | Experimental | Production |
-
-## 🔄 Migration Guide
-
-### For Contract Issuers
-
-```bash
-# 1. Export v0.11 contract data
-rgb-v0.11 export --contract <ID> --output old-data.json
-
-# 2. Install the v0.12 CLI (release candidate; crate rgb-wallet, not rgb-cli)
 cargo install --locked rgb-wallet --version 0.12.0-rc.3
-
-# 3. Re-issue contract
-# Create new params file with your token specs
-rgb issue --wallet my-wallet token-params.yaml
-
-# 4. Announce to users
 ```
 
-### For Wallet Developers
-
-Update your integration:
-
-```typescript
-// Old (v0.11)
-import { RGB } from 'rgbjs@0.11';
-
-// New (v0.12)
-import { RGB } from 'rgbjs@0.12';
-
-// Update API calls
-const transfer = await rgb.transfer({
-  // New payment script format
-  payments: [...]  // Changed from single invoice
-});
-```
-
-### For Users
-
-1. Backup wallet data
-2. Upgrade wallet software
-3. Re-sync RGB contracts
-4. Verify balances
-
-## 🎓 Learning Path
-
-If you're new to v0.12:
-
-1. [**Core Concepts**](/core-concepts/overview) - Understand the new architecture
-2. [**AluVM Guide**](/core-concepts/aluvm/overview) - Learn the new VM
-3. [**State Management**](/core-concepts/state/unified-state) - Understand unified state
-4. [**Migration Guide**](/guides/development/testing) - Update existing projects
-
-## 📚 Additional Resources
-
-- [v0.12 Release Notes](https://rgb.tech/blog/release-v0-12-consensus/)
-- [Breaking Changes Details](https://github.com/RGB-WG/rgb-core/blob/v0.12/CHANGELOG.md)
-- [Migration Examples](https://github.com/RGB-WG/rgb-examples/tree/main/migration)
-
-## Forward Compatibility Guarantee
-
-**Important**: All contracts issued with RGB v0.12 will remain compatible with future versions. This is the first version with this guarantee.
-
-```
-RGB v0.12+ = Stable consensus layer
-Future versions will be backward compatible
-```
-
----
-
-Ready to build with v0.12? Start with the [Quick Start Guide](/getting-started/quick-start).
+Then follow the [quick start](/getting-started/quick-start) (v0.12 tab) and the [CLI reference](/technical-reference/cli).
