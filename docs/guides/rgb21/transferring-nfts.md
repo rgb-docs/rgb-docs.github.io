@@ -6,6 +6,10 @@ description: Learn how to transfer non-fungible tokens using RGB21 with privacy 
 
 # Transferring RGB21 NFTs
 
+:::danger Order of steps
+This page tells you to sign and broadcast before you build the consignment. That's wrong. Both CLIs write the consignment together with the PSBT (Line A: `rgb pay` → `rgb complete` → `rgb finalize`; Line B: `rgb transfer`, then sign and broadcast). Send the consignment to the recipient **before** you broadcast. rgb-lib broadcasts only after the recipient has acknowledged it. If you broadcast first and the recipient rejects the consignment or never gets it, the assets can be lost. This page is being rewritten.
+:::
+
 Transferring RGB21 NFTs follows the same client-side validation model as RGB20 fungible tokens, but with unique considerations for indivisible assets, metadata handling, and provenance tracking. This comprehensive guide covers the complete NFT transfer workflow from invoice creation to consignment acceptance.
 
 ## NFT Transfer Overview

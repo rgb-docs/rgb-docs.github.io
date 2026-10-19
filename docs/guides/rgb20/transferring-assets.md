@@ -6,6 +6,10 @@ description: Learn how to transfer fungible assets using RGB20 tokens with clien
 
 # Transferring RGB20 Assets
 
+:::danger Order of steps
+This page tells you to sign and broadcast before you build the consignment. That's wrong. Both CLIs write the consignment together with the PSBT (Line A: `rgb pay` → `rgb complete` → `rgb finalize`; Line B: `rgb transfer`, then sign and broadcast). Send the consignment to the recipient **before** you broadcast. rgb-lib broadcasts only after the recipient has acknowledged it. If you broadcast first and the recipient rejects the consignment or never gets it, the assets can be lost. This page is being rewritten.
+:::
+
 This guide covers the complete process of transferring RGB20 fungible tokens between parties using RGB's client-side validation model. RGB transfers are private, scalable, and leverage Bitcoin's security without bloating the blockchain.
 
 ## Understanding RGB Transfers

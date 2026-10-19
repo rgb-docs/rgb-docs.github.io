@@ -14,7 +14,7 @@ Tapret leverages Bitcoin's Taproot upgrade (BIP 341/342) to:
 
 - **Hide commitments**: Indistinguishable from regular Taproot transactions
 - **Reduce costs**: More efficient than OP_RETURN
-- **Maintain compatibility**: Works with any Taproot wallet
+- **Look like normal Taproot outputs**: but spending one needs the tapret tweak data, which only an RGB-aware wallet keeps. Back it up. A generic Taproot wallet can't spend the output, so losing the tweak strands the funds
 - **Enable key-path spending**: Normal Bitcoin transactions possible
 - **Support multiple commitments**: Multiple protocols in one output
 

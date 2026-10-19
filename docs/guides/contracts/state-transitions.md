@@ -6,6 +6,10 @@ description: Understanding RGB state transitions, validation, and how contract s
 
 # State Transitions
 
+:::danger `@rgbjs/*` packages don't exist
+The `@rgbjs/...` imports on this page refer to npm packages that were never published, and the `@rgbjs` scope isn't registered. Treat these examples as illustrative only and **don't install anything under that name**: anyone could register it. Real JavaScript options: Line B (RGB Protocol Association) has the [`rgb-lib`](https://www.npmjs.com/package/rgb-lib) bindings from RGB-Tools. Line A (RGB-WG v0.12) has no JavaScript SDK. This page is being rewritten.
+:::
+
 State transitions are the fundamental operations in RGB contracts that modify state ownership and update global data. This guide covers how transitions work, validation rules, and advanced state management patterns.
 
 ## What are State Transitions?

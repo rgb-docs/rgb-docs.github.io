@@ -6,6 +6,10 @@ description: Understanding RGB contract schemas, validation rules, and how to cr
 
 # RGB Schemas
 
+:::danger `@rgbjs/*` packages don't exist
+The `@rgbjs/...` imports on this page refer to npm packages that were never published, and the `@rgbjs` scope isn't registered. Treat these examples as illustrative only and **don't install anything under that name**: anyone could register it. Real JavaScript options: Line B (RGB Protocol Association) has the [`rgb-lib`](https://www.npmjs.com/package/rgb-lib) bindings from RGB-Tools. Line A (RGB-WG v0.12) has no JavaScript SDK. This page is being rewritten.
+:::
+
 RGB schemas define the structure, rules, and semantics of smart contracts. They specify what state contracts can hold, what operations are valid, and how state transitions are validated. This guide covers RGB's schema system and how to work with both standard and custom schemas.
 
 ## What is a Schema?

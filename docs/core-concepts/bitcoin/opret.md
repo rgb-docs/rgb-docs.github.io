@@ -6,6 +6,10 @@ description: OP_RETURN commitment method for RGB
 
 # Opret (OP_RETURN Commitments)
 
+:::danger `@rgbjs/*` packages don't exist
+The `@rgbjs/...` imports on this page refer to npm packages that were never published, and the `@rgbjs` scope isn't registered. Treat these examples as illustrative only and **don't install anything under that name**: anyone could register it. Real JavaScript options: Line B (RGB Protocol Association) has the [`rgb-lib`](https://www.npmjs.com/package/rgb-lib) bindings from RGB-Tools. Line A (RGB-WG v0.12) has no JavaScript SDK. This page is being rewritten.
+:::
+
 Opret is RGB's traditional commitment method using Bitcoin's OP_RETURN opcode. While [Tapret](./tapret.md) is now preferred for new implementations due to superior privacy and efficiency, Opret remains widely supported for legacy compatibility and applications where explicit protocol signaling is desired.
 
 ## Overview

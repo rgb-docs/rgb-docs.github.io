@@ -6,6 +6,10 @@ description: Integrating RGB into Bitcoin wallets and applications
 
 # Wallet Integration
 
+:::danger `@rgbjs/*` packages don't exist
+The `@rgbjs/...` imports on this page refer to npm packages that were never published, and the `@rgbjs` scope isn't registered. Treat these examples as illustrative only and **don't install anything under that name**: anyone could register it. Real JavaScript options: Line B (RGB Protocol Association) has the [`rgb-lib`](https://www.npmjs.com/package/rgb-lib) bindings from RGB-Tools. Line A (RGB-WG v0.12) has no JavaScript SDK. This page is being rewritten.
+:::
+
 Learn how to integrate RGB smart contract support into Bitcoin wallets and applications.
 
 ## Integration Overview
@@ -195,6 +199,10 @@ class RgbWallet implements RgbWalletInterface {
 ## UTXO Management
 
 ### RGB-Aware Coin Selection
+
+:::danger Don't write your own RGB coin selection
+A UTXO can carry several RGB allocations at once, including assets from other contracts. If you spend it without moving all of them in the same operation, they're destroyed. Use your RGB library's own transfer flow (Line A: `rgb pay`; Line B: `rgb transfer` / rgb-lib `send`), which accounts for every allocation. The example below ignores other assets on the same UTXO.
+:::
 
 RGB assets are tied to specific UTXOs, requiring specialized coin selection:
 
@@ -2072,6 +2080,10 @@ class WalletBackupManager {
   }
 }
 ```
+
+:::danger A seed phrase alone doesn't recover RGB assets
+RGB state lives off-chain, in your stash (contracts and consignments). The blockchain doesn't hold it, so rescanning from a mnemonic restores the bitcoin but **not the RGB assets**. Back up the RGB data directory, or use your library's encrypted backup (rgb-lib: `backup` / `restore_backup`), every time the state changes. Line B's rgb-lib derives keys with BIP86 under the RGB coin type 827166 (827167 on test networks), not BIP84. The example below is wrong on both points and is kept only until this page is rewritten.
+:::
 
 ### Seed Phrase Recovery
 

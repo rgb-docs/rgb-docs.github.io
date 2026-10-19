@@ -57,12 +57,12 @@ const config: Config = {
         description: 'Complete technical documentation for RGB Protocol v0.12 - Smart contracts for Bitcoin and Lightning Network',
         author: {
           '@type': 'Organization',
-          name: 'RGB Working Group',
-          url: 'https://rgb.tech',
+          name: 'RGB Docs community',
+          url: 'https://github.com/rgb-docs',
         },
         publisher: {
           '@type': 'Organization',
-          name: 'RGB Working Group',
+          name: 'RGB Docs community',
           logo: {
             '@type': 'ImageObject',
             url: 'https://rgb-docs.github.io/img/logo.png',
@@ -112,7 +112,7 @@ const config: Config = {
       // General SEO
       {name: 'keywords', content: 'RGB, Bitcoin, Smart Contracts, Lightning Network, Client-side Validation, AluVM, RGB20, RGB21, RGB25, Tapret, NFT, DeFi'},
       {name: 'description', content: 'Technical documentation for RGB Protocol v0.12 - Smart contracts for Bitcoin and Lightning Network with client-side validation'},
-      {name: 'author', content: 'RGB Working Group'},
+      {name: 'author', content: 'RGB Docs community'},
 
       // Open Graph Protocol
       {property: 'og:type', content: 'website'},
@@ -151,11 +151,11 @@ const config: Config = {
 
     // Optional announcement bar
     announcementBar: {
-      id: 'v012_release',
-      content: 'RGB v0.12 is now production-ready! <a href="/getting-started/introduction">Get Started</a>',
-      backgroundColor: '#7C4DFF',
+      id: 'rewrite_2026_10',
+      content: 'These docs are being rewritten for the two RGB lines: v0.12 (RGB-WG, release candidate 0.12.0-rc.3) and v0.11 (RGB Protocol Association, 0.11.1). Many pages predate the split. Check commands against <code>rgb --help</code> before using real funds.',
+      backgroundColor: '#B45309',
       textColor: '#fff',
-      isCloseable: true,
+      isCloseable: false,
     },
 
     // Navigation bar

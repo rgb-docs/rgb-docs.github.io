@@ -354,8 +354,8 @@ const auditLog = await RGB23.create({
 
 :::tip **Developer Experience**
 ```bash
-# Install CLI
-cargo install rgb-wallet
+# Install the Line A CLI (without --version, cargo picks the old 0.10.9)
+cargo install --locked rgb-wallet --version 0.12.0-rc.3
 
 # Issue token in a few commands
 rgb init

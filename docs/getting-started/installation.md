@@ -19,12 +19,11 @@ RGB has several implementations under active development:
 
 ### Node Implementations
 
-- **[rgb-node](https://github.com/RGB-WG/rgb-node)** - Reference RGB node implementation in Rust
-- **[RGB Lightning Node](https://github.com/RGB-WG/rgb-lightning-node)** - Lightning Network node with RGB support
+- **[RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node)** - Lightning node with RGB support (Line B, alpha, regtest/testnet)
 
 ### Developer Tools
 
-- **[rgb-cli](https://crates.io/crates/rgb-cli)** - Command-line interface for RGB operations
+- **[rgb-wallet](https://crates.io/crates/rgb-wallet)** (Line A) and **[rgb-cmd](https://crates.io/crates/rgb-cmd)** (Line B) - the `rgb` command-line tools
 - **[rgbjs](https://www.npmjs.com/package/rgbjs)** - JavaScript/TypeScript SDK for web and Node.js
 
 :::info Development Status
@@ -56,22 +55,39 @@ rustup update stable
 
 ### Install RGB CLI
 
-```bash
-# Install rgb-cli from crates.io
-cargo install rgb-cli
+RGB split into two lines in 2025, and each ships its own CLI. Both install a binary called `rgb`, so install only one per `PATH`.
 
-# Verify installation
+:::warning Don't use `cargo install rgb-cli`
+The `rgb-cli` crate is a 2023 release (0.9.1) from before the split. It works with neither current line.
+:::
+
+```bash line=A
+# Line A: RGB v0.12 (RGB-WG). Release candidate, testnet only.
+cargo install --locked rgb-wallet --version 0.12.0-rc.3
+rgb --help   # this CLI has no --version flag
+```
+
+```bash line=B
+# Line B: RGB v0.11 (RGB Protocol Association).
+cargo install --locked rgb-cmd --version 0.11.1
 rgb --version
 ```
 
 ### Add RGB Libraries to Your Project
 
-```toml title="Cargo.toml"
+Pin exact versions. Line A only has release candidates, and Cargo won't pick a pre-release for a plain `"0.12"` requirement.
+
+```toml title="Cargo.toml (Line A)"
 [dependencies]
-rgb-core = "0.12"
-rgb-std = "0.12"
-rgb-wallet = "0.12"
-rgb-contracts = "0.12"
+rgb-runtime = "=0.12.0-rc.3"
+rgb-std = "=0.12.0-rc.3"
+```
+
+```toml title="Cargo.toml (Line B)"
+[dependencies]
+rgb-api = "=0.11.1"
+# or, for applications, the wallet library used by Iris and RGB Lightning Node:
+# rgb-lib = "0.2.2"
 ```
 
 ## JavaScript/TypeScript Installation
@@ -145,31 +161,12 @@ cargo build --release
 ./target/release/electrs --network testnet
 ```
 
-## Development Tools
-
-### RGB Explorer (Optional)
-
-```bash
-# Install RGB explorer for debugging
-cargo install rgb-explorer
-
-# Run explorer
-rgb-explorer --network testnet
-```
-
-### AluVM Debugger (Optional)
-
-```bash
-# Install AluVM debugger
-cargo install aluvm-debugger
-```
-
 ## Verify Installation
 
 ### Check RGB CLI
 
 ```bash
-# Check version
+# Line B: print the version (Line A's rgb has no --version flag)
 rgb --version
 
 # Show help
@@ -217,7 +214,7 @@ For containerized development:
 FROM rust:latest
 
 # Install RGB
-RUN cargo install rgb-cli rgb-wallet
+RUN cargo install --locked rgb-cmd --version 0.11.1   # Line B; for Line A: rgb-wallet --version 0.12.0-rc.3
 
 # Set working directory
 WORKDIR /app

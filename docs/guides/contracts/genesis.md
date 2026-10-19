@@ -6,6 +6,10 @@ description: Creating and deploying RGB contract genesis - the initial state tha
 
 # Genesis Contracts
 
+:::danger `@rgbjs/*` packages don't exist
+The `@rgbjs/...` imports on this page refer to npm packages that were never published, and the `@rgbjs` scope isn't registered. Treat these examples as illustrative only and **don't install anything under that name**: anyone could register it. Real JavaScript options: Line B (RGB Protocol Association) has the [`rgb-lib`](https://www.npmjs.com/package/rgb-lib) bindings from RGB-Tools. Line A (RGB-WG v0.12) has no JavaScript SDK. This page is being rewritten.
+:::
+
 The genesis is the birth of an RGB contract - it defines the initial state, allocates ownership, and anchors the contract to Bitcoin. This guide covers creating, deploying, and verifying RGB contract genesis with detailed implementation examples from rgb-core and rgb-std.
 
 ## What is Genesis?

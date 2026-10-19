@@ -6,6 +6,10 @@ description: Understanding RGB asset transfers over Lightning Network channels f
 
 # RGB Lightning Overview
 
+:::danger `@rgbjs/*` packages don't exist
+The `@rgbjs/...` imports on this page refer to npm packages that were never published, and the `@rgbjs` scope isn't registered. Treat these examples as illustrative only and **don't install anything under that name**: anyone could register it. Real JavaScript options: Line B (RGB Protocol Association) has the [`rgb-lib`](https://www.npmjs.com/package/rgb-lib) bindings from RGB-Tools. Line A (RGB-WG v0.12) has no JavaScript SDK. This page is being rewritten.
+:::
+
 RGB Lightning enables instant, low-cost transfer of RGB assets through Lightning Network channels. This integration combines RGB's client-side validation with Lightning's payment channel technology for scalable, private asset transfers.
 
 ## What is RGB Lightning?
@@ -134,16 +138,9 @@ graph TB
 
 ### Prerequisites
 
-```bash
-# Install RGB node
-cargo install rgb-node
-
-# Install RGB-enabled Lightning (LNP/BP)
-cargo install lnp-node
-
-# Install Bitcoin Core
-apt install bitcoind
-```
+:::danger Being rewritten
+The commands that used to be here (`cargo install rgb-node`, `cargo install lnp-node`) install 2023 crates that have no RGB Lightning support. Line A (v0.12) has no Lightning implementation. The only working RGB Lightning node is [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) (Line B). It is alpha and supports regtest and testnet only; follow its README.
+:::
 
 *Installation to be expanded*
 
