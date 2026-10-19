@@ -111,8 +111,10 @@ for (const file of walk(path.join(root, 'docs'))) {
           else if (ver && !/git|path/.test(m[3] || '')) {
             const vs = crates[name] || [];
             const want = ver.replace(/^[=^~]/, '');
-            if (!vs.some((v) => v === want || v.startsWith(want + '.') || v.startsWith(want + '-')))
-              add(file, n, 'crate', `${name} ${ver}`, `no such version on crates.io (latest: ${vs[0] || 'none'})`);
+            // Cargo only matches a pre-release when the requirement itself names one.
+            const pool = want.includes('-') ? vs : vs.filter((v) => !v.includes('-'));
+            if (!pool.some((v) => v === want || v.startsWith(want + '.') || v.startsWith(want + '-')))
+              add(file, n, 'crate', `${name} ${ver}`, `no matching version on crates.io (latest: ${vs[0] || 'none'}${want.includes('-') ? '' : '; pre-releases need an exact requirement'})`);
           }
         }
       }
