@@ -1,555 +1,67 @@
 ---
 sidebar_position: 2
-title: RGB Asset Channels
-description: Managing Lightning channels with RGB assets - opening, funding, balancing, and closing asset channels
+title: Asset channels
+description: Opening, checking and closing RGB asset channels with the RGB Lightning Node. Parameters, limits and what happens on chain.
+rgb_line: B
+verified_with: rgb-cmd 0.11.1
+last_update:
+  date: 2026-10-19
 ---
 
-# RGB Asset Channels
+# Asset channels
 
-:::danger `@rgbjs/*` packages don't exist
-The `@rgbjs/...` imports on this page refer to npm packages that were never published, and the `@rgbjs` scope isn't registered. Treat these examples as illustrative only and **don't install anything under that name**: anyone could register it. Real JavaScript options: Line B (RGB Protocol Association) has the [`rgb-lib`](https://www.npmjs.com/package/rgb-lib) bindings from RGB-Tools. Line A (RGB-WG v0.12) has no JavaScript SDK. This page is being rewritten.
+:::info RGB v0.11 line (rgb-cmd 0.11.1)
+Asset channels exist only for v0.11, through the RGB Lightning Node (RLN), which is alpha software for regtest and testnet. Read [RGB on Lightning](/guides/lightning/overview) first. See [Two RGB lines](/getting-started/two-rgbs).
 :::
 
-RGB asset channels extend standard Lightning channels to support RGB token balances alongside Bitcoin. This guide covers creating, managing, and closing channels that carry RGB assets.
+An RGB channel is a Lightning channel that also holds a balance of **one** RGB asset. Everything below comes from RLN's `openapi.yaml` and `src/routes.rs` (commit of 2026-09-17).
 
-## Channel Structure
+## Opening
 
-### Dual Balance Tracking
+`POST /openchannel`:
 
-RGB channels maintain separate balances for Bitcoin and each RGB asset:
-
-```typescript
-interface RgbChannel {
-  channelId: string;
-  peer: string;
-
-  // Bitcoin balances (sats)
-  bitcoin: {
-    local: bigint;
-    remote: bigint;
-    capacity: bigint;
-  };
-
-  // RGB asset balances
-  assets: Array<{
-    contractId: string;
-    ticker: string;
-    local: bigint;
-    remote: bigint;
-    capacity: bigint;
-  }>;
-
-  state: 'opening' | 'active' | 'closing' | 'closed';
-}
-```
-
-*Channel data structure to be expanded*
-
-### Commitment Transactions
-
-Each channel state includes RGB commitments:
-
-```
-Bitcoin Commitment TX:
-Input:  Funding UTXO (2-of-2 multisig)
-Output: Alice balance + RGB commitments
-        Bob balance + RGB commitments
-        (HTLCs if any)
-
-RGB State:
-Contract: rgb:2wHxKf...
-Alice:    800 tokens
-Bob:      200 tokens
-```
-
-*Commitment structure to be expanded*
-
-## Opening Asset Channels
-
-### Prerequisites
+| Field | Meaning |
+|---|---|
+| `peer_pubkey_and_opt_addr` | `<pubkey>@<host>:<port>` |
+| `capacity_sat` | Bitcoin capacity. An RGB channel needs at least **30,010 sats**. Every channel must be between 5,506 and 16,777,215 sats. |
+| `push_msat` | Bitcoin given to the peer at opening |
+| `asset_id`, `asset_amount` | The RGB contract and the amount you put in (at least 1). Give both or neither. |
+| `push_asset_amount` | Asset units given to the peer at opening (at most `asset_amount`) |
+| `public` | Announce the channel in gossip |
+| `with_anchors` | Must be `true` for RGB channels |
+| `fee_base_msat`, `fee_proportional_millionths` | Your routing fees, in msat |
 
 ```bash
-# Verify RGB asset ownership
-rgb-wallet balance --contract-id rgb:2wHxKf...
-
-# Check peer supports RGB
-lnp-cli getnodeinfo 03abc... | grep rgb_enabled
+curl -X POST -H "Content-type: application/json" \
+  -d '{"peer_pubkey_and_opt_addr": "<pubkey>@localhost:9736", "capacity_sat": 30010,
+       "push_msat": 0, "asset_id": "<asset_id>", "asset_amount": 500, "push_asset_amount": 0,
+       "public": true, "with_anchors": true}' \
+  http://localhost:3001/openchannel
 ```
 
-*Prerequisites to be expanded*
+Only the opener funds the channel. There is no dual funding and no splicing. The funding transaction sends the bitcoin **and** the asset (an on-chain RGB transfer) to the 2-of-2 multisig output. The channel becomes usable after 6 confirmations. The node's own limits are in `GET /nodeinfo`: `rgb_channel_capacity_min_sat`, `channel_capacity_min_sat`, `channel_capacity_max_sat`, `channel_asset_min_amount`, `channel_asset_max_amount` and `rgb_htlc_min_msat`.
 
-### Funding with RGB Assets
+:::warning Keep bitcoin on both sides
+Every RGB HTLC also carries at least 3,000 sats. A side whose bitcoin balance can't cover that minimum (plus reserve and fees) can't send asset payments, even if it holds asset units. Size `capacity_sat` and `push_msat` with that in mind.
+:::
+
+## Checking
+
+`GET /listchannels` returns each channel's `status` (`Opening`, `Opened`, `Closing`), `ready`, `is_usable`, the bitcoin balances in msat, and `asset_id`, `asset_local_amount` and `asset_remote_amount`. `POST /assetbalance {"asset_id"}` adds `offchain_outbound` and `offchain_inbound` to the on-chain figures.
+
+## Closing
 
 ```bash
-# Open channel with RGB assets
-lnp-cli openchannel \
-  --peer 03abc...def \
-  --bitcoin-amount 1000000 \
-  --push-bitcoin 0 \
-  --rgb-asset rgb:2wHxKf... \
-  --rgb-amount 5000 \
-  --rgb-push 0
+curl -X POST -H "Content-type: application/json" \
+  -d '{"channel_id": "<channel_id>", "peer_pubkey": "<pubkey>", "force": false}' \
+  http://localhost:3001/closechannel
 ```
 
-Parameters:
-- `bitcoin-amount`: Bitcoin channel capacity (sats)
-- `push-bitcoin`: Initial Bitcoin to push to peer
-- `rgb-asset`: RGB contract ID
-- `rgb-amount`: Total RGB capacity
-- `rgb-push`: Initial RGB to push to peer
+- **Cooperative close:** the closing transaction carries an RGB transition that gives each side its asset balance as ordinary on-chain allocations.
+- **Force close** (`"force": true`): the latest commitment transaction is broadcast. It already anchors the RGB state of each output through its OP_RETURN commitment, so the assets settle on chain with it. Your own output stays timelocked as usual in Lightning.
 
-*Channel opening to be expanded*
+:::danger Alpha software
+RLN uses a fixed fee rate and has no CPFP or anchor fee bumping (maintainers, 2026-06-23). A force close can get stuck in a fee spike. Use only amounts you can afford to lose, on regtest or testnet.
+:::
 
-### Using RGB.js Lightning
-
-```typescript
-import { RgbLightning } from '@rgbjs/lightning';
-
-const ln = new RgbLightning(config);
-
-// Open RGB channel
-const channel = await ln.openChannel({
-  peer: '03abc...def',
-
-  // Bitcoin funding
-  bitcoinCapacity: 1000000n,
-  bitcoinPush: 0n,
-
-  // RGB funding
-  rgbAssets: [
-    {
-      contractId: 'rgb:2wHxKf...',
-      capacity: 5000n,
-      push: 0n,
-      fundingUtxo: myRgbUtxo
-    }
-  ],
-
-  // Options
-  feeRate: 5,
-  privateChannel: false,
-  minConfs: 3
-});
-
-console.log('Channel ID:', channel.id);
-console.log('Funding TxID:', channel.fundingTxid);
-```
-
-*SDK implementation to be expanded*
-
-### Multi-Asset Channels
-
-Fund channel with multiple RGB assets:
-
-```typescript
-const multiAssetChannel = await ln.openChannel({
-  peer: peerId,
-  bitcoinCapacity: 2000000n,
-
-  rgbAssets: [
-    {
-      contractId: 'rgb:tokenA...',
-      capacity: 1000n
-    },
-    {
-      contractId: 'rgb:tokenB...',
-      capacity: 5000n
-    },
-    {
-      contractId: 'rgb:nft...',
-      capacity: 1n  // Single NFT
-    }
-  ]
-});
-```
-
-*Multi-asset support to be expanded*
-
-## Channel Lifecycle
-
-### Funding Phase
-
-```
-1. Negotiate channel parameters
-   ├─ Bitcoin capacity
-   ├─ RGB assets and amounts
-   └─ Fee rate
-
-2. Create funding transaction
-   ├─ Bitcoin UTXO → multisig
-   └─ RGB assets → channel seal
-
-3. Sign and broadcast
-   └─ Wait for confirmations
-
-4. Exchange commitment transactions
-   └─ Channel becomes active
-```
-
-*Funding process to be expanded*
-
-### Active Phase
-
-Channel is ready for payments:
-
-```bash
-# Check channel status
-lnp-cli listchannels --rgb
-
-# View RGB balances
-lnp-cli rgbbalance
-```
-
-```json
-{
-  "channel_id": "abc123...",
-  "peer": "03def...",
-  "state": "active",
-  "bitcoin": {
-    "local": 1000000,
-    "remote": 0
-  },
-  "rgb_assets": [
-    {
-      "contract_id": "rgb:2wHxKf...",
-      "ticker": "RGB",
-      "local": 5000,
-      "remote": 0
-    }
-  ]
-}
-```
-
-*Active channel management to be expanded*
-
-### Closing Phase
-
-Cooperative or force close:
-
-*To be expanded*
-
-## Channel Updates
-
-### RGB Payment Updates
-
-Each RGB payment updates channel state:
-
-```typescript
-// Before payment
-Channel State #42:
-  Alice: 500,000 sats + 5000 RGB
-  Bob:   500,000 sats + 0 RGB
-
-// After 1000 RGB payment Alice → Bob
-Channel State #43:
-  Alice: 499,900 sats + 4000 RGB
-  Bob:   500,100 sats + 1000 RGB
-
-  (100 sats routing fee deducted from Alice)
-```
-
-*State update mechanics to be expanded*
-
-### Commitment Protocol
-
-```typescript
-interface ChannelUpdate {
-  commitmentNumber: number;
-
-  // Bitcoin state update
-  bitcoinUpdate: {
-    aliceBalance: bigint;
-    bobBalance: bigint;
-  };
-
-  // RGB state updates
-  rgbUpdates: Array<{
-    contractId: string;
-    aliceBalance: bigint;
-    bobBalance: bigint;
-    stateProof: RgbProof;
-  }>;
-
-  // Signatures
-  aliceSignature: Signature;
-  bobSignature: Signature;
-}
-```
-
-*Update protocol to be expanded*
-
-## Balancing Channels
-
-### Rebalancing RGB Assets
-
-Move liquidity between channels:
-
-```bash
-# Circular rebalance
-lnp-cli rebalance \
-  --contract-id rgb:2wHxKf... \
-  --amount 1000 \
-  --from-channel abc123 \
-  --to-channel def456
-```
-
-*Rebalancing strategies to be expanded*
-
-### Liquidity Management
-
-```typescript
-// Check if can send payment
-const canSend = await ln.checkOutboundLiquidity({
-  contractId: 'rgb:...',
-  amount: 1000n
-});
-
-if (!canSend) {
-  // Rebalance or open new channel
-  await ln.rebalanceChannel({
-    channelId: channelId,
-    contractId: contractId,
-    targetLocal: 2000n
-  });
-}
-```
-
-*Liquidity management to be expanded*
-
-### Submarine Swaps
-
-Exchange on-chain RGB for in-channel balance:
-
-*To be expanded*
-
-## Channel Monitoring
-
-### Balance Tracking
-
-```typescript
-// Monitor channel balances
-ln.on('channel_update', (update) => {
-  console.log('Channel updated:', update.channelId);
-
-  update.rgbAssets.forEach(asset => {
-    console.log(`${asset.ticker}:`);
-    console.log(`  Local: ${asset.localBalance}`);
-    console.log(`  Remote: ${asset.remoteBalance}`);
-    console.log(`  Can send: ${asset.localBalance - reserve}`);
-    console.log(`  Can receive: ${asset.remoteBalance - reserve}`);
-  });
-});
-```
-
-*Monitoring tools to be expanded*
-
-### Channel State Backups
-
-```bash
-# Backup channel state
-lnp-cli backupchannels \
-  --output channels-backup.json \
-  --include-rgb
-
-# Restore channels
-lnp-cli restorechannels \
-  --input channels-backup.json
-```
-
-*Backup procedures to be expanded*
-
-### Watchtowers
-
-Protect against fraud:
-
-```typescript
-const watchtower = await ln.registerWatchtower({
-  endpoint: 'https://watchtower.rgb.tech',
-  contracts: ['rgb:2wHxKf...'],
-  channels: [channelId1, channelId2]
-});
-
-// Watchtower monitors for old state broadcasts
-```
-
-*Watchtower integration to be expanded*
-
-## Closing Channels
-
-### Cooperative Close
-
-Both parties agree to close:
-
-```bash
-# Close channel cooperatively
-lnp-cli closechannel abc123 --rgb-settlement
-```
-
-Final settlement:
-```
-Bitcoin UTXO → Alice: 499,900 sats
-RGB Seal → Alice: 4000 tokens
-
-Bitcoin UTXO → Bob: 500,100 sats
-RGB Seal → Bob: 1000 tokens
-```
-
-*Cooperative close to be expanded*
-
-### Force Close
-
-Unilateral channel closure:
-
-```bash
-# Force close channel
-lnp-cli closechannel abc123 --force --rgb-settlement
-```
-
-Process:
-1. Broadcast latest commitment transaction
-2. Wait for timelock expiry
-3. Claim funds with RGB state proofs
-4. Settle RGB assets on-chain
-
-*Force close to be expanded*
-
-### Settlement Process
-
-```typescript
-const settlement = await ln.closeChannel({
-  channelId: channelId,
-  cooperative: true
-});
-
-// Bitcoin settlement
-console.log('BTC TX:', settlement.bitcoinTx);
-
-// RGB settlements
-settlement.rgbSettlements.forEach(s => {
-  console.log(`${s.ticker} settled:`);
-  console.log(`  TX: ${s.txid}`);
-  console.log(`  Amount: ${s.amount}`);
-  console.log(`  Seal: ${s.seal}`);
-});
-```
-
-*Settlement details to be expanded*
-
-## Advanced Features
-
-### Dual-Funded Channels
-
-Both parties contribute assets:
-
-```typescript
-const dualFunded = await ln.openDualFundedChannel({
-  peer: peerId,
-
-  local: {
-    bitcoinAmount: 1000000n,
-    rgbAssets: [
-      { contractId: 'rgb:...', amount: 2000n }
-    ]
-  },
-
-  remote: {
-    bitcoinAmount: 1000000n,
-    rgbAssets: [
-      { contractId: 'rgb:...', amount: 3000n }
-    ]
-  }
-});
-```
-
-*Dual-funding to be expanded*
-
-### Splicing
-
-Add/remove funds without closing:
-
-```bash
-# Splice funds into channel
-lnp-cli splicein \
-  --channel abc123 \
-  --bitcoin-amount 500000 \
-  --rgb-asset rgb:2wHxKf... \
-  --rgb-amount 1000
-```
-
-*Splicing to be expanded*
-
-### Channel Factories
-
-Efficiently create multiple channels:
-
-*To be expanded*
-
-## Security Best Practices
-
-### Channel Limits
-
-```yaml
-channel_config:
-  max_bitcoin_capacity: 16777215  # ~0.168 BTC
-  max_rgb_capacity:
-    rgb:2wHxKf...: 10000
-
-  reserve:
-    bitcoin: 1000  # sats
-    rgb_percentage: 1  # 1% of capacity
-
-  max_htlc_count: 483
-  max_htlc_value:
-    bitcoin: 1000000
-    rgb_percentage: 10
-```
-
-*Security limits to be expanded*
-
-### Fraud Prevention
-
-Monitor for old state broadcasts:
-
-*To be expanded*
-
-### Backup Strategies
-
-```typescript
-// Automatic backup on each update
-ln.on('channel_update', async (update) => {
-  await backupManager.save({
-    channelId: update.channelId,
-    state: update.state,
-    rgbProofs: update.rgbProofs,
-    commitment: update.commitment
-  });
-});
-```
-
-*Backup best practices to be expanded*
-
-## Troubleshooting
-
-### Common Issues
-
-**Channel stuck opening**
-```
-Error: Funding transaction not confirming
-Solution: Check fee rate, potentially CPFP/RBF
-```
-
-**RGB balance mismatch**
-```
-Error: RGB state validation failed
-Solution: Restore from backup, verify consignments
-```
-
-*Troubleshooting guide to be expanded*
-
-## Related Documentation
-
-- [RGB Lightning Overview](./overview.md)
-- [Routing RGB Payments](./routing.md)
-- [RGB20 Transfers](../rgb20/transferring-assets.md)
-- [State Transitions](../contracts/state-transitions.md)
-- [Consignments](../../technical-reference/consignments.md)
+There is no per-channel backup. `POST /backup` writes an encrypted backup of the whole node.
