@@ -1,337 +1,115 @@
 ---
 sidebar_position: 3
-title: Secondary Issuance
-description: Implement controlled secondary issuance for RGB20 tokens including inflation schedules and token burning
+title: Secondary issuance (IFA)
+description: Inflatable Fungible Assets in RGB v0.11 — max supply, inflation rights, inflate, burn, link and reject lists — with rgb-lib, rgb-cmd and the RGB Lightning Node.
+rgb_line: B
+verified_with: rgb-cmd 0.11.1
+last_update:
+  date: 2026-10-19
 ---
 
-# Secondary Issuance
+# Secondary issuance (IFA)
 
-:::danger `@rgbjs/*` packages don't exist
-The `@rgbjs/...` imports on this page refer to npm packages that were never published, and the `@rgbjs` scope isn't registered. Treat these examples as illustrative only and **don't install anything under that name**: anyone could register it. Real JavaScript options: Line B (RGB Protocol Association) has the [`rgb-lib`](https://www.npmjs.com/package/rgb-lib) bindings from RGB-Tools. Line A (RGB-WG v0.12) has no JavaScript SDK. This page is being rewritten.
+:::info RGB v0.11 line (rgb-cmd 0.11.1)
+Secondary issuance exists only in v0.11, through the IFA schema. v0.12 rc.3 ships only a fixed-supply issuer (RGB20-FNA). See [Two RGB lines](/getting-started/two-rgbs).
 :::
 
-RGB20 tokens support sophisticated secondary issuance mechanisms allowing controlled token supply management. This guide covers inflation schedules, token burning, and governance-controlled issuance.
+A token whose supply can grow after genesis is a contract of the **IFA** (Inflatable Fungible Asset) schema. NIA, CFA and PFA contracts are fixed at genesis and can never be inflated or burned.
 
-## Overview
+:::warning Not production-ready, and changing in 0.11.2
+- The `rgb-schemas` 0.11.1 README marks IFA **"Not production-ready"**.
+- **Coming next:** Line B 0.11.2 (release candidate since 2026-10-09) makes contracts issued with the old IFA schema invalid. Don't issue IFA assets you need to keep until 0.11.2 is final and your tools support it. See [Two RGB lines](/getting-started/two-rgbs).
+:::
 
-Secondary issuance enables token creators to mint additional tokens after genesis according to predefined rules. RGB20 v0.12 provides flexible inflation control mechanisms built into the schema.
+## How IFA works
 
-### Issuance Models
+From `rgb-schemas` 0.11.1 `src/ifa.rs` and the official [supported schemas](https://github.com/rgb-protocol/RGB-Documentation/blob/master/rgb-contract-implementation/schema/supported-schemas.md) page:
 
-- **Fixed Cap**: No secondary issuance allowed (like Bitcoin)
-- **Capped Inflation**: Limited additional issuance up to a maximum
-- **Scheduled Issuance**: Time-based release schedules
-- **Governance Issuance**: Minting controlled by external conditions
-- **Uncapped**: Unlimited issuance (use with caution)
+| Element | Kind | Meaning |
+|---|---|---|
+| `spec`, `terms` | Global | As in NIA: ticker, name, details, precision, and terms |
+| `issuedSupply` | Global, once per issuing operation | The amount issued **by this operation**: by genesis, and then by each `inflate` |
+| `maxSupply` | Global, set in genesis | Upper bound on the total supply |
+| `assetOwner` | Owned, fungible | Token balances |
+| `inflationAllowance` | Owned, fungible | **Inflation rights**: whoever controls this UTXO can issue up to this many more tokens |
+| `linkRight` | Owned, declarative, at most one | The right to link this contract to another one, once |
+| `rejectListUrl` | Global, optional | A URL where the issuer lists operations wallets should treat as invalid |
+| `linkedFromContract`, `linkedToContract` | Global, optional | Declare another contract as the same economic asset |
 
-*Detailed models to be expanded*
+The validation scripts enforce:
 
-## Configuring Secondary Issuance
+- **Genesis:** the `assetOwner` allocations add up to `issuedSupply`, and the inflation rights add up to exactly `maxSupply − issuedSupply` (errno 30 if not, `ERRNO_INFLATION_MISMATCH`).
+- **`inflate`:** it spends inflation rights and creates new `assetOwner` allocations that add up to the new `issuedSupply`. Any leftover allowance goes to new inflation-right outputs and is declared in the `allowedInflation` metadata. Spent rights must equal new issuance plus remaining allowance (errno 31, `ERRNO_INFLATION_EXCEEDS_ALLOWANCE`). So the total can never exceed `maxSupply`.
+- **`burn`:** it spends asset or inflation-right allocations and declares the burned amount, which must be non-zero, in the `burnedAsset` / `burnedInflation` metadata (errnos 40 and 41). Change outputs allow partial burns. A burn proves to third parties that the tokens or rights no longer exist.
+- **`link`:** it spends the link right and sets `linkedToContract`. This can happen only once. A link from A to B is meant to count only when A says `linkedToContract = B` **and** B says `linkedFromContract = A`. It lets an issuer move holders to a new contract, for example a newer schema.
+- **`transfer`:** it moves assets and rights. Inputs and outputs balance for both.
 
-### At Genesis
+There is no inflation schedule and no signature-based issuance. Control comes from who holds the inflation-right UTXOs. To spread control, put the rights in a multisig wallet, such as rgb-lib's `MultisigWallet`.
 
-Define issuance rules when creating the token:
+**Reject lists** are advisory. The issuer can't enforce them, because validation is client-side. rgb-lib 0.3.0-beta.7 fetches the list when it handles an IFA transfer (`src/wallet/online.rs`). The list is a text file with one operation output (`Opout`) per line, and a `!` prefix marks an exception. A receiving rgb-lib wallet refuses consignments whose history includes a rejected output. A sending wallet leaves rejected inputs out of coin selection.
 
-```bash
-# Create token with secondary issuance
-rgb create-token \
-  --name "Inflatable Token" \
-  --ticker INFL \
-  --precision 8 \
-  --initial-supply 1000000 \
-  --max-supply 10000000 \
-  --issuance-schedule linear \
-  --issuance-rate 100000 \
-  --issuance-interval 2016  # blocks
+## With rgb-lib
+
+For `rgb-lib` 0.3.0-beta.7 (`src/wallet/singlesig.rs`). Wallet setup is as in [Issuing fungible tokens](/guides/rgb20/creating-tokens). This code wasn't run for this page.
+
+```rust
+// Issue: 1,000 in circulation, plus inflation rights for 500 more (maxSupply = 1,500).
+let asset = wallet.issue_asset_ifa(
+    "DEMOI".into(),
+    "Demo Inflatable".into(),
+    0,                // precision
+    vec![1_000],      // initial allocations
+    vec![500],        // inflation-right allocations
+    None,             // reject_list_url: Some("https://…".into())
+)?;
+
+// Later, from the wallet that holds the inflation rights: issue 200 more (fee rate 2 sat/vB).
+wallet.inflate(online, asset.asset_id.clone(), vec![200], 2, 1)?;
+
+// Burn 50 of the wallet's tokens.
+wallet.burn(online, asset.asset_id.clone(), 50, 2, 1)?;
 ```
 
-*Genesis configuration to be expanded*
+- `inflate` and `burn` publish a Bitcoin transaction, so they need the wallet online and a spendable UTXO for fees.
+- `inflate_begin` / `inflate_end` and `burn_begin` / `burn_end` split the call around an external signer. The multisig wallet has `inflate_init` and `burn_init`.
+- rgb-lib 0.3.0-beta.7 has no API to issue link rights or to link contracts.
 
-### Schema Fields
+The [RGB Lightning Node](/guides/lightning/overview) exposes `POST /issueassetifa` (`amounts`, `inflation_amounts`, `ticker`, `name`, `precision`, `reject_list_url`) and `POST /inflate` (`asset_id`, `inflation_amounts`, `fee_rate`, `min_confirmations`), according to its `openapi.yaml`.
+
+## With rgb-cmd
+
+`rgb issue` can create an IFA genesis, because both its assignments are fungible. This was run offline with rgb-cmd 0.11.1 after `rgb import InflatableFungibleAsset.rgb`. The seals are placeholders:
 
 ```yaml
-secondary_issuance:
-  enabled: true
-  max_supply: 10000000
-  issuance_rights: "utxo_based"  # or "signature_based"
-  inflation_schedule:
-    type: "linear"  # or "exponential", "stepped", "none"
-    rate: 100000
-    interval: 2016  # Bitcoin blocks
+schema: rgb:sch:IpjJhFLz3oywYKQxO3KmFgR0Aa415nlTNrNyEFqMZCE#shoe-colombo-mango
+
+globals:
+  spec:
+    ticker: DEMOI
+    name: Demo Inflatable
+    details: ~
+    precision: 0
+  terms:
+    text: demo IFA asset
+    media: ~
+  issuedSupply: 1000
+  maxSupply: 1500
+
+assignments:
+  assetOwner:
+    seal: <txid>:1
+    amount: 1000
+  inflationAllowance:
+    seal: <txid>:2
+    amount: 500
 ```
-
-*Schema structure to be expanded*
-
-## Issuance Rights Management
-
-### UTXO-Based Rights
-
-Issuance rights tied to a specific UTXO (single-use-seal):
 
 ```bash
-# Issue additional tokens using rights UTXO
-rgb-wallet issue-secondary \
-  --asset-id <asset-id> \
-  --amount 100000 \
-  --rights-utxo <utxo> \
-  --new-rights-utxo <new-utxo>
+rgb -n regtest -d data0 issue "ssi:issuer" ifa.yaml
 ```
 
-*UTXO-based issuance to be expanded*
+Real output: `A new contract rgb:HuhVTxeu-e_t~olZ-wRPYYOB-jr93HHf-1lSkoEd-EhlPbiI is issued and added to the stash.` rgb-cmd 0.11.1 has no `inflate` or `burn` command. Use rgb-lib or RLN for those.
 
-### Signature-Based Rights
+## Related: PFA
 
-Issuance controlled by specific public keys:
-
-```typescript
-import { RgbContract, IssuanceRights } from '@rgbjs/core';
-
-const rights = IssuanceRights.fromPublicKey(issuerPubkey);
-const issuance = await contract.issueSecondary({
-  amount: 100000n,
-  rights: rights,
-  signature: await signer.sign(issuanceCommitment)
-});
-```
-
-*Signature-based issuance to be expanded*
-
-### Multi-Signature Issuance
-
-Require multiple parties to approve issuance:
-
-*To be expanded*
-
-## Inflation Schedules
-
-### Linear Inflation
-
-Constant amount issued per time period:
-
-```
-Block 0:     1,000,000 tokens
-Block 2016:  1,100,000 tokens
-Block 4032:  1,200,000 tokens
-...
-```
-
-*Linear schedule implementation to be expanded*
-
-### Exponential Decay
-
-Decreasing issuance rate over time (Bitcoin-like):
-
-```
-Year 1: 1,000,000 tokens issued
-Year 2:   500,000 tokens issued
-Year 3:   250,000 tokens issued
-...
-```
-
-*Exponential schedule to be expanded*
-
-### Stepped Schedule
-
-Discrete issuance events:
-
-```yaml
-steps:
-  - block_height: 100000
-    amount: 500000
-  - block_height: 200000
-    amount: 300000
-  - block_height: 300000
-    amount: 200000
-```
-
-*Stepped schedule to be expanded*
-
-### Custom Schedules
-
-Implement arbitrary issuance logic:
-
-*To be expanded*
-
-## Executing Secondary Issuance
-
-### Via CLI
-
-```bash
-# Check issuance rights
-rgb-wallet rights --asset-id <asset-id>
-
-# Execute issuance
-rgb-wallet issue \
-  --asset-id <asset-id> \
-  --amount 100000 \
-  --rights-seal <seal> \
-  --recipient <blinded-utxo>
-```
-
-*CLI workflow to be expanded*
-
-### Via RGB.js SDK
-
-```typescript
-import { RgbWallet, SecondaryIssuance } from '@rgbjs/core';
-
-const wallet = new RgbWallet(config);
-
-// Check if issuance is available
-const rights = await wallet.getIssuanceRights(assetId);
-if (!rights.canIssue()) {
-  throw new Error('No issuance rights or limit reached');
-}
-
-// Create issuance transaction
-const issuance = await wallet.createSecondaryIssuance({
-  assetId: assetId,
-  amount: 100000n,
-  rightsSeal: rights.currentSeal,
-  newRightsSeal: await wallet.createBlindedUTXO(),
-  recipient: recipientInvoice
-});
-
-await issuance.sign();
-await issuance.broadcast();
-```
-
-*SDK implementation to be expanded*
-
-## Token Burning
-
-### Provable Burns
-
-Permanently remove tokens from circulation:
-
-```bash
-# Burn tokens
-rgb-wallet burn \
-  --asset-id <asset-id> \
-  --amount 50000 \
-  --proof-output burn-proof.rgb
-```
-
-*Burning mechanism to be expanded*
-
-### Burn-and-Mint
-
-Replace old tokens with new tokens:
-
-*To be expanded*
-
-### Supply Tracking
-
-Monitor total supply including burns:
-
-```typescript
-const supply = await contract.getTotalSupply();
-console.log(`Issued: ${supply.issued}`);
-console.log(`Burned: ${supply.burned}`);
-console.log(`Circulating: ${supply.circulating}`);
-```
-
-*Supply tracking to be expanded*
-
-## Governance Integration
-
-### External Oracles
-
-Trigger issuance based on external conditions:
-
-*To be expanded*
-
-### DAO-Controlled Issuance
-
-Multi-signature schemes for decentralized control:
-
-*To be expanded*
-
-### Proof-of-Reserves
-
-Backing secondary issuance with verifiable reserves:
-
-*To be expanded*
-
-## Security Considerations
-
-### Issuance Limits
-
-Prevent uncontrolled inflation:
-
-- Set maximum supply cap
-- Implement rate limiting
-- Use time-locks
-- Require multi-party approval
-
-*Security measures to be expanded*
-
-### Rights Revocation
-
-Permanently disable future issuance:
-
-```bash
-# Burn issuance rights
-rgb-wallet revoke-rights --asset-id <asset-id>
-```
-
-*Revocation process to be expanded*
-
-### Audit Trail
-
-All issuance events are permanently recorded:
-
-*To be expanded*
-
-## Migration Strategies
-
-### Upgrading Issuance Rules
-
-Moving from one issuance model to another:
-
-*To be expanded*
-
-### Token Swaps
-
-Replacing old contracts with new issuance rules:
-
-*To be expanded*
-
-## Use Cases
-
-### Stablecoin Collateral Management
-
-Issue tokens when collateral is deposited:
-
-*To be expanded*
-
-### Reward Distributions
-
-Scheduled rewards for network participants:
-
-*To be expanded*
-
-### Treasury Management
-
-Controlled token releases from project treasury:
-
-*To be expanded*
-
-## Best Practices
-
-1. **Set Conservative Limits**: Always define maximum supply cap
-2. **Transparency**: Publish issuance schedule publicly
-3. **Decentralize Control**: Use multi-sig for issuance rights
-4. **Audit Regularly**: Monitor total supply and issuance events
-5. **Emergency Stops**: Plan for halting issuance if needed
-
-*Best practices to be expanded*
-
-## Related Documentation
-
-- [Creating RGB20 Tokens](creating-tokens.md)
-- [Transferring Assets](./transferring-assets.md)
-- [RGB20 Schema](../contracts/schemas.md)
-- [Genesis Contracts](../contracts/genesis.md)
-- [State Transitions](../contracts/state-transitions.md)
-- [Single-Use-Seals](../../core-concepts/single-use-seals.md)
+The **PFA** (Permissioned Fungible Asset) schema is a different tool. Its supply is fixed, and the issuer's key, the `pubkey` global, must sign every **transfer**. It is meant for assets with legal limits on who may hold them. It is also marked "Not production-ready", and rgb-lib doesn't support it. See [Schemas (v0.11)](/guides/contracts/schemas).

@@ -1,439 +1,126 @@
 ---
 sidebar_position: 1
-title: RGB Lightning Overview
-description: Understanding RGB asset transfers over Lightning Network channels for instant, low-cost transactions
+title: RGB on Lightning
+description: How RGB assets move over Lightning with the RGB Lightning Node (RLN), Line B's alpha LDK-based daemon. Limits, safety caveats and a REST walkthrough.
+rgb_line: B
+verified_with: rgb-cmd 0.11.1
+last_update:
+  date: 2026-10-19
 ---
 
-# RGB Lightning Overview
+# RGB on Lightning
 
-:::danger `@rgbjs/*` packages don't exist
-The `@rgbjs/...` imports on this page refer to npm packages that were never published, and the `@rgbjs` scope isn't registered. Treat these examples as illustrative only and **don't install anything under that name**: anyone could register it. Real JavaScript options: Line B (RGB Protocol Association) has the [`rgb-lib`](https://www.npmjs.com/package/rgb-lib) bindings from RGB-Tools. Line A (RGB-WG v0.12) has no JavaScript SDK. This page is being rewritten.
+:::info RGB v0.11 line (rgb-cmd 0.11.1)
+RGB on Lightning exists only for v0.11, through the RGB Lightning Node. See [Two RGB lines](/getting-started/two-rgbs).
 :::
 
-RGB Lightning enables instant, low-cost transfer of RGB assets through Lightning Network channels. This integration combines RGB's client-side validation with Lightning's payment channel technology for scalable, private asset transfers.
+The [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) (RLN, maintained by RGB-Tools) is a daemon that opens Lightning channels holding an RGB asset and routes payments of that asset. It is built on [rgb-lib](https://github.com/RGB-Tools/rgb-lib) 0.3.0-beta.7 and on RGB-Tools' [fork of rust-lightning](https://github.com/RGB-Tools/rust-lightning) (LDK), rebased on LDK v0.2.2. You control it through a REST API. It has no CLI.
 
-## What is RGB Lightning?
+:::danger Early alpha: test networks only
+The RLN README says the node "can be tested only in regtest or testnet environments", calls it "early alpha", and accepts no responsibility for loss of funds (README, 2026-09-17). On 2026-06-23 the maintainers listed these open safety issues ([RGB Lightning roadmap](https://rgb.info/rgb-lightning-roadmap/)):
 
-RGB Lightning extends the Lightning Network to support RGB assets alongside Bitcoin. Users can open channels, route payments, and transfer tokens with the same speed and privacy as Lightning Bitcoin payments.
+- a fixed fee rate, which is safety-critical
+- no CPFP or anchor fee bumping
+- a static blinding factor
+- consignments go through a proxy
+- no re-org detection in rgb-lib yet
+- no multi-asset channels, splicing or BOLT12
 
-### Key Features
-
-- **Instant Transfers**: RGB asset transfers confirmed in milliseconds
-- **Low Fees**: Minimal routing fees compared to on-chain transfers
-- **Privacy**: Onion-routed payments hide sender and recipient
-- **Atomic Swaps**: Exchange RGB assets for Bitcoin or other RGB assets
-- **Scalability**: Millions of transactions without Bitcoin blockchain congestion
-
-*Feature details to be expanded*
-
-## How It Works
-
-### RGB-Enabled Channels
-
-Lightning channels are modified to track both Bitcoin and RGB asset balances:
-
-```
-Standard Lightning Channel:
-Alice: 500,000 sats
-Bob:   500,000 sats
-
-RGB-Enabled Channel:
-Alice: 500,000 sats + 1000 RGB tokens
-Bob:   500,000 sats + 0 RGB tokens
-```
-
-*Channel structure to be expanded*
-
-### Channel State Updates
-
-Each Lightning commitment transaction includes RGB state:
-
-```typescript
-interface ChannelState {
-  // Bitcoin balances
-  bitcoin: {
-    alice: 500000n,
-    bob: 500000n
-  },
-
-  // RGB asset balances
-  rgb_assets: [
-    {
-      contract_id: 'rgb:...',
-      alice: 1000n,
-      bob: 0n
-    }
-  ],
-
-  // Commitment number
-  commitment_number: 42,
-
-  // RGB state commitments
-  rgb_commitments: [
-    {
-      contract: 'rgb:...',
-      state_hash: '0x...',
-      proof: merkle_proof
-    }
-  ]
-}
-```
-
-*State structure to be expanded*
-
-### Payment Flow
-
-1. **Invoice Creation**: Recipient creates RGB Lightning invoice
-2. **Route Discovery**: Find path through RGB-enabled nodes
-3. **HTLC Setup**: Create hash time-locked contracts for each hop
-4. **Asset Transfer**: Update RGB state in each channel
-5. **Settlement**: Reveal preimage to claim payment
-
-*Payment workflow to be expanded*
-
-## Architecture
-
-### Protocol Layers
-
-```mermaid
-%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#667eea','primaryTextColor':'#fff','primaryBorderColor':'#764ba2','lineColor':'#764ba2','secondaryColor':'#f8f9fa','tertiaryColor':'#fff'}}}%%
-graph TB
-    subgraph layer4[" "]
-        A["<b>RGB Asset Layer</b><br/>Asset definitions, schemas"]
-    end
-    subgraph layer3[" "]
-        B["<b>RGB Lightning Protocol</b><br/>Channel states, transfers"]
-    end
-    subgraph layer2[" "]
-        C["<b>Lightning Network (BOLT)</b><br/>Payment routing, HTLCs"]
-    end
-    subgraph layer1[" "]
-        D["<b>Bitcoin Blockchain</b><br/>Anchoring, settlement"]
-    end
-
-    A --> B --> C --> D
-
-    style layer4 fill:#667eea,stroke:#764ba2,stroke-width:2px,color:#fff
-    style layer3 fill:#7c8ff0,stroke:#764ba2,stroke-width:2px,color:#fff
-    style layer2 fill:#92a0f3,stroke:#764ba2,stroke-width:2px,color:#fff
-    style layer1 fill:#a8b1f6,stroke:#764ba2,stroke-width:2px,color:#fff
-    style A fill:transparent,stroke:none,color:#fff
-    style B fill:transparent,stroke:none,color:#fff
-    style C fill:transparent,stroke:none,color:#fff
-    style D fill:transparent,stroke:none,color:#fff
-```
-
-*Architecture details to be expanded*
-
-### Component Integration
-
-**RGB Node**: Validates asset states and transitions
-**Lightning Node**: Manages channels and routes payments
-**Bitcoin Node**: Monitors blockchain and broadcasts transactions
-**Consignment Storage**: Stores RGB proofs for validation
-
-*Component roles to be expanded*
-
-## Setting Up RGB Lightning
-
-### Prerequisites
-
-:::danger Being rewritten
-The commands that used to be here (`cargo install rgb-node`, `cargo install lnp-node`) install 2023 crates that have no RGB Lightning support. Line A (v0.12) has no Lightning implementation. The only working RGB Lightning node is [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) (Line B). It is alpha and supports regtest and testnet only; follow its README.
+RLN has no tagged releases (Cargo version `0.1.0`). Pin a commit.
 :::
 
-*Installation to be expanded*
+## How it works
 
-### Node Configuration
+The design is described in the official [Lightning Network compatibility](https://github.com/rgb-protocol/RGB-Documentation/blob/master/rgb-over-lightning-network/lightning-network-compatibility.md) page.
 
-```yaml
-# rgb-lightning.conf
-network: bitcoin
+- **One asset per channel.** A channel holds bitcoin plus a balance of at most one RGB contract (`asset_id`, `asset_local_amount`, `asset_remote_amount`).
+- **Funding** is an on-chain RGB transfer to the channel's 2-of-2 multisig output, and it needs 6 confirmations (`MIN_CHANNEL_CONFIRMATIONS`, `src/ldk.rs`).
+- **Commitments.** Every commitment transaction gets an extra **OP_RETURN** output, an opret commitment, that anchors an RGB transition moving the asset from the funding output to the commitment outputs and HTLCs. RLN channels use opret, not tapret, and they require anchor outputs (`with_anchors: true`).
+- **Payments are HTLCs with an asset amount attached**, and each one must also carry at least **3,000,000 msat (3,000 sats)** (`HTLC_MIN_MSAT`, `src/routes.rs`; also `rgb_htlc_min_msat` in `GET /nodeinfo`). So an RGB payment always moves some bitcoin too.
+- **Invoices are ordinary BOLT11** (`lnbc…`, `lntb…`, `lnbcrt…`) with two extra tagged fields: 30 = RGB amount, 31 = RGB contract ID (`lightning-invoice/src/lib.rs` in the fork).
+- **Routing fees are in msat.** There are no fees paid in the asset. Routes use one contract end to end. See [Routing](/guides/lightning/routing).
+- **Closing:** a cooperative or force close puts a normal on-chain RGB state on the closing or commitment outputs. RLN then holds it as a regular RGB allocation.
 
-rgb:
-  enabled: true
-  stash_dir: ~/.rgb/stash
-  contracts: [rgb20, rgb21]
+RLN also does maker/taker atomic swaps between two assets, or an asset and BTC, over Lightning (`/makerinit`, `/makerexecute`, `/taker`).
 
-lightning:
-  node_alias: "RGB-LN-Node"
-  listen: 0.0.0.0:9735
-  rgb_channels: true
+## Install and run
 
-bitcoin:
-  rpc_url: http://localhost:8332
-  rpc_user: user
-  rpc_password: pass
-```
-
-*Configuration to be expanded*
-
-### Starting RGB Lightning Node
+From the RLN README. RLN isn't on crates.io:
 
 ```bash
-# Start RGB daemon
-rgbd --config rgb.conf
-
-# Start Lightning daemon with RGB support
-lnpd --config lightning.conf --rgb-enabled
-
-# Verify RGB support
-lnp-cli getinfo
+git clone https://github.com/RGB-Tools/rgb-lightning-node --recurse-submodules --shallow-submodules
+cd rgb-lightning-node
+cargo install --locked --path .
+./regtest.sh start
 ```
 
-Output:
-```json
-{
-  "node_id": "03abc...",
-  "rgb_enabled": true,
-  "rgb_contracts": ["rgb:schema:fungible:..."],
-  "channels": 5,
-  "rgb_channels": 2
-}
+`regtest.sh` starts bitcoind, electrs and an RGB proxy in Docker. Start a node with its data directory, ports and network:
+
+{/* snippet:skip: rgb-lightning-node is RLN's binary, built from source above */}
+```bash
+rgb-lightning-node dataldk0/ --daemon-listening-port 3001 \
+    --ldk-peer-listening-port 9735 --network regtest \
+    --disable-authentication
 ```
 
-*Node setup to be expanded*
+`--disable-authentication` is for local tests only. Otherwise, pass `--root-public-key` and send a [Biscuit](https://www.biscuitsec.org/) token in an `Authorization: Bearer` header (see "Authentication" in the README). For testnet3 or testnet4, use `--network testnet` or `--network testnet4` and the public services the README lists.
 
-## Opening RGB Channels
+## A first payment (regtest)
 
-### Creating RGB-Enabled Channel
+These calls follow the RLN `openapi.yaml`. They weren't run for this page. Node A listens on port 3001 and node B on 3002.
 
 ```bash
-# Open channel with RGB asset allocation
-lnp-cli openchannel \
-  --peer 03def... \
-  --amount 1000000 \
-  --rgb-asset rgb:2wHxKf... \
-  --rgb-amount 5000
+# 1. create and unlock the node (repeat on :3002)
+curl -X POST -H "Content-type: application/json" \
+  -d '{"password": "nodepassword"}' http://localhost:3001/init
+curl -X POST -H "Content-type: application/json" \
+  -d '{"password": "nodepassword", "indexer_url": "127.0.0.1:50001", "announce_addresses": [],
+       "ldk_chain_sync": {"mode": "BlockSync", "config": {"bitcoind_rpc_username": "user",
+       "bitcoind_rpc_password": "password", "bitcoind_rpc_host": "localhost", "bitcoind_rpc_port": 18443}}}' \
+  http://localhost:3001/unlock
+
+# 2. fund it (./regtest.sh sendtoaddress <address> 1), make UTXOs, issue an asset
+curl -X POST http://localhost:3001/address
+curl -X POST -H "Content-type: application/json" \
+  -d '{"up_to": false, "fee_rate": 5, "skip_sync": false}' http://localhost:3001/createutxos
+curl -X POST -H "Content-type: application/json" \
+  -d '{"ticker": "DEMO", "name": "Demo Asset", "precision": 0, "amounts": [1000]}' \
+  http://localhost:3001/issueassetnia
+
+# 3. open an RGB channel to B (B's pubkey from GET :3002/nodeinfo)
+curl -X POST -H "Content-type: application/json" \
+  -d '{"peer_pubkey_and_opt_addr": "<B_pubkey>@localhost:9736", "capacity_sat": 30010,
+       "push_msat": 0, "asset_id": "<asset_id>", "asset_amount": 500,
+       "public": true, "with_anchors": true}' \
+  http://localhost:3001/openchannel
+# mine 6 blocks (./regtest.sh mine 6), then wait until GET /listchannels shows is_usable: true
+
+# 4. B creates an invoice for 10 units (plus the 3,000-sat minimum); A pays it
+curl -X POST -H "Content-type: application/json" \
+  -d '{"amt_msat": 3000000, "expiry_sec": 420, "asset_id": "<asset_id>", "asset_amount": 10}' \
+  http://localhost:3002/lninvoice
+curl -X POST -H "Content-type: application/json" \
+  -d '{"invoice": "<lnbcrt…>"}' http://localhost:3001/sendpayment
+curl -X POST -H "Content-type: application/json" \
+  -d '{"asset_id": "<asset_id>"}' http://localhost:3002/assetbalance
 ```
 
-*Channel opening to be expanded*
+`assetbalance` reports `offchain_outbound` and `offchain_inbound` next to the on-chain balances. `/sendrgb` and `/rgbinvoice` make ordinary on-chain RGB transfers from the same node.
 
-### Channel Funding
+:::danger Back up the node
+`POST /backup {"backup_path", "password"}` writes an encrypted backup of the whole node, and `/restore` reads it back. Channel state changes with every payment, and restoring an old channel state can cost you the channel funds. As with any Lightning node, a backup isn't a substitute for keeping the node online and its data directory safe.
+:::
 
-```typescript
-import { RgbLightning } from '@rgbjs/lightning';
+## Who uses it
 
-const lightning = new RgbLightning(config);
+The RLN README lists Iris Wallet desktop, KaleidoSwap, Lnfi, Spectrum, Thunderstack and Tiramisu Wallet (2026-09-17). Utexo's `wdk-rgb-lightning` module for Tether's WDK, announced in beta on 2026-08-28, also builds on RLN ([rgb.info](https://rgb.info/rgb-lightning-tether-wdk/)).
 
-// Open channel with Bitcoin and RGB assets
-const channel = await lightning.openChannel({
-  peer: peerNodeId,
+:::info RGB v0.12 has no Lightning implementation
+RGB-WG hasn't released a Lightning node for v0.12, and the old `lnp-node` (0.9, 2023) has no RGB support. Bitlight Labs develops its own v0.12 Lightning stack, which this site hasn't checked. As of 2026-10-19, there is nothing to document for Line A.
+:::
 
-  // Bitcoin funding
-  bitcoinAmount: 1000000n,  // sats
+## More
 
-  // RGB asset funding
-  rgbAssets: [
-    {
-      contractId: 'rgb:...',
-      amount: 5000n,
-      seal: myUtxo
-    }
-  ],
-
-  feeRate: 5
-});
-
-console.log('Channel opened:', channel.channelId);
-```
-
-*Funding process to be expanded*
-
-## Making RGB Payments
-
-### Creating Invoice
-
-```bash
-# Create RGB Lightning invoice
-lnp-cli addinvoice \
-  --amount-rgb 100 \
-  --contract-id rgb:2wHxKf... \
-  --description "Payment for services"
-```
-
-```typescript
-const invoice = await lightning.createInvoice({
-  assetId: 'rgb:...',
-  amount: 100n,
-  description: 'Payment for services',
-  expiry: 3600
-});
-
-console.log('Invoice:', invoice.toString());
-// lnrgb:2wHxKf...
-```
-
-*Invoice creation to be expanded*
-
-### Sending Payment
-
-```bash
-# Pay RGB Lightning invoice
-lnp-cli payinvoice lnrgb:2wHxKf...
-```
-
-```typescript
-const payment = await lightning.payInvoice(invoice);
-
-console.log('Payment hash:', payment.paymentHash);
-console.log('Preimage:', payment.preimage);
-console.log('Amount:', payment.amount);
-console.log('Fees:', payment.fees);
-```
-
-*Payment sending to be expanded*
-
-## Benefits and Trade-offs
-
-### Advantages
-
-- **Speed**: Millisecond confirmations vs minutes/hours on-chain
-- **Cost**: Routing fees much lower than on-chain fees
-- **Privacy**: No public blockchain record
-- **Scalability**: Unlimited transaction throughput
-- **Finality**: Instant settlement within channels
-
-*Benefits to be expanded*
-
-### Limitations
-
-- **Liquidity**: Requires funded channels
-- **Online Requirement**: Both parties must be online
-- **Channel Management**: Need to open/close channels
-- **Routing**: Finding paths for RGB assets more complex
-- **Backup Complexity**: Must backup channel states
-
-*Limitations to be expanded*
-
-## Use Cases
-
-### Micropayments
-
-Enable tiny payments infeasible on-chain:
-
-*To be expanded*
-
-### Streaming Payments
-
-Continuous payment flows:
-
-*To be expanded*
-
-### Instant Settlement
-
-Real-time exchange and trading:
-
-*To be expanded*
-
-### Cross-Border Transfers
-
-Fast international asset transfers:
-
-*To be expanded*
-
-## Security Considerations
-
-### Channel Security
-
-- Monitor channel state
-- Maintain watchtowers
-- Backup channel data
-- Use appropriate channel capacity
-
-*Security practices to be expanded*
-
-### Asset Validation
-
-- Verify RGB proofs in channels
-- Validate state transitions
-- Check contract authenticity
-- Monitor for fraud attempts
-
-*Validation procedures to be expanded*
-
-## Network Topology
-
-### RGB-Enabled Nodes
-
-Not all Lightning nodes support RGB:
-
-```bash
-# Find RGB-capable nodes
-lnp-cli listnodes --rgb-only
-
-# Connect to RGB node
-lnp-cli connect \
-  --node-id 03abc... \
-  --rgb-contracts rgb:2wHxKf...
-```
-
-*Network discovery to be expanded*
-
-### Liquidity Pools
-
-Specialized nodes providing RGB liquidity:
-
-*To be expanded*
-
-## Monitoring and Management
-
-### Channel Status
-
-```bash
-# List RGB channels
-lnp-cli listchannels --rgb
-
-# Check RGB balances
-lnp-cli rgbbalance --contract-id rgb:2wHxKf...
-```
-
-```typescript
-const channels = await lightning.listChannels();
-
-channels.forEach(channel => {
-  console.log(`Channel ${channel.id}:`);
-  console.log(`  Bitcoin: ${channel.localBalance} sats`);
-
-  channel.rgbAssets.forEach(asset => {
-    console.log(`  ${asset.ticker}: ${asset.localBalance}`);
-  });
-});
-```
-
-*Monitoring tools to be expanded*
-
-### Rebalancing
-
-Optimize channel liquidity:
-
-*To be expanded*
-
-## Future Developments
-
-### Planned Features
-
-- **Multi-asset channels**: Support multiple RGB assets per channel
-- **Atomic swaps**: Built-in asset exchange
-- **Submarine swaps**: On-chain ↔ Lightning swaps
-- **Watchtowers**: RGB-aware monitoring services
-- **Mobile clients**: Lightweight RGB Lightning wallets
-
-*Roadmap to be expanded*
-
-### Research Areas
-
-- **Channel factories**: Improved channel creation
-- **Eltoo integration**: Simplified channel updates
-- **PTLCs**: Privacy-enhanced transfers
-- **Trampoline routing**: Better mobile support
-
-*Research directions to be expanded*
-
-## Related Documentation
-
-- [Asset Channels](./asset-channels.md)
-- [Routing](./routing.md)
-- [RGB20 Transfers](../rgb20/transferring-assets.md)
-- [Lightning Integration](overview.md)
-- [Channel Management](asset-channels.md)
+- [Asset channels](/guides/lightning/asset-channels): opening, limits and closing
+- [Routing](/guides/lightning/routing)
+- [RLN API reference](https://rgb-tools.github.io/rgb-lightning-node) (Swagger UI for `master`)
