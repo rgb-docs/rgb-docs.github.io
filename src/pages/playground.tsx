@@ -13,7 +13,7 @@ export default function Playground(): ReactNode {
   return (
     <Layout
       title="Interactive Playground"
-      description="Try RGB Protocol features interactively - encode/decode, create contracts, and more">
+      description="Browser tools for RGB: Baid64 ids for both RGB lines, tagged hashes, invoice parsing, and illustrative contract and transfer diagrams">
 
       {/* Hero Section */}
       <header style={{
@@ -37,7 +37,7 @@ export default function Playground(): ReactNode {
             maxWidth: '700px',
             margin: '0 auto'
           }}>
-            Try RGB Protocol features interactively in your browser. No installation required!
+            Encode and decode RGB ids, hashes and invoices for both RGB lines (v0.11 and v0.12) in your browser.
           </p>
         </div>
       </header>
@@ -69,7 +69,7 @@ export default function Playground(): ReactNode {
               <FeatureRow
                 emoji="🚀"
                 title="Learn by Doing"
-                description="Understand RGB concepts through hands-on experimentation with real encoding and validation."
+                description="Decode real ids and invoices from both RGB lines and see how their parts fit together."
               />
               <FeatureRow
                 emoji="🔒"
@@ -83,8 +83,8 @@ export default function Playground(): ReactNode {
               />
               <FeatureRow
                 emoji="🎯"
-                title="Real Implementations"
-                description="Uses the same algorithms as production RGB libraries for accurate results."
+                title="Checked against the real code"
+                description="The Baid64 and tagged-hash tools are ports of the baid64 0.4.x and commit_verify code, and reproduce real ids from rgb-cmd 0.11.1 and rgb-wallet 0.12.0-rc.3. The contract builder and the consignment diagram are illustrative only."
               />
             </div>
           </div>
@@ -202,7 +202,7 @@ function PlaygroundModules() {
                 marginBottom: '2rem',
                 lineHeight: '1.6'
               }}>
-                Work with all RGB encoding formats: BAID64, Base58, Base64, Bech32, hex conversions, and hashing.
+                Baid64 ids in the formats of both RGB lines (rgb: for v0.11, contract: for v0.12), tagged SHA-256, and an invoice parser.
               </p>
               <EncodingPlayground />
             </>
@@ -223,7 +223,7 @@ function PlaygroundModules() {
                 marginBottom: '2rem',
                 lineHeight: '1.6'
               }}>
-                Create RGB contracts interactively: RGB20 tokens, RGB21 NFTs, and RGB25 collectibles.
+                See which fields a fungible token, an NFT (UDA) or a collectible (CFA) has. Illustrative only: it does not create a real contract.
               </p>
               <ContractBuilder />
             </>
@@ -244,7 +244,7 @@ function PlaygroundModules() {
                 marginBottom: '2rem',
                 lineHeight: '1.6'
               }}>
-                Visualize how RGB state transitions work using Bitcoin's UTXO model and client-side validation.
+                A simplified picture of how a transfer moves state from one seal to others. Illustrative only.
               </p>
               <TransferSimulator />
             </>
@@ -257,7 +257,7 @@ function PlaygroundModules() {
                 marginBottom: '1rem',
                 color: '#1a1a1a'
               }}>
-                📦 Consignment Inspector
+                📦 Consignments
               </Heading>
               <p style={{
                 color: '#666',
@@ -265,7 +265,7 @@ function PlaygroundModules() {
                 marginBottom: '2rem',
                 lineHeight: '1.6'
               }}>
-                Inspect RGB consignments: view state history DAG, transitions, and Bitcoin anchors.
+                Identify an RGB file from its header, and see what a transfer consignment proves.
               </p>
               <ConsignmentInspector />
             </>

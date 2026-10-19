@@ -1,54 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import React, {useMemo, useState} from 'react';
 import styles from './Playground.module.css';
 import {
-  hexToBytes,
+  ID_TYPES,
+  RGB_TAGS,
   bytesToHex,
-  encodeBaid64,
   decodeBaid64,
-  parseRgbId,
-  formatContractId,
-  commitmentHash,
-  isValidHex,
-  isValidBaid64,
-  generateExampleContractId,
   encodeBase64,
-  encodeBech32,
-  encodeBase58,
+  encodeBaid64,
+  hexToBytes,
+  parseInvoice,
+  randomBytes,
+  sha256,
+  taggedHash,
 } from './encodingUtils';
 
-type Tool = 'baid64' | 'hex' | 'hash' | 'invoice';
+type Tool = 'baid64' | 'hash' | 'invoice';
 
 export default function EncodingPlayground() {
   const [activeTool, setActiveTool] = useState<Tool>('baid64');
-
+  const tab = (t: Tool, label: string) => (
+    <button className={activeTool === t ? styles.active : ''} onClick={() => setActiveTool(t)}>
+      {label}
+    </button>
+  );
   return (
     <div className={styles.playground}>
       <div className={styles.toolTabs}>
-        <button
-          className={activeTool === 'baid64' ? styles.active : ''}
-          onClick={() => setActiveTool('baid64')}>
-          BAID64 Encoder
-        </button>
-        <button
-          className={activeTool === 'hex' ? styles.active : ''}
-          onClick={() => setActiveTool('hex')}>
-          Hex Converter
-        </button>
-        <button
-          className={activeTool === 'hash' ? styles.active : ''}
-          onClick={() => setActiveTool('hash')}>
-          Hash Calculator
-        </button>
-        <button
-          className={activeTool === 'invoice' ? styles.active : ''}
-          onClick={() => setActiveTool('invoice')}>
-          Invoice Parser
-        </button>
+        {tab('baid64', 'Baid64 ids')}
+        {tab('hash', 'Tagged hash')}
+        {tab('invoice', 'Invoice parser')}
       </div>
-
       <div className={styles.toolContent}>
         {activeTool === 'baid64' && <Baid64Tool />}
-        {activeTool === 'hex' && <HexTool />}
         {activeTool === 'hash' && <HashTool />}
         {activeTool === 'invoice' && <InvoiceTool />}
       </div>
@@ -56,236 +39,147 @@ export default function EncodingPlayground() {
   );
 }
 
-function Baid64Tool() {
-  const [mode, setMode] = useState<'encode' | 'decode'>('encode');
-  const [input, setInput] = useState('');
-  const [output, setOutput] = useState('');
-  const [error, setError] = useState('');
+const lineName = (l: 'A' | 'B') => (l === 'B' ? 'v0.11' : 'v0.12');
 
-  const handleConvert = () => {
-    setError('');
-    try {
-      if (mode === 'encode') {
-        const bytes = hexToBytes(input);
-        const baid64 = encodeBaid64(bytes);
-        setOutput(baid64);
-      } else {
-        const bytes = decodeBaid64(input);
-        const hex = bytesToHex(bytes);
-        setOutput(hex);
-      }
-    } catch (e) {
-      setError(e.message);
-    }
-  };
-
-  const loadExample = () => {
-    if (mode === 'encode') {
-      setInput('4a2b3c4d5e6f7081920a3b4c5d6e7f8091a2b3c4d5e6f7081920a3b4c5d6e7f80');
-      setError('');
-    } else {
-      setInput('2Ky4xDT-VyLmtp9Y-XmKinHXG-utaq8UBu-qjfqDiUM-8bHNdBb');
-      setError('');
-    }
-  };
-
-  useEffect(() => {
-    if (input) handleConvert();
-  }, [input, mode]);
-
+function Output({label, value}: {label: string; value: string}) {
   return (
-    <div className={styles.tool}>
-      <div className={styles.toolHeader}>
-        <h3>BAID64 Encoder/Decoder</h3>
-        <div className={styles.modeSwitch}>
-          <button
-            className={mode === 'encode' ? styles.active : ''}
-            onClick={() => setMode('encode')}>
-            Encode
-          </button>
-          <button
-            className={mode === 'decode' ? styles.active : ''}
-            onClick={() => setMode('decode')}>
-            Decode
-          </button>
-        </div>
-      </div>
-
-      <p className={styles.description}>
-        {mode === 'encode'
-          ? 'Convert hex bytes to BAID64 format (Base58 with separators)'
-          : 'Decode BAID64 back to hex bytes'}
-      </p>
-
-      <div className={styles.ioSection}>
-        <div className={styles.inputSection}>
-          <label>
-            Input {mode === 'encode' ? '(Hex)' : '(BAID64)'}:
-            <button className={styles.exampleBtn} onClick={loadExample}>
-              Load Example
-            </button>
-          </label>
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={
-              mode === 'encode'
-                ? '4a2b3c4d5e6f708192...'
-                : '2Ky4xDT-VyLmtp9Y-XmKinHXG-...'
-            }
-            rows={4}
-          />
-        </div>
-
-        <div className={styles.arrow}>↓</div>
-
-        <div className={styles.outputSection}>
-          <label>Output {mode === 'encode' ? '(BAID64)' : '(Hex)'}:</label>
-          {error ? (
-            <div className={styles.error}>❌ {error}</div>
-          ) : (
-            <div className={styles.outputBox}>
-              {output || <span className={styles.placeholder}>Result will appear here...</span>}
-            </div>
-          )}
-          {output && !error && (
-            <button
-              className={styles.copyBtn}
-              onClick={() => navigator.clipboard.writeText(output)}>
-              📋 Copy
-            </button>
-          )}
-        </div>
-      </div>
+    <div className={styles.formatOutput}>
+      <label>{label}</label>
+      <code className={styles.codeBlock}>{value}</code>
+      <button onClick={() => navigator.clipboard.writeText(value)} title="Copy">
+        Copy
+      </button>
     </div>
   );
 }
 
-function HexTool() {
-  const [input, setInput] = useState('');
-  const [hexOutput, setHexOutput] = useState('');
-  const [baid64Output, setBaid64Output] = useState('');
-  const [rgbIdOutput, setRgbIdOutput] = useState('');
-  const [base64Output, setBase64Output] = useState('');
-  const [base58Output, setBase58Output] = useState('');
-  const [bech32Output, setBech32Output] = useState('');
-  const [error, setError] = useState('');
+function Baid64Tool() {
+  const [mode, setMode] = useState<'encode' | 'decode'>('encode');
+  const [typeKey, setTypeKey] = useState('b-contract');
+  const [hex, setHex] = useState('09ad1de65e4a0abe169ba228c14927eadd8d1eb823911d4a46b785b55061011d');
+  const [text, setText] = useState(ID_TYPES[0].example);
+  const type = ID_TYPES.find((t) => t.key === typeKey)!;
 
-  const handleConvert = () => {
-    setError('');
+  const encoded = useMemo(() => {
     try {
-      const bytes = hexToBytes(input);
-      setHexOutput(bytesToHex(bytes));
-      setBaid64Output(encodeBaid64(bytes));
-      setRgbIdOutput(formatContractId(bytes));
-      setBase64Output(encodeBase64(bytes));
-      setBase58Output(encodeBase58(bytes));
-      setBech32Output(encodeBech32('rgb', bytes));
+      const bytes = hexToBytes(hex);
+      if (bytes.length !== type.len) throw new Error(`A ${type.label.toLowerCase()} is ${type.len} bytes; this is ${bytes.length}`);
+      return {bytes, error: ''};
     } catch (e) {
-      setError(e.message);
-      setHexOutput('');
-      setBaid64Output('');
-      setRgbIdOutput('');
-      setBase64Output('');
-      setBase58Output('');
-      setBech32Output('');
+      return {bytes: null, error: (e as Error).message};
     }
-  };
+  }, [hex, type]);
 
-  const generateRandom = () => {
-    const bytes = new Uint8Array(32);
-    crypto.getRandomValues(bytes);
-    setInput(bytesToHex(bytes));
-  };
-
-  useEffect(() => {
-    if (input) handleConvert();
-  }, [input]);
+  const decoded = useMemo(() => {
+    try {
+      return {d: decodeBaid64(text, type.opts.hri, type.len), error: ''};
+    } catch (e) {
+      return {d: null, error: (e as Error).message};
+    }
+  }, [text, type]);
 
   return (
     <div className={styles.tool}>
       <div className={styles.toolHeader}>
-        <h3>Hex to All Formats</h3>
-        <button className={styles.exampleBtn} onClick={generateRandom}>
-          🎲 Generate Random 32 bytes
-        </button>
+        <h3>Baid64 encoder and decoder</h3>
+        <div className={styles.modeSwitch}>
+          <button className={mode === 'encode' ? styles.active : ''} onClick={() => setMode('encode')}>Encode</button>
+          <button className={mode === 'decode' ? styles.active : ''} onClick={() => setMode('decode')}>Decode</button>
+        </div>
       </div>
 
       <p className={styles.description}>
-        Convert hex bytes to all RGB encoding formats
+        A port of the <code>baid64</code> crate 0.4.x used by both RGB lines: Base64 with the alphabet{' '}
+        <code>A–Z a–z 0–9 _ ~</code>, an optional prefix, <code>-</code> chunks (8 characters, then 7), and a
+        4-byte checksum <code>h[0] h[1] h[1] h[2]</code> of <code>h = SHA-256(SHA-256(prefix) ‖ payload)</code>,
+        embedded or shown as three words after <code>#</code>. See{' '}
+        <a href="/technical-reference/encodings">Encoding formats</a>.
       </p>
 
-      <div className={styles.ioSection}>
-        <div className={styles.inputSection}>
-          <label>Hex Input (32 bytes for Contract ID):</label>
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="4a2b3c4d5e6f7081920a3b4c5d6e7f8091a2b3c4d5e6f7081920a3b4c5d6e7f80"
-            rows={3}
-          />
-        </div>
-
-        {error ? (
-          <div className={styles.error}>❌ {error}</div>
-        ) : (
-          hexOutput && (
-            <>
-              <div className={styles.formatOutput}>
-                <label>Formatted Hex:</label>
-                <code className={styles.codeBlock}>{hexOutput}</code>
-                <button onClick={() => navigator.clipboard.writeText(hexOutput)}>
-                  📋
-                </button>
-              </div>
-
-              <div className={styles.formatOutput}>
-                <label>BAID64:</label>
-                <code className={styles.codeBlock}>{baid64Output}</code>
-                <button onClick={() => navigator.clipboard.writeText(baid64Output)}>
-                  📋
-                </button>
-              </div>
-
-              <div className={styles.formatOutput}>
-                <label>RGB Contract ID:</label>
-                <code className={styles.codeBlock}>{rgbIdOutput}</code>
-                <button onClick={() => navigator.clipboard.writeText(rgbIdOutput)}>
-                  📋
-                </button>
-              </div>
-
-              <div className={styles.formatOutput}>
-                <label>Base64:</label>
-                <code className={styles.codeBlock}>{base64Output}</code>
-                <button onClick={() => navigator.clipboard.writeText(base64Output)}>
-                  📋
-                </button>
-              </div>
-
-              <div className={styles.formatOutput}>
-                <label>Base58:</label>
-                <code className={styles.codeBlock}>{base58Output}</code>
-                <button onClick={() => navigator.clipboard.writeText(base58Output)}>
-                  📋
-                </button>
-              </div>
-
-              <div className={styles.formatOutput}>
-                <label>Bech32 (rgb prefix):</label>
-                <code className={styles.codeBlock}>{bech32Output}</code>
-                <button onClick={() => navigator.clipboard.writeText(bech32Output)}>
-                  📋
-                </button>
-              </div>
-
-              <div className={styles.info}>
-                ℹ️ Length: {hexOutput.length / 2} bytes | All formats represent the same data
-              </div>
-            </>
-          )
-        )}
+      <div className={styles.inputSection}>
+        <label>Id type</label>
+        <select className={styles.formInput} value={typeKey} onChange={(e) => {
+          const t = ID_TYPES.find((x) => x.key === e.target.value)!;
+          setTypeKey(t.key);
+          setText(t.example);
+        }}>
+          {ID_TYPES.map((t) => (
+            <option key={t.key} value={t.key}>
+              {lineName(t.line)}: {t.label} ({t.opts.prefix ? `${t.opts.hri}:` : `HRI ${t.opts.hri}, no prefix`})
+            </option>
+          ))}
+        </select>
+        <small>Settings from {type.source}.</small>
       </div>
+
+      {mode === 'encode' ? (
+        <div className={styles.ioSection}>
+          <div className={styles.inputSection}>
+            <label>
+              Payload ({type.len} bytes, hex)
+              <button className={styles.exampleBtn} onClick={() => setHex(bytesToHex(randomBytes(type.len)))}>
+                Random bytes
+              </button>
+            </label>
+            <textarea value={hex} onChange={(e) => setHex(e.target.value)} rows={2} />
+          </div>
+          {encoded.error ? (
+            <div className={styles.error}>{encoded.error}</div>
+          ) : (
+            encoded.bytes && (
+              <>
+                <Output label={`${lineName(type.line)} ${type.label}`} value={encodeBaid64(encoded.bytes, type.opts)} />
+                {type.len === 32 && (
+                  <>
+                    <Output label="Same bytes as a v0.11 contract id" value={encodeBaid64(encoded.bytes, ID_TYPES[0].opts)} />
+                    <Output label="Same bytes as a v0.12 contract id" value={encodeBaid64(encoded.bytes, ID_TYPES[5].opts)} />
+                  </>
+                )}
+                <Output label="Plain Base64, for comparison" value={encodeBase64(encoded.bytes)} />
+                <div className={styles.info}>
+                  The same bytes print differently per id type, and the checksum depends on the prefix, so an id
+                  from one type or line doesn't parse as another. Random bytes give a well-formed string, not an id
+                  of anything that exists.
+                </div>
+              </>
+            )
+          )}
+        </div>
+      ) : (
+        <div className={styles.ioSection}>
+          <div className={styles.inputSection}>
+            <label>
+              Baid64 string
+              <button className={styles.exampleBtn} onClick={() => setText(type.example)}>Real example</button>
+            </label>
+            <input type="text" className={styles.largeInput} value={text} onChange={(e) => setText(e.target.value)} />
+          </div>
+          {decoded.error ? (
+            <div className={styles.error}>{decoded.error}</div>
+          ) : (
+            decoded.d && (
+              <div className={styles.parsedOutput}>
+                <div className={styles.field}>
+                  <span className={styles.fieldLabel}>Prefix:</span>
+                  <code>{decoded.d.hri === null ? '(none)' : `${decoded.d.hri}:`}</code>
+                </div>
+                <div className={styles.field}>
+                  <span className={styles.fieldLabel}>Payload:</span>
+                  <code className={styles.codeBlock}>{bytesToHex(decoded.d.payload)}</code>
+                </div>
+                <div className={styles.field}>
+                  <span className={styles.fieldLabel}>Checksum:</span>
+                  <code>
+                    {decoded.d.checksum
+                      ? `${bytesToHex(decoded.d.checksum)} (${decoded.d.checksumSource}) ${decoded.d.checksumValid ? 'valid' : 'WRONG'}`
+                      : 'none carried, so typos are not detected'}
+                  </code>
+                </div>
+              </div>
+            )
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -293,70 +187,55 @@ function HexTool() {
 function HashTool() {
   const [input, setInput] = useState('');
   const [inputType, setInputType] = useState<'text' | 'hex'>('text');
-  const [hash, setHash] = useState('');
-  const [doubleHash, setDoubleHash] = useState('');
+  const [tag, setTag] = useState(RGB_TAGS[0].tag);
 
-  const calculateHash = async () => {
+  const result = useMemo(() => {
     try {
       const bytes = inputType === 'hex' ? hexToBytes(input) : new TextEncoder().encode(input);
-      const hashBytes = await commitmentHash(bytes);
-      const hashHex = bytesToHex(hashBytes);
-      setDoubleHash(hashHex);
-      setHash(hashHex);
+      return {plain: bytesToHex(sha256(bytes)), tagged: bytesToHex(taggedHash(tag, bytes)), error: ''};
     } catch (e) {
-      console.error(e);
+      return {plain: '', tagged: '', error: (e as Error).message};
     }
-  };
-
-  useEffect(() => {
-    if (input) {
-      calculateHash();
-    }
-  }, [input, inputType]);
+  }, [input, inputType, tag]);
 
   return (
     <div className={styles.tool}>
       <div className={styles.toolHeader}>
-        <h3>Commitment Hash Calculator</h3>
+        <h3>Tagged SHA-256</h3>
         <div className={styles.modeSwitch}>
-          <button
-            className={inputType === 'text' ? styles.active : ''}
-            onClick={() => setInputType('text')}>
-            Text
-          </button>
-          <button
-            className={inputType === 'hex' ? styles.active : ''}
-            onClick={() => setInputType('hex')}>
-            Hex
-          </button>
+          <button className={inputType === 'text' ? styles.active : ''} onClick={() => setInputType('text')}>Text</button>
+          <button className={inputType === 'hex' ? styles.active : ''} onClick={() => setInputType('hex')}>Hex</button>
         </div>
       </div>
 
       <p className={styles.description}>
-        Calculate SHA-256 commitment hash (double SHA-256) used in RGB
+        RGB ids and commitments are tagged hashes, <code>SHA-256(SHA-256(tag) ‖ SHA-256(tag) ‖ data)</code>, where
+        the data is the strict encoding of the object. RGB doesn't use Bitcoin's double SHA-256 for its own ids.
+        Hashing your own text here shows the construction; it doesn't produce a real RGB id.
       </p>
 
       <div className={styles.ioSection}>
         <div className={styles.inputSection}>
-          <label>Input Data:</label>
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={inputType === 'text' ? 'Enter text...' : 'Enter hex...'}
-            rows={4}
-          />
+          <label>Tag</label>
+          <select className={styles.formInput} value={tag} onChange={(e) => setTag(e.target.value)}>
+            {RGB_TAGS.map((t) => (
+              <option key={t.tag} value={t.tag}>
+                {t.tag} ({t.use}; {t.line === 'both' ? 'both lines' : lineName(t.line)})
+              </option>
+            ))}
+          </select>
         </div>
-
-        {hash && (
+        <div className={styles.inputSection}>
+          <label>Data</label>
+          <textarea value={input} onChange={(e) => setInput(e.target.value)}
+            placeholder={inputType === 'text' ? 'Enter text…' : 'Enter hex…'} rows={3} />
+        </div>
+        {result.error ? (
+          <div className={styles.error}>{result.error}</div>
+        ) : (
           <>
-            <div className={styles.arrow}>↓ SHA-256 ↓ SHA-256</div>
-            <div className={styles.formatOutput}>
-              <label>Commitment Hash:</label>
-              <code className={styles.codeBlock}>{doubleHash}</code>
-              <button onClick={() => navigator.clipboard.writeText(doubleHash)}>
-                📋
-              </button>
-            </div>
+            <Output label="Tagged hash" value={result.tagged} />
+            <Output label="Plain SHA-256, for comparison" value={result.plain} />
           </>
         )}
       </div>
@@ -364,90 +243,73 @@ function HashTool() {
   );
 }
 
+const INVOICE_EXAMPLES = [
+  {
+    label: 'v0.11, 100 units to a blinded UTXO (rgb-invoicing tests)',
+    value: 'rgb:eIbQx5Am-XRDjj01-RM~5eo7-rv2nluD-OnBJRAy-S9~Yfts/XvmU3d4_nQQ8S7oagbXi07x5vjMm7P~ERukQNX6SC4M/BF/bc:utxob:4vm1CX2Z-K8hMo59-e7dgGBS-Jka7mYn-Xe~yP85-yUiHHxr-aVlYa',
+  },
+  {
+    label: 'v0.11, regtest (rgb-sandbox README)',
+    value: 'rgb:Tk3d0h5w-8v4XYCg-7e~Sc0o-Lu6rp~X-~Jt7VHS-jqgzFD8/~/BF/bcrt:utxob:MSLQCKkW-w6caphB-12do1nJ-HNfgxvv-WE3zOOC-s8yZyHq-Ihoa5',
+  },
+  {
+    label: 'v0.12, auth-token seal (rgb-wallet 0.12.0-rc.3 output)',
+    value: 'contract:tb@contract:nztjpjRX-_NVDDgd-EHENsqL-AKsGsyV-F6LzljB-X4WTv0Y/10@at:VbJYsl3B-FccP_ZkJ-Yi49U0M6-DLNra14f-SyXj7URN-pmdnfQ/',
+  },
+  {
+    label: 'v0.12, witness-output seal with API, method and state',
+    value: 'contract:tb@contract:nztjpjRX-_NVDDgd-EHENsqL-AKsGsyV-F6LzljB-X4WTv0Y/RGB20/transfer/amount/10@wout:AgAAAAAA-AAAQBDa8-5gLBB7Ak-ElBtuHev-bIGANisj-eXkg/',
+  },
+];
+
 function InvoiceTool() {
-  const [input, setInput] = useState('');
-  const [parsed, setParsed] = useState<{
-    prefix: string;
-    baid64: string;
-    hex: string;
-    bytes: number;
-  } | null>(null);
-  const [error, setError] = useState('');
-
-  const handleParse = () => {
-    setError('');
-    setParsed(null);
+  const [input, setInput] = useState(INVOICE_EXAMPLES[0].value);
+  const parsed = useMemo(() => {
+    if (!input.trim()) return {p: null, error: ''};
     try {
-      const result = parseRgbId(input);
-      setParsed({
-        prefix: result.prefix,
-        baid64: result.baid64,
-        hex: bytesToHex(result.bytes),
-        bytes: result.bytes.length,
-      });
+      return {p: parseInvoice(input), error: ''};
     } catch (e) {
-      setError(e.message);
+      return {p: null, error: (e as Error).message};
     }
-  };
-
-  const loadExample = () => {
-    setInput(generateExampleContractId());
-  };
-
-  useEffect(() => {
-    if (input) handleParse();
   }, [input]);
 
   return (
     <div className={styles.tool}>
       <div className={styles.toolHeader}>
-        <h3>RGB Invoice/ID Parser</h3>
-        <button className={styles.exampleBtn} onClick={loadExample}>
-          Load Example
-        </button>
+        <h3>Invoice parser</h3>
       </div>
-
       <p className={styles.description}>
-        Parse RGB contract IDs, invoices, and other RGB-prefixed identifiers
+        Splits a v0.11 (<code>rgb:…</code>) or v0.12 (<code>contract:…</code>) invoice into its parts, decodes
+        the v0.11 base32 amount, and checks the Baid64 checksums of the ids and seals. It checks the structure only,
+        not whether the contract exists. See <a href="/technical-reference/invoices">Invoices</a>.
       </p>
-
       <div className={styles.ioSection}>
         <div className={styles.inputSection}>
-          <label>RGB ID:</label>
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="rgb:2Ky4xDT-VyLmtp9Y-XmKinHXG-utaq8UBu-qjfqDiUM-8bHNdBb"
-            className={styles.largeInput}
-          />
+          <label>Examples</label>
+          <select className={styles.formInput} onChange={(e) => setInput(e.target.value)} value="">
+            <option value="" disabled>Load a real example…</option>
+            {INVOICE_EXAMPLES.map((x) => (
+              <option key={x.value} value={x.value}>{x.label}</option>
+            ))}
+          </select>
         </div>
-
-        {error ? (
-          <div className={styles.error}>❌ {error}</div>
+        <div className={styles.inputSection}>
+          <label>Invoice</label>
+          <textarea value={input} onChange={(e) => setInput(e.target.value)} rows={3} />
+        </div>
+        {parsed.error ? (
+          <div className={styles.error}>{parsed.error}</div>
         ) : (
-          parsed && (
+          parsed.p && (
             <div className={styles.parsedOutput}>
-              <h4>✅ Parsed Successfully</h4>
-              <div className={styles.field}>
-                <span className={styles.fieldLabel}>Prefix:</span>
-                <code>{parsed.prefix}</code>
-              </div>
-              <div className={styles.field}>
-                <span className={styles.fieldLabel}>BAID64:</span>
-                <code className={styles.codeBlock}>{parsed.baid64}</code>
-              </div>
-              <div className={styles.field}>
-                <span className={styles.fieldLabel}>Hex:</span>
-                <code className={styles.codeBlock}>{parsed.hex}</code>
-                <button onClick={() => navigator.clipboard.writeText(parsed.hex)}>
-                  📋
-                </button>
-              </div>
-              <div className={styles.field}>
-                <span className={styles.fieldLabel}>Size:</span>
-                <code>{parsed.bytes} bytes</code>
-              </div>
+              <h4>{parsed.p.line === 'B' ? 'RGB v0.11 (Line B) invoice' : 'RGB v0.12 (Line A) invoice'}</h4>
+              {parsed.p.fields.map((f) => (
+                <div className={styles.field} key={f.name + f.value}>
+                  <span className={styles.fieldLabel}>{f.name}:</span>
+                  <code className={styles.codeBlock}>{f.value}</code>
+                  {f.note && <small style={{display: 'block'}}>{f.note}</small>}
+                </div>
+              ))}
             </div>
           )
         )}
