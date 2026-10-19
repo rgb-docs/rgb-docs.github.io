@@ -1,484 +1,112 @@
 ---
 sidebar_position: 1
-title: RGB Schemas
-description: Understanding RGB contract schemas, validation rules, and how to create custom schemas
+title: Schemas (v0.11)
+description: The five standard RGB v0.11 schemas (NIA, IFA, UDA, CFA, PFA), what each contains, and how schemas are built and imported. v0.12 has no schemas.
+rgb_line: B
+verified_with: rgb-cmd 0.11.1
+last_update:
+  date: 2026-10-19
 ---
 
-# RGB Schemas
+# Schemas (v0.11)
 
-:::danger `@rgbjs/*` packages don't exist
-The `@rgbjs/...` imports on this page refer to npm packages that were never published, and the `@rgbjs` scope isn't registered. Treat these examples as illustrative only and **don't install anything under that name**: anyone could register it. Real JavaScript options: Line B (RGB Protocol Association) has the [`rgb-lib`](https://www.npmjs.com/package/rgb-lib) bindings from RGB-Tools. Line A (RGB-WG v0.12) has no JavaScript SDK. This page is being rewritten.
+:::info RGB v0.11 line (rgb-cmd 0.11.1)
+Schemas are a v0.11 concept. RGB v0.12 replaced them with codexes, issuers and APIs. See [Two RGB lines](/getting-started/two-rgbs).
 :::
 
-RGB schemas define the structure, rules, and semantics of smart contracts. They specify what state contracts can hold, what operations are valid, and how state transitions are validated. This guide covers RGB's schema system and how to work with both standard and custom schemas.
-
-## What is a Schema?
-
-A schema is a formal definition of a contract type in RGB. It acts as a blueprint that determines:
-
-- **State Structure**: What data the contract stores
-- **Operations**: What actions can be performed
-- **Validation Rules**: How to verify state transitions
-- **Interfaces**: How contracts expose functionality
-
-Schemas are identified by a schema ID (hash of the schema definition) and are immutable once created.
-
-### Schema Components
-
-```yaml
-schema:
-  id: <schema-hash>
-  name: "RGB20"
-  version: "0.12.0"
-
-  global_state:
-    - ticker: String(maxLen: 8)
-    - name: String(maxLen: 256)
-    - precision: U8
-
-  owned_state:
-    - assetOwner: Amount
-
-  transitions:
-    - Transfer:
-        inputs: [assetOwner]
-        outputs: [assetOwner]
-    - Issue:
-        outputs: [assetOwner]
-
-  genesis:
-    required: [ticker, name, precision]
-    owned: [assetOwner]
-```
-
-*Schema structure to be expanded*
-
-## Standard RGB Schemas
-
-### RGB20 - Fungible Assets
-
-The RGB20 schema defines fungible tokens (like ERC-20):
-
-```yaml
-schema_id: rgb:schema:fungible:...
-version: 0.12.0
-
-owned_rights:
-  assetOwner:
-    type: Amount
-
-global_state:
-  ticker: String(8)
-  name: String(256)
-  details: Option<String(4096)>
-  precision: U8
-  timestamp: I64
-
-state_schema:
-  totalSupply: Amount
-  maxSupply: Option<Amount>
-
-transitions:
-  Transfer:
-    owned_rights: assetOwner
-  Issue:
-    owned_rights: assetOwner
-    global: totalSupply
-```
-
-*RGB20 schema details to be expanded*
-
-### RGB21 - Non-Fungible Tokens
-
-The RGB21 schema defines unique tokens (like ERC-721):
-
-```yaml
-schema_id: rgb:schema:nft:...
-version: 0.12.0
-
-owned_rights:
-  assetOwner:
-    type: Token
-
-global_state:
-  name: String(256)
-  metadata: Attachment
-
-token_schema:
-  token_id: U64
-  metadata: TokenData
-
-transitions:
-  Transfer:
-    owned_rights: assetOwner
-  Mint:
-    owned_rights: assetOwner
-    global: totalMinted
-```
-
-*RGB21 schema details to be expanded*
-
-### RGB25 - Collectibles
-
-Enhanced NFT schema with collection features:
-
-*To be expanded*
-
-## Schema Definition Language
-
-### Strict Types
-
-RGB schemas use strict type encoding for deterministic validation:
-
-```typescript
-// Basic types
-type U8 = number;        // 8-bit unsigned integer
-type U16 = number;       // 16-bit unsigned integer
-type U32 = number;       // 32-bit unsigned integer
-type U64 = bigint;       // 64-bit unsigned integer
-type String = string;    // UTF-8 string with max length
-
-// Complex types
-type Option<T> = T | null;
-type Array<T> = T[];
-type Map<K, V> = Record<K, V>;
-
-// Custom types
-type Amount = U64;
-type TokenId = U64;
-type Attachment = Bytes;
-```
-
-*Type system to be expanded*
-
-### State Definitions
-
-**Global State**: Shared across all contract instances
-
-```yaml
-global_state:
-  ticker: String(maxLen: 8)
-  totalSupply: U64
-  issuer: PublicKey
-```
-
-**Owned State**: Associated with specific UTXOs
-
-```yaml
-owned_state:
-  assetOwner: Amount
-  fractionOwner: Rational64
-```
-
-*State types to be expanded*
-
-### Transition Rules
-
-Define valid state changes:
-
-```yaml
-transitions:
-  Transfer:
-    inputs:
-      - assetOwner: Amount
-    outputs:
-      - assetOwner: Amount
-    validation:
-      - sum(inputs.assetOwner) == sum(outputs.assetOwner)
-
-  Burn:
-    inputs:
-      - assetOwner: Amount
-    validation:
-      - inputs.assetOwner > 0
-```
-
-*Transition validation to be expanded*
-
-## Creating Custom Schemas
-
-### Schema Design Process
-
-1. **Define Use Case**: What does your contract do?
-2. **Identify State**: What data needs to be tracked?
-3. **Design Transitions**: What operations are needed?
-4. **Add Validation**: What rules ensure correctness?
-5. **Test Thoroughly**: Verify all edge cases
-
-*Design methodology to be expanded*
-
-### Example: Simple Voting Schema
-
-```yaml
-schema:
-  name: "RGB-Vote"
-  version: "0.1.0"
-
-  global_state:
-    proposal: String(maxLen: 1024)
-    deadline: U64  # block height
-    yes_votes: U64
-    no_votes: U64
-
-  owned_state:
-    voting_right: Unit  # Right to vote
-    vote_cast: Bool     # Has voted
-
-  transitions:
-    Vote:
-      inputs:
-        - voting_right: Unit
-      outputs:
-        - vote_cast: Bool
-      metadata:
-        - choice: Bool  # true = yes, false = no
-      validation:
-        - current_height() < global.deadline
-        - !inputs.vote_cast
-
-    Tally:
-      validation:
-        - current_height() >= global.deadline
-      effects:
-        - freeze global.yes_votes
-        - freeze global.no_votes
-```
-
-*Custom schema example to be expanded*
-
-### Schema Compilation
-
-```bash
-# Compile schema definition
-rgb-schema compile voting-schema.yaml -o voting.schema
-
-# Verify schema
-rgb-schema verify voting.schema
-
-# Get schema ID
-rgb-schema id voting.schema
-```
-
-*Schema tooling to be expanded*
-
-### Using Custom Schemas
-
-```typescript
-import { Schema, Contract } from '@rgbjs/core';
-
-// Load custom schema
-const schema = await Schema.load('./voting.schema');
-
-// Create contract using schema
-const contract = await Contract.create({
-  schema: schema,
-  genesis: {
-    global: {
-      proposal: "Should we implement feature X?",
-      deadline: currentHeight + 2016,
-      yes_votes: 0n,
-      no_votes: 0n
+A **schema** is the template that every contract of one kind follows. It lists the global state types, the owned state types and the allowed transitions, and it points to the AluVM scripts that validate genesis and each transition. Every contract records its schema ID in genesis, and wallets validate each operation of the contract against that schema.
+
+Schemas are Rust code. The [`rgb-schemas`](https://github.com/rgb-protocol/rgb-schemas) crate (0.11.1, 2026-09-16) builds each one as a `Schema` value, and its `rgb-schemas` binary compiles them into strict-encoded `.rgb` kit files. There is no YAML or text format for schemas, no schema compiler CLI and no schema registry.
+
+:::note No interfaces in v0.11
+Line B has no RGB20/RGB21 interfaces: the `rgb-ops` 0.11.1 source has no `Iface` types. Line B treats the names "RGB20" and "RGB21" as deprecated and uses the schema names below. Code reads a contract through a schema-specific wrapper, using the `IssuerWrapper` and `SchemaWrapper` traits (`rgb-ops` `src/contract/schema.rs`).
+:::
+
+## The five standard schemas
+
+Summarised from `rgb-schemas` 0.11.1 `src/*.rs` and the official [supported schemas](https://github.com/rgb-protocol/RGB-Documentation/blob/master/rgb-contract-implementation/schema/supported-schemas.md) page.
+
+| Schema | What it is | Global state | Owned state | Transitions | 0.11.1 README |
+|---|---|---|---|---|---|
+| **NIA**, Non-Inflatable Asset | Fixed-supply fungible token | `spec`, `terms`, `issuedSupply` | `assetOwner` (u64) | `transfer` | |
+| **IFA**, Inflatable Fungible Asset | Fungible token with secondary issuance, burn and link | NIA's, plus `maxSupply`, `rejectListUrl`, `linkedFromContract`, `linkedToContract` | `assetOwner`, `inflationAllowance`, `linkRight` | `transfer`, `inflate`, `burn`, `link` | **Not production-ready** |
+| **UDA**, Unique Digital Asset | One NFT per contract | `spec`, `terms`, `tokens` (one `TokenData`), `attachmentTypes` | `assetOwner` (token index and fraction, always 1) | `transfer` | |
+| **CFA**, Collectible Fungible Asset | Fungible token with an optional `art` (Article) string | `art`, `name`, `details`, `precision`, `terms`, `issuedSupply` | `assetOwner` (u64) | `transfer` | |
+| **PFA**, Permissioned Fungible Asset | Fixed supply. The issuer signs every transfer | NIA's, plus `pubkey` | `assetOwner` (u64) | `transfer` (signature checked) | **Not production-ready** |
+
+Guides: [NIA tokens](/guides/rgb20/creating-tokens), [IFA secondary issuance](/guides/rgb20/secondary-issuance), [UDA NFTs](/guides/rgb21/creating-nfts) and [CFA](/guides/rgb25/overview).
+
+## Inside a schema
+
+This is the NIA schema from `rgb-schemas` 0.11.1 `src/nia.rs`, shortened. It is a Rust value, not a configuration file:
+
+```rust
+Schema {
+    ffv: zero!(),
+    name: tn!("NonInflatableAsset"),
+    meta_types: none!(),
+    global_types: tiny_bmap! {
+        GS_NOMINAL => GlobalDetails {
+            global_state_schema: GlobalStateSchema::once(types.get("RGBContract.AssetSpec")),
+            name: fname!("spec"),
+        },
+        // GS_TERMS => "terms", GS_ISSUED_SUPPLY => "issuedSupply"
     },
-    owned: {
-      voting_right: voters.map(v => ({
-        seal: v.seal,
-        amount: 1
-      }))
-    }
-  }
-});
-```
-
-*Schema usage to be expanded*
-
-## Schema Versioning
-
-### Backward Compatibility
-
-```yaml
-schema:
-  name: "RGB20"
-  version: "0.12.0"
-  compatible_with:
-    - "0.11.0"
-    - "0.10.0"
-
-  upgrades:
-    from_0_11:
-      - add_field: max_supply
-      - deprecate_field: old_precision
-```
-
-*Versioning strategy to be expanded*
-
-### Migration Paths
-
-Upgrading contracts to new schema versions:
-
-*To be expanded*
-
-## Schema Interfaces
-
-### AluVM Script Integration
-
-Schemas can include validation scripts in AluVM:
-
-```asm
-; Transfer validation script
-push inputs.amount     ; Push input amounts
-sum                    ; Sum all inputs
-push outputs.amount    ; Push output amounts
-sum                    ; Sum all outputs
-eq                     ; Check equality
-assert                 ; Assert true or fail
-```
-
-*AluVM integration to be expanded*
-
-### Programmable Validation
-
-Complex validation logic:
-
-```typescript
-interface ValidationRule {
-  condition: AluVMScript;
-  error: string;
+    owned_types: tiny_bmap! {
+        OS_ASSET => AssignmentDetails {
+            owned_state_schema: OwnedStateSchema::Fungible(FungibleType::Unsigned64Bit),
+            name: fname!("assetOwner"),
+            default_transition: TS_TRANSFER,
+        }
+    },
+    genesis: GenesisSchema { /* each global Once, assetOwner OnceOrMore, validator */ },
+    transitions: tiny_bmap! { TS_TRANSFER => TransitionDetails { /* … */ } },
+    default_assignment: Some(OS_ASSET),
 }
-
-const rules: ValidationRule[] = [
-  {
-    condition: 'sum(inputs) == sum(outputs)',
-    error: 'Amount conservation violated'
-  },
-  {
-    condition: 'all(outputs.amount > 0)',
-    error: 'Zero-amount outputs not allowed'
-  }
-];
 ```
 
-*Validation rules to be expanded*
+- **Type numbers** are fixed in `src/lib.rs`. For example, `GS_NOMINAL` is 2000, `GS_TERMS` 2001, `GS_ISSUED_SUPPLY` 2010, `OS_ASSET` 4000 and `TS_TRANSFER` 10000.
+- **Global state** belongs to one contract and is append-only. Genesis sets it, and a transition can add entries (an IFA `inflate` adds a new `issuedSupply`). Nothing overwrites it.
+- **Owned state** comes in three kinds in 0.11.1: declarative (no value), fungible (u64) and structured (strict-typed data, such as the UDA allocation). Attachments are not a state type.
+- **Validation scripts** are AluVM bytecode. The NIA transfer check is four instructions:
 
-## Schema Registry
+  ```rust
+  put     a8[0],ERRNO_NON_EQUAL_IN_OUT;  // errno 0 if the check fails
+  svs     OS_ASSET;                       // sum of inputs == sum of outputs
+  test;
+  ret;
+  ```
 
-### Publishing Schemas
+  Amounts are plain u64 values, visible to everyone who validates the consignment. Neither RGB line uses Pedersen commitments.
+- **The schema ID** is a commitment to the whole `Schema` value. Change one field and you get a different schema, so schemas can't be upgraded. IFA's `link` transition exists so that an issuer can point holders to a replacement contract.
+
+## Using a schema
+
+A wallet needs the compiled kit before it can issue or accept contracts of that schema. `rgb-schemas` ships the kits in `schemata/`. The IDs below are real `rgb import` output (rgb-cmd 0.11.1, run offline on 2026-10-19):
 
 ```bash
-# Publish to schema registry
-rgb-schema publish voting.schema \
-  --registry https://schema.rgb.tech \
-  --author-key <key>
+rgb -n regtest -d data0 import rgb-schemas/schemata/NonInflatableAsset.rgb
+rgb -n regtest -d data0 schemata
 ```
 
-*Schema publishing to be expanded*
+| Schema | Schema ID |
+|---|---|
+| NIA | `rgb:sch:RWhwUfTMpuP2Zfx1~j4nswCANGeJrYOqDcKelaMV4zU#remote-digital-pegasus` |
+| IFA | `rgb:sch:IpjJhFLz3oywYKQxO3KmFgR0Aa415nlTNrNyEFqMZCE#shoe-colombo-mango` |
+| UDA | `rgb:sch:~6rjymf3GTE840lb5JoXm2aFwE8eWCk3mCjOf_mUztE#spider-montana-fantasy` |
+| CFA | `rgb:sch:JgqK5hJX9YBT4osCV7VcW_iLTcA5csUCnLzvaKTTrNY#mars-house-friend` |
+| PFA | `rgb:sch:YvvvQ4UsHuPQDT3nIQ9mnpsqMbrs5lYZRbyymHVrkY8#famous-process-eagle` |
 
-### Discovering Schemas
+[rgb-lib](https://github.com/RGB-Tools/rgb-lib) 0.3.0-beta.7 embeds NIA, UDA, CFA and IFA (its `AssetSchema` enum), so apps built on it import nothing. It doesn't support PFA.
 
-```bash
-# Search for schemas
-rgb-schema search "voting"
+To issue from Rust, pass a schema to `ContractBuilder::with(issuer, schema, types, scripts, chain_net)`, or call `stock.contract_builder(issuer, schema_id, chain_net)`. The [`examples/`](https://github.com/rgb-protocol/rgb-schemas/tree/0.11.1/examples) directory of rgb-schemas has one program per schema. A custom schema is a new Rust module built the same way. Wallets only accept contracts whose schema they have imported, so in practice apps use the five standard schemas.
 
-# Get schema by ID
-rgb-schema get <schema-id>
+:::info RGB v0.12 has no schemas
+`rgb-core` 0.12 removed schema verification. In v0.12 (rgb-wallet 0.12.0-rc.3), a contract is issued from an **issuer** file, which holds a codex (the validation code) and an API, together with a YAML parameter file such as `DemoToken.yaml`. See [Genesis](/guides/contracts/genesis) and the [Quick Start](/getting-started/quick-start).
+:::
 
-# List all schemas
-rgb-schema list --category governance
-```
+## Further reading
 
-*Schema discovery to be expanded*
-
-## Advanced Features
-
-### Parametric Schemas
-
-Schemas with configurable parameters:
-
-*To be expanded*
-
-### Composable Schemas
-
-Combining multiple schemas:
-
-*To be expanded*
-
-### Recursive Structures
-
-Schemas referencing themselves:
-
-*To be expanded*
-
-## Schema Security
-
-### Validation Best Practices
-
-1. **Conservation Laws**: Ensure assets aren't created/destroyed incorrectly
-2. **Access Control**: Verify operation permissions
-3. **Overflow Protection**: Check for arithmetic overflow
-4. **State Consistency**: Maintain invariants
-5. **DoS Prevention**: Limit computational complexity
-
-*Security guidelines to be expanded*
-
-### Common Vulnerabilities
-
-**Insufficient Validation**
-```yaml
-# BAD: No amount checking
-Transfer:
-  inputs: [amount]
-  outputs: [amount]
-
-# GOOD: Explicit validation
-Transfer:
-  inputs: [amount]
-  outputs: [amount]
-  validation:
-    - sum(inputs) == sum(outputs)
-    - all(outputs > 0)
-```
-
-*Vulnerability patterns to be expanded*
-
-## Testing Schemas
-
-### Unit Testing
-
-```typescript
-import { SchemaTest } from '@rgbjs/testing';
-
-describe('Voting Schema', () => {
-  it('should prevent double voting', async () => {
-    const test = new SchemaTest(votingSchema);
-
-    const contract = await test.genesis({
-      proposal: "Test",
-      deadline: 1000
-    });
-
-    // First vote succeeds
-    await test.transition('Vote', {
-      inputs: [{ voting_right: 1 }],
-      metadata: { choice: true }
-    });
-
-    // Second vote fails
-    await expect(
-      test.transition('Vote', {
-        inputs: [{ vote_cast: true }],
-        metadata: { choice: false }
-      })
-    ).rejects.toThrow('Already voted');
-  });
-});
-```
-
-*Testing framework to be expanded*
-
-## Related Documentation
-
-- [Contractum](./contractum.md)
-- [Genesis Contracts](./genesis.md)
-- [State Transitions](./state-transitions.md)
-- [Strict Types](../../technical-reference/strict-types.md)
-- [RGB20 Guide](../rgb20/creating-tokens.md)
-- [RGB21 Guide](../rgb21/creating-nfts.md)
+- [rgb-schemas](https://github.com/rgb-protocol/rgb-schemas): source and compiled kits
+- Official docs ([docs.rgb.info](https://docs.rgb.info)): [Schema](https://github.com/rgb-protocol/RGB-Documentation/blob/master/rgb-contract-implementation/schema/README.md) and the [NIA schema walkthrough](https://github.com/rgb-protocol/RGB-Documentation/blob/master/rgb-contract-implementation/schema/non-inflatable-fungible-asset-schema.md)
+- [CLI reference (v0.11)](/technical-reference/cli-v011)
