@@ -87,6 +87,7 @@ const config: Config = {
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/rgb-docs/rgb-docs.github.io/tree/main/',
           routeBasePath: '/',  // Docs at root, not /docs/
+          showLastUpdateTime: true,
         },
         blog: false,  // Disable blog
         theme: {
@@ -187,7 +188,7 @@ const config: Config = {
           position: 'left',
         },
         {
-          to: '/technical-reference/api',
+          to: '/technical-reference/cli',
           label: 'Reference',
           position: 'left',
         },
@@ -201,11 +202,14 @@ const config: Config = {
           label: 'Ecosystem',
           position: 'left',
           items: [
-            {label: 'GitHub', href: 'https://github.com/RGB-WG'},
-            {label: 'rgbjs', href: 'https://rgbjs.com'},
-            {label: 'RGB.tech', href: 'https://rgb.tech'},
+            {label: 'Ecosystem overview', to: '/technical-reference/ecosystem'},
             {type: 'html', value: '<hr style="margin: 0.5rem 0;">'},
-            {label: 'Community', href: 'https://rgb.tech/community'},
+            {label: 'v0.12: rgb.tech', href: 'https://rgb.tech'},
+            {label: 'v0.12: RGB-WG on GitHub', href: 'https://github.com/RGB-WG'},
+            {type: 'html', value: '<hr style="margin: 0.5rem 0;">'},
+            {label: 'v0.11: rgb.info', href: 'https://rgb.info'},
+            {label: 'v0.11: rgb-protocol on GitHub', href: 'https://github.com/rgb-protocol'},
+            {label: 'v0.11: RGB-Tools on GitHub', href: 'https://github.com/RGB-Tools'},
           ],
         },
         {

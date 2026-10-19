@@ -2093,7 +2093,6 @@ done
 
 ### Technical References
 - [RGB Protocol Specification](https://rgb.tech)
-- [API Reference](./api.md) - Programmatic RGB interfaces
 - [Interfaces](./interfaces.md) - RGB interface standards
 - [Schema Documentation](../guides/contracts/schemas.md) - RGB20, RGB21 schemas
 

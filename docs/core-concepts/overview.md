@@ -44,7 +44,6 @@ RGB implements **Partially-Replicated Infinite State Machines** (PRISM):
 - State evolves as a directed acyclic graph (DAG)
 - Enables massive scalability
 
-[Learn more about PRISM Computing →](/core-concepts/prism-computing)
 
 ## RGB Architecture Layers
 

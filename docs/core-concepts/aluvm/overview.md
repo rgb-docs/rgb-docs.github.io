@@ -282,7 +282,6 @@ See [Instruction Set](./instruction-set.md) for complete reference.
 
 *To be expanded: Memory architecture overview*
 
-See [Memory Model](./memory-model.md) for detailed information.
 
 - Isolated memory spaces
 - No heap allocation
@@ -1507,8 +1506,6 @@ AluVM enables **Bitcoin to be a platform for complex smart contracts** while mai
 ## Related Documentation
 
 - **[Instruction Set](./instruction-set.md)** - Complete instruction reference with 17 core instructions detailed
-- **[Memory Model](./memory-model.md)** - Memory architecture with segmentation and access patterns
-- **[Prism Computing](../prism-computing.md)** - RGB's client-side validation computing model
 - **[Contractum Guide](../../guides/contracts/contractum.md)** - High-level contract programming language
 - **[Development Guide](../../guides/development/rust-sdk.md)** - Practical guide to building with AluVM
 

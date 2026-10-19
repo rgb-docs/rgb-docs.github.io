@@ -212,4 +212,3 @@ Include:
 
 - [CLI Reference](./cli.md)
 - [FAQ](./faq.md)
-- [API Reference](./api.md)
