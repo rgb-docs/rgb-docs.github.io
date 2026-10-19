@@ -38,7 +38,8 @@
     "git:https://github.com/rgb-protocol/rgb-sandbox": "Line B official regtest sandbox (Docker), rgb-protocol org",
     "git:https://github.com/RGB-Tools/rgb-lightning-node": "Line B RGB Lightning Node, RGB-Tools org",
     "git:https://github.com/RGB-Tools/rgb-lib": "Line B wallet library, RGB-Tools org",
-    "git:https://github.com/romanz/electrs": "romanz/electrs, the upstream Electrum server (Rust)"
+    "git:https://github.com/romanz/electrs": "romanz/electrs, the upstream Electrum server (Rust)",
+    "npm:rgb-lib": "RGB-Tools/rgb-lib-nodejs; maintainers ftenga, zoedberg, nicbus (Line B Node bindings)"
   },
   "denied": {
     "crate:rgb": "kornelski/rust-rgb, an unrelated pixel-colour crate",

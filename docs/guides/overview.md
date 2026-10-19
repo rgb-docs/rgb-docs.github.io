@@ -1,207 +1,68 @@
 ---
 sidebar_position: 1
 title: Guides Overview
-description: Practical guides for building with RGB
+description: Which guide to read for which RGB line, and the real tools each line ships.
+rgb_line: both
+verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
+last_update:
+  date: 2026-10-19
 ---
 
-# RGB Guides Overview
+# Guides Overview
 
-This section provides practical, hands-on guides for building applications with RGB v0.12. Whether you're creating fungible tokens, NFTs, complex smart contracts, or integrating RGB into existing applications, these guides will help you get started.
+:::info Applies to both RGB lines
+This page routes you to the guide for your line. Some guides cover both lines in tabs, others only one. See [Two RGB lines](/getting-started/two-rgbs).
+:::
 
-## Quick Navigation
+## Pick a line first
 
-### Token Development
-- [**RGB20 Tokens**](./rgb20/creating-tokens.md) - Fungible token standard
-  - Creating tokens
-  - Transferring assets
-  - Secondary issuance
-  - Supply management
+| | Line B: v0.11 (RGB Protocol Association) | Line A: v0.12 (RGB-WG) |
+|---|---|---|
+| Use it for | Wallets, apps and assets that exist today, including Lightning | Studying the v0.12 design on testnet or regtest |
+| CLI | `rgb` from [`rgb-cmd`](/technical-reference/cli-v011) 0.11.1 | `rgb` from [`rgb-wallet`](/technical-reference/cli) 0.12.0-rc.3 (refuses mainnet) |
+| App library | [`rgb-lib`](https://github.com/RGB-Tools/rgb-lib) (Rust, plus Kotlin, Swift, Python and Node.js bindings) | `rgb-runtime` (Rust only) |
+| Contracts | Schemas: NIA, IFA, UDA, CFA, PFA | Codexes and issuers (`.issuer` files) |
+| Lightning | [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) (alpha) | None |
 
-### NFT Development
-- [**RGB21 NFTs**](./rgb21/creating-nfts.md) - Non-fungible token standard
-  - Creating NFTs
-  - Metadata and attachments
-  - Transferring NFTs
-  - Royalties and rights
+If you're not sure, use Line B. Neither line can read the other's contracts, invoices or consignments.
 
-### Smart Contracts
-- [**Contract Development**](./contracts/schemas.md) - Building custom contracts
-  - Schema design
-  - Contractum language
-  - Genesis creation
-  - State transitions
-  - Validation logic
+## Guides and their lines
 
-### Lightning Network
-- [**Lightning Integration**](./lightning/overview.md) - RGB on Lightning
-  - Asset channels
-  - Routing RGB payments
-  - Channel management
-  - Liquidity
+**Contracts**
 
-### Development
-- [**Development Guides**](./development/rust-sdk.md) - Building applications
-  - Rust SDK
-  - RGB.js
-  - Wallet integration
-  - Testing strategies
+| Guide | Line | What it covers |
+|---|---|---|
+| [Schemas](./contracts/schemas.md) | B | The NIA, IFA, UDA, CFA and PFA schemas |
+| [Genesis](./contracts/genesis.md) | both | Issuing a contract: `rgb issue`, `ContractBuilder`, rgb-lib, `.issuer` files |
+| [State transitions](./contracts/state-transitions.md) | both | What a transition contains and how a transfer flows |
+| [Bundles](./contracts/bundles.md) | B | Transition bundles (Line A removed them from consensus) |
+| [Contractum](./contracts/contractum.md) | A | A proposed contract language; not implemented |
 
-## Getting Started
+**Assets**
 
-### Prerequisites
+| Guide | Line |
+|---|---|
+| [Creating fungible tokens](./rgb20/creating-tokens.md) and [transferring them](./rgb20/transferring-assets.md) | both |
+| [Secondary issuance](./rgb20/secondary-issuance.md) (IFA) | B |
+| [Collectible fungible assets](./rgb25/overview.md) (CFA) | B |
+| [Unique digital assets](./rgb21/creating-nfts.md) (UDA): [metadata](./rgb21/metadata-attachments.md), [transfers](./rgb21/transferring-nfts.md) | B |
 
-*To be expanded: What you need to know*
+**Lightning:** [overview](./lightning/overview.md), [asset channels](./lightning/asset-channels.md) and [routing](./lightning/routing.md). Line B only, through RGB Lightning Node.
 
-Before starting with RGB development:
-- **Bitcoin basics**: UTXOs, transactions, scripts
-- **Programming**: Rust or TypeScript/JavaScript
-- **Cryptography**: Hashes, signatures, commitments
-- **Development tools**: Git, package managers
+**Development**
 
-### Choosing Your Path
+| Guide | Line | What it covers |
+|---|---|---|
+| [Rust](./development/rust-sdk.md) | both | `rgb-lib`, `rgb-ops`/`rgb-api` (B); `rgb-runtime`/`rgb-std` (A) |
+| [JavaScript and TypeScript](./development/rgbjs.md) | B | `rgb-lib` on npm, third-party packages, the RGB Lightning Node REST API |
+| [Wallet integration](./development/wallet-integration.md) | both | Keys, coin selection, receiving, sending, backups |
+| [Testing](./development/testing.md) | both | Regtest stacks, rgb-sandbox, testnet4 |
 
-*To be expanded: Guide selection*
+## Names to avoid
 
-**For fungible assets** → Start with [RGB20 guide](./rgb20/creating-tokens.md)
+These appear in older RGB material, but they aren't the tools of either current line:
 
-**For unique assets/NFTs** → Start with [RGB21 guide](./rgb21/creating-nfts.md)
-
-**For custom logic** → Start with [Contracts guide](./contracts/schemas.md)
-
-**For Lightning** → Start with [Lightning guide](./lightning/overview.md)
-
-**For integration** → Start with [Development guide](./development/wallet-integration.md)
-
-## Development Environment
-
-### Tools and SDKs
-
-*To be expanded: Development tools*
-
-Available tooling:
-- **rgb-sdk**: Rust library for RGB operations
-- **rgbjs**: JavaScript/TypeScript implementation
-- **rgb-cli**: Command-line interface
-- **rgb-wallet**: Reference wallet implementation
-
-### Networks
-
-*To be expanded: Testing networks*
-
-Development networks:
-- **Regtest**: Local testing
-- **Signet**: Public test network
-- **Testnet**: Bitcoin testnet
-- **Mainnet**: Production network
-
-## Common Patterns
-
-### Asset Creation
-
-*To be expanded: Creating assets*
-
-Typical workflow:
-1. Design schema (or use standard)
-2. Create genesis transaction
-3. Issue initial supply
-4. Distribute to holders
-
-### Asset Transfers
-
-*To be expanded: Transfer patterns*
-
-Transfer process:
-1. Validate current state
-2. Create state transition
-3. Commit to Bitcoin
-4. Generate consignment
-5. Send to recipient
-
-### Multi-Asset Operations
-
-*To be expanded: Handling multiple assets*
-
-Coordinating operations:
-- Batched transfers
-- Atomic swaps
-- Multi-protocol transactions
-
-## Best Practices
-
-### Security
-
-*To be expanded: Security guidelines*
-
-- Always validate full history
-- Verify Bitcoin commitments
-- Secure private keys
-- Test thoroughly
-- Audit contracts
-
-### Privacy
-
-*To be expanded: Privacy best practices*
-
-- Use Tapret commitments
-- Avoid address reuse
-- Consider CoinJoin
-- Minimize data disclosure
-
-### Efficiency
-
-*To be expanded: Optimization tips*
-
-- Batch operations
-- Prune history when possible
-- Optimize state size
-- Cache validation results
-
-## Example Projects
-
-### Simple Token
-
-*To be expanded: Basic token example*
-
-Complete example: [Simple RGB20 Token](./rgb20/creating-tokens.md)
-
-### NFT Collection
-
-*To be expanded: NFT project example*
-
-Complete example: [RGB21 NFT Collection](./rgb21/creating-nfts.md)
-
-### DAO
-
-*To be expanded: DAO example*
-
-Complete example: [DAO Contract](./contracts/schemas.md)
-
-### Lightning Asset Wallet
-
-*To be expanded: Lightning example*
-
-Complete example: [Lightning Asset Wallet](./lightning/asset-channels.md)
-
-## Troubleshooting
-
-Common issues and solutions in [Troubleshooting Guide](../technical-reference/troubleshooting.md)
-
-## Community Resources
-
-- **Discord**: RGB developer community
-- **GitHub**: RGB repositories and issues
-- **Documentation**: Technical reference
-- **Examples**: Sample projects
-
-## Next Steps
-
-Choose a guide based on your needs:
-
-- 📘 [Create RGB20 Tokens](./rgb20/creating-tokens.md)
-- 🎨 [Create RGB21 NFTs](./rgb21/creating-nfts.md)
-- ⚡ [RGB on Lightning](./lightning/overview.md)
-- 🔧 [Wallet Integration](./development/wallet-integration.md)
-
----
-
-**Status**: Overview complete - Individual guides provide detailed implementations.
+- **`rgb-cli`, `rgb-node`, `lnp-node`** (crates.io): 0.9.x releases from 2023.
+- **`rgb-sdk`**: no such crate on crates.io, and `RGB-WG/rgb-sdk` was archived in 2022.
+- **`rgb`** (crates.io): an unrelated pixel-colour crate. The v0.12 library crate is `rgb-std`, which you import as `rgb`.
+- **`@rgbjs/*`** (npm): never published, so anyone could register the names. Don't install them.

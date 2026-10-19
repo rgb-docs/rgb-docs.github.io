@@ -1,627 +1,126 @@
 ---
 sidebar_position: 4
 title: State Transitions
-description: Understanding RGB state transitions, validation, and how contract state evolves over time
+description: What an RGB state transition contains on each line, how it is committed to Bitcoin, and the CLI flow that creates one.
+rgb_line: both
+verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
+last_update:
+  date: 2026-10-19
 ---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
 # State Transitions
 
-:::danger `@rgbjs/*` packages don't exist
-The `@rgbjs/...` imports on this page refer to npm packages that were never published, and the `@rgbjs` scope isn't registered. Treat these examples as illustrative only and **don't install anything under that name**: anyone could register it. Real JavaScript options: Line B (RGB Protocol Association) has the [`rgb-lib`](https://www.npmjs.com/package/rgb-lib) bindings from RGB-Tools. Line A (RGB-WG v0.12) has no JavaScript SDK. This page is being rewritten.
+:::info Applies to both RGB lines
+The idea is the same on both lines, but the structures, commands and files differ and can't be mixed. See [Two RGB lines](/getting-started/two-rgbs).
 :::
 
-State transitions are the fundamental operations in RGB contracts that modify state ownership and update global data. This guide covers how transitions work, validation rules, and advanced state management patterns.
+A state transition is a contract operation after [genesis](./genesis.md). It:
 
-## What are State Transitions?
+- **consumes** owned state by closing its seals, which means spending the Bitcoin outputs that hold it;
+- **creates** new owned state, assigned to new seals (the recipient's and your change);
+- may **add** global state, which is append-only and is never modified or deleted;
+- is **validated client-side**: the contract's own code (AluVM) checks it, for example that amounts are conserved.
 
-A state transition represents a valid change in contract state - transferring ownership, updating global values, or executing contract logic. Each transition:
+The transition itself never goes on chain. The transaction that spends the seals (the **witness transaction**) carries a 32-byte commitment to it, in an `OP_RETURN` output (opret) or in a taproot output (tapret), through a multi-protocol commitment. See [Deterministic commitments](/core-concepts/bitcoin/deterministic-commitments). The recipient gets the transition and its history from the sender in a [consignment](/technical-reference/consignments) and validates them.
 
-- **Consumes Inputs**: Spends existing state (sealed UTXOs)
-- **Creates Outputs**: Generates new state (new seals)
-- **Updates Globals**: Modifies shared contract state
-- **Validates Rules**: Proves compliance with schema
+Transitions aren't signed with holder keys. Closing a seal requires spending its output, so the Bitcoin signature on the witness transaction is what authorizes a transfer.
 
-Transitions are client-side validated and anchored to Bitcoin without publishing data on-chain.
+:::danger Before you broadcast
+- **Send the consignment first.** Give it to the recipient and let them validate or accept it before you publish the witness transaction. If the transaction is mined and the consignment is lost, the assets are lost.
+- **Every allocation on a spent output must move.** If an output you spend also holds state from another contract, the witness transaction has to carry a transition for that contract too, or that state is destroyed. rgb-lib, `rgb-cmd` and `rgb-wallet` do this for you. Don't build these transactions with your own coin selection.
+- **Back up tapret wallets.** A tapret commitment tweaks your output key. Without the RGB data directory, a seed-only wallet can't find or spend that output.
+:::
 
-### Transition Anatomy
+<Tabs groupId="rgb-line">
+<TabItem value="b" label="v0.11 (rgb-cmd)">
 
-```yaml
-transition:
-  transition_type: Transfer
-  contract_id: rgb:2wHxKf...
+## Line B
 
-  inputs:
-    - seal: btc:bc1q...:0
-      amount: 1000
+From [`rgb-consensus` `src/operation/operations.rs`](https://github.com/rgb-protocol/rgb-consensus/blob/0.11.1/src/operation/operations.rs):
 
-  outputs:
-    - seal: <blinded-utxo>
-      amount: 600
-    - seal: <blinded-utxo>
-      amount: 400
-
-  globals:
-    total_supply: 1000000  # Unchanged
-
-  validation_proof:
-    schema_check: passed
-    amount_conservation: passed
-    signature: valid
-
-  bitcoin_anchor:
-    txid: abc123...
-    block: 800000
-```
-
-*Transition structure to be expanded*
-
-## Transition Types
-
-### Transfer Transitions
-
-Move owned state from one party to another:
-
-```typescript
-import { RgbContract } from '@rgbjs/core';
-
-const transfer = await contract.createTransition({
-  type: 'Transfer',
-  inputs: [
-    { seal: mySeal, amount: 1000n }
-  ],
-  outputs: [
-    { seal: recipientSeal, amount: 600n },
-    { seal: changeSeal, amount: 400n }
-  ]
-});
-
-await transfer.validate();
-await transfer.anchor();
-await transfer.finalize();
-```
-
-*Transfer transitions to be expanded*
-
-### State Update Transitions
-
-Modify global contract state:
-
-```typescript
-const update = await contract.createTransition({
-  type: 'UpdateMetadata',
-  inputs: [
-    { seal: adminRightsSeal, rights: ['admin'] }
-  ],
-  globals: {
-    description: 'Updated contract description',
-    website: 'https://newsite.com'
-  }
-});
-```
-
-*State updates to be expanded*
-
-### Issuance Transitions
-
-Create new tokens (if permitted):
-
-```typescript
-const issuance = await contract.createTransition({
-  type: 'Issue',
-  inputs: [
-    { seal: issuerSeal, rights: ['issue'] }
-  ],
-  outputs: [
-    { seal: recipientSeal, amount: 100000n },
-    { seal: newIssuerSeal, rights: ['issue'] }  // Preserve rights
-  ],
-  globals: {
-    total_supply: current_supply + 100000n
-  }
-});
-```
-
-*Issuance transitions to be expanded*
-
-### Burn Transitions
-
-Permanently destroy tokens:
-
-```typescript
-const burn = await contract.createTransition({
-  type: 'Burn',
-  inputs: [
-    { seal: holderSeal, amount: 500n }
-  ],
-  outputs: [],  // No outputs = burned
-  globals: {
-    total_supply: current_supply - 500n
-  }
-});
-```
-
-*Burn transitions to be expanded*
-
-## Validation Rules
-
-### Conservation Laws
-
-Amount must be conserved (unless burning/issuing):
-
-```typescript
-function validateConservation(inputs, outputs) {
-  const inputSum = inputs.reduce((sum, i) => sum + i.amount, 0n);
-  const outputSum = outputs.reduce((sum, o) => sum + o.amount, 0n);
-
-  if (inputSum !== outputSum) {
-    throw new Error('Amount conservation violated');
-  }
+```rust
+// rgb-consensus 0.11.1
+pub struct Transition {
+    pub ffv: Ffv,
+    pub contract_id: ContractId,
+    pub nonce: u64,
+    pub transition_type: TransitionType, // defined by the schema, e.g. NIA's `transfer`
+    pub metadata: Metadata,
+    pub globals: GlobalState,            // new global state, if the schema allows it
+    pub inputs: Inputs,                  // the previous outputs (Opout) being consumed
+    pub assignments: Assignments<GraphSeal>,
+    pub signature: Option<Signature>,    // optional issuer-style signature, used by PFA
 }
 ```
 
-*Conservation validation to be expanded*
+There's no anchor or proof inside the transition. All transitions of one contract that a witness transaction closes seals for are grouped in a [`TransitionBundle`](./bundles.md). Bundles of different contracts share the transaction through the multi-protocol commitment. The schema decides which transitions exist. NIA, for instance, has only `transfer`, while IFA adds `inflate`, `burn` and `link` (`rgb-schemas` `src/ifa.rs`).
 
-### Schema Compliance
+### CLI flow
 
-Transition must match schema definition:
+| Step | Who | Command |
+|---|---|---|
+| 1 | Recipient | `rgb invoice --amount 100 <CONTRACT_ID>` |
+| 2 | Sender | `rgb transfer <INVOICE> <CONSIGNMENT> <PSBT>` writes the consignment and a PSBT that already contains the commitment |
+| 3 | Recipient | `rgb validate <CONSIGNMENT>` |
+| 4 | Sender | Sign the PSBT with the key holder (for example `bp-hot sign`), then `rgb finalize -p <PSBT>` |
+| 5 | Recipient | After the transaction confirms, `rgb accept <CONSIGNMENT>` (`-f` accepts before confirmation) |
 
-```yaml
-schema_rules:
-  Transfer:
-    inputs:
-      - assetOwner: Amount
-    outputs:
-      - assetOwner: Amount
-    validation:
-      - sum(inputs.assetOwner) == sum(outputs.assetOwner)
-      - all(outputs.assetOwner > 0)
+```bash line=B
+rgb -d data1 -w rcpt1 invoice --amount 100 "$contract_id"
+rgb -d data0 -w issuer transfer "$invoice" transfer.rgb transfer.psbt
+rgb -d data1 -w rcpt1 validate transfer.rgb
+bp-hot sign -N transfer.psbt wallets/0.derive
+rgb -d data0 -w issuer finalize -p transfer.psbt transfer.tx
+rgb -d data1 -w rcpt1 accept transfer.rgb
 ```
 
-*Schema validation to be expanded*
-
-### Custom Validation
-
-Schemas can define arbitrary validation logic:
-
-```typescript
-// In schema definition
-validation_script: |
-  // Check transfer limits
-  if (sum(outputs) > MAX_TRANSFER) {
-    require(has_admin_permission);
-  }
-
-  // Check recipient whitelist
-  for (output in outputs) {
-    require(is_whitelisted(output.owner));
-  }
-
-  // Time-based restrictions
-  if (current_time < unlock_time) {
-    reject("Tokens still locked");
-  }
-```
-
-*Custom validation to be expanded*
-
-## Creating Transitions
-
-### Using RGB CLI (v0.12.0-rc.3)
-
-State transitions are created through the invoice/pay workflow:
-
-```bash
-# Step 1: Recipient generates invoice
-rgb invoice --wallet recipient-wallet \
-  <CONTRACT_ID> \
-  1000
-
-# Step 2: Sender pays invoice (creates transition + PSBT)
-rgb pay --wallet sender-wallet \
-  <INVOICE> \
-  transfer.consignment \
-  transfer.psbt
-
-# Step 3: Sender signs PSBT (using Bitcoin wallet)
-# ... sign PSBT with Bitcoin signing tool ...
-
-# Step 4: Sender completes the operation
-rgb complete --wallet sender-wallet \
-  transfer.bundle \
-  signed.psbt
-
-# Step 5: Sender shares consignment with recipient
-
-# Step 6: Recipient validates and accepts the transition
-rgb accept --wallet recipient-wallet \
-  transfer.consignment
-
-# Step 7: Sender finalizes and broadcasts Bitcoin transaction
-rgb finalize --wallet sender-wallet \
-  --broadcast \
-  signed.psbt
-```
-
-The transition is created automatically as part of the `pay` command, which:
-- Selects appropriate inputs
-- Constructs state transition
-- Creates Bitcoin PSBT
-- Generates consignment with validation proofs
-
-### Using RGB.js SDK
-
-```typescript
-import { RgbWallet, StateTransition } from '@rgbjs/core';
-
-const wallet = new RgbWallet(config);
-
-// Step 1: Build transition
-const transition = await wallet.buildTransition({
-  contractId: contractId,
-  transitionType: 'Transfer',
-
-  // Inputs (what we're spending)
-  inputs: await wallet.selectInputs({
-    contractId: contractId,
-    amount: 1000n
-  }),
-
-  // Outputs (where it's going)
-  outputs: [
-    {
-      recipient: recipientInvoice,
-      amount: 1000n
-    }
-  ]
-});
-
-// Step 2: Validate
-const validationResult = await transition.validate();
-if (!validationResult.valid) {
-  throw new Error('Invalid transition: ' + validationResult.errors);
-}
-
-// Step 3: Sign
-await transition.sign(privateKey);
-
-// Step 4: Anchor to Bitcoin
-const bitcoinTx = await transition.createAnchorTx();
-await wallet.broadcastTx(bitcoinTx);
-
-// Step 5: Finalize
-await transition.finalize();
-```
-
-*SDK implementation to be expanded*
-
-## State Management
-
-### Global State Updates
-
-Tracking contract-wide state:
-
-```typescript
-interface GlobalState {
-  // Immutable fields (set at genesis)
-  readonly ticker: string;
-  readonly precision: number;
-
-  // Mutable fields
-  total_supply: bigint;
-  total_burned: bigint;
-  last_update: number;
-}
-
-// Update in transition
-const transition = await contract.updateGlobals({
-  total_supply: newSupply,
-  last_update: Date.now()
-});
-```
-
-*Global state management to be expanded*
-
-### Owned State Tracking
-
-State attached to specific UTXOs:
-
-```typescript
-interface OwnedState {
-  seal: Seal;           // Bitcoin UTXO
-  amount: bigint;       // Fungible amount
-  data?: AttachmentId;  // NFT data
-  rights?: Right[];     // Special permissions
-}
-
-// Query owned state
-const myState = await wallet.getOwnedState(contractId);
-console.log('My balance:', myState.reduce((sum, s) => sum + s.amount, 0n));
-```
-
-*Owned state management to be expanded*
-
-### State History
-
-Complete state evolution over time:
-
-```typescript
-const history = await contract.getStateHistory();
-
-history.forEach(snapshot => {
-  console.log(`Block ${snapshot.height}:`);
-  console.log(`  Total Supply: ${snapshot.global.total_supply}`);
-  console.log(`  Holders: ${snapshot.owned_state.length}`);
-});
-```
-
-*State history to be expanded*
-
-## Advanced Patterns
-
-### Atomic Multi-Transitions
-
-Multiple contracts in single Bitcoin transaction:
-
-```typescript
-const atomicTransitions = await wallet.createAtomicBatch([
-  {
-    contractId: contract1,
-    type: 'Transfer',
-    outputs: [{ seal: seal1, amount: 100n }]
-  },
-  {
-    contractId: contract2,
-    type: 'Transfer',
-    outputs: [{ seal: seal2, amount: 200n }]
-  }
-]);
-
-// All succeed or all fail together
-await atomicTransitions.execute();
-```
-
-*Atomic operations to be expanded*
-
-### Conditional Transitions
-
-Transitions with external requirements:
-
-```typescript
-const conditional = await contract.createTransition({
-  type: 'ConditionalTransfer',
-  inputs: [{ seal: mySeal, amount: 1000n }],
-  outputs: [{ seal: recipientSeal, amount: 1000n }],
-
-  conditions: {
-    // Require Bitcoin block height
-    min_height: 850000,
-
-    // Require oracle signature
-    oracle_data: {
-      price_feed: 'BTC/USD',
-      min_price: 50000,
-      oracle_pubkey: oraclePubkey
-    },
-
-    // Require time lock
-    unlock_time: future_timestamp
-  }
-});
-```
-
-*Conditional transitions to be expanded*
-
-### State Aggregation
-
-Combining multiple small states:
-
-```typescript
-// Consolidate dust amounts
-const consolidate = await wallet.consolidateState({
-  contractId: contractId,
-  minAmount: 100n,  // Only consolidate amounts > 100
-  targetOutputs: 1  // Combine into single UTXO
-});
-
-// Before: [50, 75, 25, 100, 30]
-// After:  [280]
-```
-
-*State aggregation to be expanded*
-
-## Validation Process
-
-### Client-Side Validation
-
-Each party validates transitions independently:
-
-```typescript
-class TransitionValidator {
-  async validate(transition: Transition): Promise<ValidationResult> {
-    // 1. Schema validation
-    await this.validateSchema(transition);
-
-    // 2. Input validation
-    await this.validateInputs(transition.inputs);
-
-    // 3. State conservation
-    await this.validateConservation(transition);
-
-    // 4. Custom rules
-    await this.validateCustomRules(transition);
-
-    // 5. Signature verification
-    await this.validateSignatures(transition);
-
-    // 6. Bitcoin anchor
-    await this.validateAnchor(transition);
-
-    return { valid: true };
-  }
+Each command also needs `-n regtest --electrum=localhost:50001` or your own indexer. The full walkthrough is in [Quick Start](/getting-started/quick-start), and every flag is in the [v0.11 CLI reference](/technical-reference/cli-v011#transfer). In an app, rgb-lib's `send` and `refresh` do all of this, and move the consignment through an RGB proxy server. See [Wallet integration](../development/wallet-integration.md).
+
+</TabItem>
+<TabItem value="a" label="v0.12 (rgb-wallet)">
+
+## Line A
+
+In v0.12 a transition is an `Operation` ([`ultrasonic` 0.12.0 `src/operation.rs`](https://github.com/AluVM/ultrasonic/blob/v0.12.0/src/operation.rs)):
+
+```rust
+// ultrasonic 0.12.0
+pub struct Operation {
+    pub version: ReservedBytes<1>,
+    pub contract_id: ContractId,
+    pub call_id: CallId,                       // which codex method is called
+    pub nonce: fe256,
+    pub witness: StateValue,                   // operation-wide witness data
+    pub destructible_in: SmallVec<Input>,      // owned state being consumed (seals closed)
+    pub immutable_in: SmallVec<CellAddr>,      // global state being read
+    pub destructible_out: SmallVec<StateCell>, // new owned state
+    pub immutable_out: SmallVec<StateData>,    // new global state
 }
 ```
 
-*Validation workflow to be expanded*
+`rgb-core` 0.12 removed transition bundles, anchors, valencies and state extensions from consensus ([CHANGELOG](https://github.com/RGB-WG/rgb-core/blob/master/CHANGELOG.md)). When an operation closes seals, `rgb-core` checks that its witness transaction closes them with a commitment to the operation (`src/verify.rs`). The wallet groups the operations for one transaction in a `PrefabBundle` (`rgb-std` `src/popls/bp.rs`). Its documentation says it "should cover all contracts assigning state to the witness transaction previous outputs".
 
-### Proof Generation
+### CLI flow
 
-Creating cryptographic proofs:
+| Step | Who | Command |
+|---|---|---|
+| 1 | Recipient | `rgb invoice -w bob DemoToken 10` |
+| 2 | Sender | `rgb pay -w alice <INVOICE> transfer.rgb transfer.psbt` writes the consignment and an unsigned PSBT |
+| 3 | Sender | Sign the PSBT with the wallet that holds the keys (`rgb` doesn't sign) |
+| 4 | Recipient | `rgb accept -w bob transfer.rgb` |
+| 5 | Sender | `rgb finalize -w alice --broadcast --esplora transfer.psbt` |
 
-```typescript
-const proof = await transition.generateProof({
-  include: {
-    schema_compliance: true,
-    amount_conservation: true,
-    signature_validity: true,
-    merkle_path: true
-  }
-});
-
-// Proof can be verified independently
-const verified = await ProofVerifier.verify(proof);
+```bash line=A
+rgb invoice -w bob --nonce 0 DemoToken 10
+rgb pay -w alice "$INVOICE" transfer.rgb transfer.psbt
+rgb accept -w bob transfer.rgb
+rgb finalize -w alice --broadcast --esplora transfer.psbt
 ```
 
-*Proof generation to be expanded*
+`pay` already completes the PSBT. Don't run `rgb complete` on it: `complete` is for bundles made with `rgb exec`. This is the flow of [`examples/demo.sh`](https://github.com/RGB-WG/rgb/blob/v0.12.0-rc.3/examples/demo.sh) plus signing and broadcast. All flags are in the [v0.12 CLI reference](/technical-reference/cli#pay). It runs on test networks only.
 
-## Anchoring to Bitcoin
-
-### Creating Anchor Transaction
-
-```typescript
-const anchorTx = await transition.createAnchorTransaction({
-  feeRate: 5,  // sats/vbyte
-  changeAddress: myBitcoinAddress,
-
-  // Optional: Anchor multiple transitions
-  additionalTransitions: [transition2, transition3]
-});
-
-// Broadcast to Bitcoin network
-const txid = await bitcoinClient.sendRawTransaction(anchorTx);
-```
-
-*Anchoring process to be expanded*
-
-### Commitment Structure
-
-RGB commitment in OP_RETURN:
-
-```
-OP_RETURN
-  <protocol_tag>      # 'rgb1'
-  <commitment>        # Hash(transition_data)
-  <extra_proof>       # Optional: Multi-protocol proof
-```
-
-*Commitment format to be expanded*
-
-### Confirmation Handling
-
-```typescript
-// Wait for confirmations
-await transition.waitForConfirmation({
-  required: 6,
-  timeout: 3600000  // 1 hour
-});
-
-// Handle reorganizations
-transition.on('reorg', async (event) => {
-  console.warn('Reorg detected at height', event.oldHeight);
-  await transition.reanchor();
-});
-```
-
-*Confirmation management to be expanded*
-
-## Error Handling
-
-### Common Validation Errors
-
-```typescript
-try {
-  await transition.validate();
-} catch (error) {
-  if (error instanceof AmountConservationError) {
-    console.error('Inputs and outputs don\'t match');
-  } else if (error instanceof SchemaValidationError) {
-    console.error('Transition violates schema rules');
-  } else if (error instanceof InsufficientRightsError) {
-    console.error('Missing required permissions');
-  }
-}
-```
-
-*Error handling to be expanded*
-
-### Recovery Strategies
-
-```typescript
-// Retry with different parameters
-async function transferWithRetry(params) {
-  try {
-    return await createTransfer(params);
-  } catch (error) {
-    if (error instanceof InsufficientBalanceError) {
-      // Reduce amount
-      params.amount = params.amount * 0.9n;
-      return transferWithRetry(params);
-    } else if (error instanceof FeeEstimationError) {
-      // Increase fee
-      params.feeRate *= 1.5;
-      return transferWithRetry(params);
-    }
-    throw error;
-  }
-}
-```
-
-*Recovery patterns to be expanded*
-
-## Performance Optimization
-
-### Batch Processing
-
-```typescript
-// Process multiple transitions efficiently
-const transitions = await Promise.all(
-  invoices.map(invoice =>
-    wallet.createTransition({
-      recipient: invoice,
-      amount: 100n
-    })
-  )
-);
-
-await wallet.anchorBatch(transitions);
-```
-
-*Batch optimization to be expanded*
-
-### Caching Validation Results
-
-```typescript
-const validationCache = new Map();
-
-async function validateCached(transition) {
-  const key = transition.id;
-  if (validationCache.has(key)) {
-    return validationCache.get(key);
-  }
-
-  const result = await transition.validate();
-  validationCache.set(key, result);
-  return result;
-}
-```
-
-*Caching strategies to be expanded*
-
-## Related Documentation
-
-- [RGB Schemas](./schemas.md)
-- [Contractum Language](./contractum.md)
-- [Genesis Contracts](./genesis.md)
-- [RGB20 Transfers](../rgb20/transferring-assets.md)
-- [RGB21 Transfers](../rgb21/transferring-nfts.md)
-- [Client-Side Validation](../../core-concepts/client-side-validation.md)
-- [Consignments](../../technical-reference/consignments.md)
+</TabItem>
+</Tabs>
