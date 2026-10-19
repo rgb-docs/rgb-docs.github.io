@@ -44,10 +44,10 @@ Sources: `aluvm-0.12.0/src/core/core.rs`, `zk-aluvm-0.12.0/src/core/core.rs`, `u
 
 | Segment | Holds | Limit |
 |---|---|---|
-| ISAE | Names of the instruction-set extensions the code uses | 255 |
+| ISAE | Names of the instruction-set extensions the code uses | 255 (A), 64 (B) |
 | code | Bytecode | 65,535 bytes |
 | data | Read-only constants that instructions reference | 65,535 bytes |
-| libs | Ids of other libraries this one may call | 255 |
+| libs | Ids of other libraries this one may call | 255 (B also caps a whole program at 1,024 libraries) |
 
 A library is identified by a hash of all four segments, its `LibId`. An entry point is a `LibSite`: library id plus code offset. Changing any constant in the data segment therefore changes the `LibId`, and the schema or codex that references it.
 
