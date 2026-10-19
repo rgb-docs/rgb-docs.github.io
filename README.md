@@ -1,12 +1,15 @@
-# RGB Protocol Documentation
+# RGB Documentation
 
-Technical documentation for RGB Protocol v0.12 - Smart contracts for Bitcoin and Lightning Network.
+Community documentation for RGB, client-side-validated smart contracts on Bitcoin, hosted at [https://rgb-docs.github.io](https://rgb-docs.github.io).
 
-## About
+Since 2025 there have been two incompatible RGB implementations, and this site covers both. Every page says which one it applies to (see [Two RGB lines](https://rgb-docs.github.io/getting-started/two-rgbs)):
 
-This repository contains the official documentation for the RGB Protocol, hosted at [https://rgb-docs.github.io](https://rgb-docs.github.io).
+| | Pinned version | Upstream |
+|---|---|---|
+| **Line A: RGB v0.12** (LNP/BP Standards Association) | `rgb-wallet` 0.12.0-rc.3 | [RGB-WG](https://github.com/RGB-WG), [rgb.tech](https://rgb.tech) |
+| **Line B: RGB v0.11** (RGB Protocol Association) | `rgb-cmd` 0.11.1 | [rgb-protocol](https://github.com/rgb-protocol), [RGB-Tools](https://github.com/RGB-Tools), [rgb.info](https://rgb.info) |
 
-RGB is a suite of protocols for scalable and confidential smart contracts on Bitcoin and the Lightning Network, utilizing client-side validation and Bitcoin's UTXO model.
+This is not an official publication of either project.
 
 ## Development
 
@@ -49,8 +52,8 @@ The site automatically deploys to GitHub Pages when changes are pushed to the `m
 docs/
 ├── getting-started/      # Installation, quick start, what's new
 ├── core-concepts/        # Client-side validation, seals, AluVM, state management
-├── guides/               # RGB20, RGB21, contracts, Lightning, development
-└── technical-reference/  # API, CLI, interfaces, troubleshooting
+├── guides/               # contracts, fungible assets, UDA, CFA, Lightning (v0.11), development
+└── technical-reference/  # CLI (both lines), invoices, encodings, ecosystem, troubleshooting
 ```
 
 ## Contributing
@@ -65,17 +68,21 @@ Contributions are welcome! To contribute:
 
 ### Writing Guidelines
 
-- Use clear, concise language
-- Include code examples where appropriate
-- Add links to related documentation
-- Follow the existing structure and style
+- Every page has `rgb_line: A | B | both`, `verified_with` and `last_update` front matter.
+- Where the lines differ, use `<Tabs groupId="rgb-line">`. Mark shell fences with `line=A` or `line=B`.
+- Verify every command, crate and package against the pinned release, not against `main`. Run the snippet gate before you open a PR:
+
+  ```bash
+  node scripts/check-snippets.mjs
+  ```
+
+  It checks `rgb` commands against the pinned CLIs' help trees (`scripts/cli-help/`), and install targets and crates against `scripts/install-allowlist.json`.
+- Date and source every version, status or ecosystem claim. Don't use numbers you can't source.
 
 ## Resources
 
-- [RGB Protocol](https://rgb.tech)
-- [RGB GitHub](https://github.com/RGB-WG)
-- [rgbjs SDK](https://rgbjs.com)
-- [RGB FAQ](https://www.rgbfaq.com)
+- v0.12 line: [rgb.tech](https://rgb.tech), [RGB-WG on GitHub](https://github.com/RGB-WG)
+- v0.11 line: [rgb.info](https://rgb.info), [docs.rgb.info](https://docs.rgb.info), [rgb-protocol on GitHub](https://github.com/rgb-protocol), [RGB-Tools on GitHub](https://github.com/RGB-Tools)
 
 ## License
 
