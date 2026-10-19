@@ -1,613 +1,90 @@
 ---
 sidebar_position: 3
 title: Global State
-description: Understanding RGB's global state for coordinated operations
+description: Append-only contract data that nobody owns, such as ticker, name, supply and terms. What it is and how each RGB line stores it.
+rgb_line: both
+verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
+last_update:
+  date: 2026-10-19
 ---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
 # Global State
 
-Global state in RGB enables coordination and shared information across all instances of a contract. Unlike owned state which is attached to individual UTXOs, global state is visible and verifiable by all contract participants, enabling use cases like DAOs, voting systems, and supply management.
+:::info Applies to both RGB lines
+Both lines have append-only global state; the encoding differs. See [Two RGB lines](/getting-started/two-rgbs).
+:::
 
-## Overview
+**Global state** is contract data that is not bound to any Bitcoin output: an asset's ticker, name, precision, issued supply, legal terms, or a record of each later issuance. It is part of the contract, but nobody "owns" or spends it.
 
-Global state represents data that:
+Three things are often misunderstood:
 
-- Is shared across all contract participants
-- Requires coordination for updates
-- Is publicly verifiable (within contract scope)
-- Enables multi-party coordination
-- Maintains deterministic consensus
+- **It is not public.** Like everything in RGB, it is client-side data. It is visible only to people who receive a consignment containing it. For example, everyone who receives the asset also receives its genesis, and with it the ticker and supply. Nobody else does.
+- **It is append-only.** An operation can add new global values. It can never change or delete existing ones. There are no global variables to update.
+- **There is no voting or consensus behind it.** An operation that adds global state is valid if it follows the contract's rules, which are the schema (B) or the codex (A). In Line B it must also spend at least one owned input. Its ordering comes from the Bitcoin transactions that anchor it. Two parties can't disagree about it, because the seals they spend are single-use.
 
-This model is essential for applications requiring coordination, such as governance systems, auctions, and global supply caps.
+Typical pattern: the right to change something is an **owned** state (for example IFA's inflation allowance in Line B). Using that right emits new **global** data (the newly issued amount).
 
-## Global State Fundamentals
+<Tabs groupId="rgb-line">
+<TabItem value="b" label="v0.11 (rgb-cmd)">
 
-### Concept
-
-*To be expanded: What is global state*
-
-Global state is contract-level information that:
-
-1. **Shared visibility**: All participants can read
-2. **Coordinated updates**: Changes require consensus mechanism
-3. **Deterministic**: Same for all validators
-4. **Anchored**: Committed to Bitcoin for security
-5. **Verifiable**: Anyone can validate state
-
-```
-[Placeholder for global state diagram]
-
-┌─────────────────────────────────┐
-│      RGB Contract               │
-│                                 │
-│  ┌───────────────────────────┐ │
-│  │   Global State            │ │
-│  │                           │ │
-│  │   TotalSupply: 1000000    │ │
-│  │   ProposalCount: 5        │ │
-│  │   VotingPeriod: 7 days    │ │
-│  │                           │ │
-│  └───────────────────────────┘ │
-│           ▲                     │
-│           │                     │
-│  ┌────────┴──────────┐         │
-│  │  All participants  │         │
-│  │  can read & verify │         │
-│  └────────────────────┘         │
-└─────────────────────────────────┘
-```
-
-### Difference from Owned State
-
-*To be expanded: Global vs. owned state*
-
-| Aspect | Global State | Owned State |
-|--------|--------------|-------------|
-| Visibility | Public to all | Private to parties |
-| Updates | Coordinated | Individual |
-| Use case | Coordination | Transfers |
-| Privacy | Lower | Higher |
-| Scalability | Limited | Unlimited |
-
-## State Definition
-
-### Schema Definition
-
-*To be expanded: Defining global state in schemas*
-
-Global state is defined in contract schemas:
+Each global state type in the schema is declared as (`rgb-consensus` 0.11.1 `src/schema/state.rs`):
 
 ```rust
-// Placeholder for global state definition
-schema MyDAO {
-    // Global state variables
-    global TotalSupply: U64
-    global SupplyCap: U64
-    global ProposalCount: U64
-    global VotingPeriod: U32
-
-    // Owned state for individual holdings
-    owned VotingPower: U64
-
-    // Transitions can update global state
-    transition CreateProposal {
-        updates: [ProposalCount += 1]
-        validate: { /* validation logic */ }
-    }
+pub struct GlobalStateSchema {
+    pub sem_id: SemId,     // strict type of each value
+    pub max_items: u24,    // how many values one operation may add
 }
 ```
 
-### State Types
+`GlobalStateSchema::once(sem_id)` allows a single value. Genesis and transitions carry new values in their `globals` field.
 
-*To be expanded: Supported global state types*
+For example, the NIA schema (`rgb-schemas` 0.11.1 `src/nia.rs`) declares three global types, each `once`: `spec` (`RGBContract.AssetSpec`), `terms` (`RGBContract.ContractTerms`) and `issuedSupply` (`RGBContract.Amount`). This is what `rgb state` shows for them:
 
-Global state supports:
-
-- **Primitives**: Integers, booleans, bytes
-- **Collections**: Maps, arrays, sets
-- **Structured data**: Custom types via Strict Types
-- **Timestamps**: Block heights, time values
-- **References**: Links to other state
-
-## State Updates
-
-### Update Mechanisms
-
-*To be expanded: How global state changes*
-
-Global state updates require:
-
-1. **Valid transition**: Must follow schema rules
-2. **Consensus mechanism**: Depends on contract design
-3. **Bitcoin commitment**: Anchored on-chain
-4. **Validation**: All participants verify
-
-```
-[Placeholder for update flow diagram]
-
-1. Propose Update
-   ┌──────────────┐
-   │  Transition  │
-   │  Request     │
-   └──────────────┘
-         │
-         ▼
-2. Consensus (if required)
-   ┌──────────────┐
-   │  Voting/     │
-   │  Approval    │
-   └──────────────┘
-         │
-         ▼
-3. Bitcoin Commitment
-   ┌──────────────┐
-   │  Anchor to   │
-   │  Bitcoin TX  │
-   └──────────────┘
-         │
-         ▼
-4. State Update
-   ┌──────────────┐
-   │  New Global  │
-   │  State       │
-   └──────────────┘
+```text
+Global:
+  spec := ticker "DEMO", name "Demo asset", details ~, precision centi
+  terms := text "Demo terms", media ~
+  issuedSupply := 100000000
 ```
 
-### Consensus Models
+AluVM scripts can read global state: `ldg` reads the current operation's values and `ldc` reads the contract's accumulated values (`rgb-consensus` `src/vm/op_contract.rs`).
 
-*To be expanded: Different consensus approaches*
+</TabItem>
+<TabItem value="a" label="v0.12 (rgb-wallet)">
 
-Contracts can use various consensus models:
-
-- **Single authority**: Contract issuer controls updates
-- **Multi-sig**: M-of-N approvals required
-- **Token-weighted voting**: Voting power from owned state
-- **Time-locked**: Automatic updates after time period
-- **Threshold signatures**: Schnorr/FROST signatures
-
-### Atomic Updates
-
-*To be expanded: Coordinating multiple updates*
-
-Global state updates can be atomic across:
-- Multiple global variables
-- Global + owned state changes
-- Cross-contract updates (advanced)
-
-## State Visibility
-
-### Public Verifiability
-
-*To be expanded: How anyone can verify global state*
-
-Global state is verifiable through:
-
-1. **State commitments**: Merkle roots in Bitcoin
-2. **Transition history**: Complete change log
-3. **Validation proofs**: Cryptographic verification
-4. **Consensus proof**: Evidence of approval
-
-### State Queries
-
-*To be expanded: Reading global state*
-
-Applications query global state:
-
-```typescript
-// Placeholder for query API
-const totalSupply = await contract.getGlobalState('TotalSupply');
-const proposalCount = await contract.getGlobalState('ProposalCount');
-
-// Query at specific point in time
-const historicalSupply = await contract.getGlobalStateAt(
-  'TotalSupply',
-  blockHeight
-);
-```
-
-### State Synchronization
-
-*To be expanded: Keeping global state in sync*
-
-Participants synchronize global state:
-
-- Monitor Bitcoin commitments
-- Validate state transitions
-- Update local copies
-- Detect conflicts
-- Resolve discrepancies
-
-## Use Cases
-
-### Supply Management
-
-*To be expanded: Tracking total supply*
-
-Global supply cap enforcement:
+Global state is a set of **immutable memory cells**, `immutable_out` in an operation (`ultrasonic` 0.12.0 `src/operation.rs`, `src/state.rs`):
 
 ```rust
-// Placeholder schema
-schema CappedToken {
-    global TotalSupply: U64
-    global SupplyCap: U64
-    owned Balance: U64
-
-    transition Issue {
-        outputs: [Balance+]
-        updates: [TotalSupply += sum(outputs)]
-        validate: {
-            TotalSupply <= SupplyCap
-        }
-    }
-
-    transition Burn {
-        inputs: [Balance+]
-        updates: [TotalSupply -= sum(inputs)]
-    }
+pub struct StateData {
+    pub value: StateValue,      // 0 to 4 fe256 field elements; the VM can check these
+    pub raw: Option<RawData>,   // arbitrary bytes; committed to, but not readable by the VM
 }
 ```
 
-### DAO Governance
+Later operations can reference earlier immutable cells through `immutable_in: [CellAddr]`, where a `CellAddr` is an operation id plus an index. The codex's API gives the cells names and types. In the demo `RGB20-FNA` contract these are `ticker`, `name`, `precision` and `issued`.
 
-*To be expanded: Decentralized governance*
+The CLI shows the field-element part as "verifiable state" and the raw part as "unverifiable state":
 
-Proposal and voting system:
-
-```rust
-// Placeholder schema
-schema DAO {
-    global ProposalCount: U64
-    global Proposals: Map<U64, Proposal>
-    owned VotingPower: U64
-
-    transition CreateProposal {
-        updates: [
-            ProposalCount += 1,
-            Proposals[ProposalCount] = new_proposal
-        ]
-    }
-
-    transition Vote {
-        inputs: [VotingPower]
-        outputs: [VotingPower]  // Return voting power
-        updates: [
-            Proposals[proposal_id].votes += vote_amount
-        ]
-    }
-
-    transition ExecuteProposal {
-        validate: {
-            Proposals[proposal_id].passed() &&
-            Proposals[proposal_id].timelock_expired()
-        }
-        updates: [
-            // Execute proposal action
-        ]
-    }
-}
+```text
+Global: State name      	Conf. height	Verifiable state                	Unverifiable state              	RGB output
+	issued          	genesis     	10000                           	~                               	rtVWyitimkZyM4bDei2AcftvX0HKur8kfdf~0Ku2Ry8:3
+	ticker          	genesis     	"DEMO"                          	~                               	rtVWyitimkZyM4bDei2AcftvX0HKur8kfdf~0Ku2Ry8:0
 ```
 
-### Auctions and Markets
+`rgb-std` also derives **aggregated** state from global cells, e.g. total `supply`.
 
-*To be expanded: Price discovery and trading*
+</TabItem>
+</Tabs>
 
-Auction state management:
+## What global state can't do
 
-```rust
-// Placeholder schema
-schema Auction {
-    global CurrentBid: U64
-    global CurrentBidder: PublicKey
-    global AuctionEnd: Timestamp
-    owned BidToken: U64
+- **Read the clock or the chain.** Validation scripts in both lines are deterministic and have no access to time, block height or network data.
+- **Be updated in place.** To "change" a value, a contract appends a new one, and the contract's API decides which value counts (for example, the latest).
+- **Fork.** Every recipient who validates the same history gets the same global state.
 
-    transition PlaceBid {
-        inputs: [BidToken]
-        validate: {
-            input_amount > CurrentBid &&
-            now() < AuctionEnd
-        }
-        updates: [
-            CurrentBid = input_amount,
-            CurrentBidder = bidder_key
-        ]
-    }
+## Privacy trade-off
 
-    transition CloseAuction {
-        validate: { now() >= AuctionEnd }
-        outputs: [BidToken -> winner]
-    }
-}
-```
-
-### Registries and Namespaces
-
-*To be expanded: Decentralized registries*
-
-Name registration system:
-
-```rust
-// Placeholder schema
-schema NameRegistry {
-    global Names: Map<String, Owner>
-    global RegistrationCount: U64
-    owned RegistrationRight: Unit
-
-    transition Register {
-        inputs: [RegistrationRight]
-        updates: [
-            Names[name] = owner,
-            RegistrationCount += 1
-        ]
-        validate: {
-            !Names.contains(name)  // Name not taken
-        }
-    }
-}
-```
-
-## Privacy Considerations
-
-### Transparency Trade-offs
-
-*To be expanded: Balancing privacy and coordination*
-
-Global state reduces privacy:
-
-- **Visible to participants**: All can see global state
-- **Transaction graph**: Updates may reveal relationships
-- **Timing information**: Update times visible
-- **Value disclosure**: Amounts may be public
-
-### Privacy-Preserving Techniques
-
-*To be expanded: Enhancing global state privacy*
-
-Techniques to preserve privacy:
-
-- **Commitments**: Hide actual values, reveal later
-- **Zero-knowledge proofs**: Prove properties without revealing data
-- **Aggregated data**: Only show totals, not individuals
-- **Delayed disclosure**: Commit now, reveal later
-- **Encrypted state**: Decrypt only when needed
-
-Example with commitments:
-```rust
-// Placeholder
-global CommittedValue: Hash
-global RevealedValue: Option<U64>
-
-transition Commit {
-    updates: [CommittedValue = hash(value + nonce)]
-}
-
-transition Reveal {
-    updates: [RevealedValue = value]
-    validate: {
-        hash(value + nonce) == CommittedValue
-    }
-}
-```
-
-## Coordination Patterns
-
-### Voting Systems
-
-*To be expanded: Implementing voting*
-
-Token-weighted voting:
-
-```rust
-// Placeholder
-transition Vote {
-    inputs: [VotingPower]
-    outputs: [VotingPower]  // Non-destructive voting
-    updates: [
-        Proposal[id].for_votes += amount,
-    ]
-    validate: {
-        !already_voted(voter_id)
-    }
-}
-```
-
-### Multi-Signature Updates
-
-*To be expanded: M-of-N approvals*
-
-Require multiple approvals:
-
-```rust
-// Placeholder
-global PendingUpdate: Option<StateUpdate>
-global Approvals: Set<PublicKey>
-
-transition ProposeUpdate {
-    updates: [
-        PendingUpdate = proposed_change
-        Approvals = empty_set()
-    ]
-}
-
-transition ApproveUpdate {
-    updates: [
-        Approvals.insert(signer_key)
-    ]
-}
-
-transition ExecuteUpdate {
-    validate: {
-        Approvals.len() >= THRESHOLD
-    }
-    updates: [
-        apply(PendingUpdate),
-        PendingUpdate = None,
-        Approvals = empty_set()
-    ]
-}
-```
-
-### Time-Locked Operations
-
-*To be expanded: Scheduled state changes*
-
-Automatic execution after timelock:
-
-```rust
-// Placeholder
-global ScheduledUpdate: Option<Update>
-global ExecutionTime: Timestamp
-
-transition Schedule {
-    updates: [
-        ScheduledUpdate = update,
-        ExecutionTime = now() + delay
-    ]
-}
-
-transition Execute {
-    validate: {
-        now() >= ExecutionTime
-    }
-    updates: [
-        apply(ScheduledUpdate),
-        ScheduledUpdate = None
-    ]
-}
-```
-
-## Scalability Considerations
-
-### State Size Limits
-
-*To be expanded: Managing global state size*
-
-Global state should remain bounded:
-
-- **Pruning old data**: Remove obsolete information
-- **Pagination**: Split large collections
-- **Archival**: Move historical data off-chain
-- **Compression**: Efficient encoding
-
-### Update Frequency
-
-*To be expanded: Rate limiting updates*
-
-High update frequency challenges:
-
-- Bitcoin transaction costs
-- Coordination overhead
-- State synchronization
-- Validation complexity
-
-**Solutions**:
-- Batch updates
-- Off-chain coordination with periodic anchoring
-- Layer 2 state channels
-- Optimistic updates with dispute resolution
-
-## Validation and Consistency
-
-### State Validation
-
-*To be expanded: Validating global state transitions*
-
-Validators check:
-
-1. Transition follows schema rules
-2. Consensus requirements met
-3. State invariants maintained
-4. Bitcoin commitment valid
-5. No conflicts with other updates
-
-### Conflict Resolution
-
-*To be expanded: Handling conflicting updates*
-
-When multiple updates conflict:
-
-- **First-seen rule**: First valid update wins
-- **Bitcoin ordering**: Use Bitcoin block order
-- **Explicit priority**: Schema defines precedence
-- **Merger**: Combine compatible updates
-
-### State Forks
-
-*To be expanded: Preventing and handling forks*
-
-Global state can fork if:
-- Different validators see different updates first
-- Network partition occurs
-- Conflicting consensus decisions
-
-**Prevention**:
-- Clear ordering rules
-- Bitcoin anchoring for finality
-- Waiting for confirmations
-- Explicit conflict resolution
-
-## Performance Optimization
-
-### Caching Strategies
-
-*To be expanded: Efficient state access*
-
-- Cache current global state locally
-- Incremental updates
-- Lazy loading of historical state
-- Indexed queries
-
-### Validation Optimization
-
-*To be expanded: Fast validation*
-
-- Parallel validation of independent transitions
-- Merkle proof verification
-- Cached intermediate results
-- Optimized state serialization
-
-## Testing Global State
-
-### Unit Tests
-
-*To be expanded: Testing state transitions*
-
-```rust
-// Placeholder test
-#[test]
-fn test_supply_cap_enforcement() {
-    let mut contract = Contract::new();
-    contract.global.insert("SupplyCap", 1000000);
-    contract.global.insert("TotalSupply", 900000);
-
-    let issue = Issue { amount: 150000 };
-
-    assert!(issue.validate(&contract).is_err());
-    // Exceeds supply cap
-}
-```
-
-### Integration Tests
-
-*To be expanded: End-to-end testing*
-
-Test complete workflows:
-- Proposal creation and voting
-- Multi-party coordination
-- Timelock execution
-- Conflict resolution
-
-## Related Documentation
-
-- [Unified State Model](./unified-state.md) - Overall state architecture
-- [Owned State](./owned-state.md) - Private UTXO-attached state
-- [State Transitions](../../guides/contracts/state-transitions.md) - Creating transitions
-- [Schemas](../../guides/contracts/schemas.md) - Schema design guide
-
-## References
-
-*Coming soon: Global state coordination research and specifications*
-
----
-
-**Status**: Draft outline - To be expanded with detailed coordination patterns and implementation examples.
+Global data reaches every future holder of the contract's state. Don't put anything in it that later recipients shouldn't see. Per-transfer data that doesn't need to be kept belongs elsewhere: in Line B's operation `metadata`, or in an owned state value.
