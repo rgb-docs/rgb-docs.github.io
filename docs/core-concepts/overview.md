@@ -52,7 +52,7 @@ Nothing on chain says "RGB", shows amounts or names the contract. An observer se
 | Tapret leaf prefix | 29 × `OP_RESERVED` (0x50) | 29 × `OP_NOP` (0x61) |
 | Opret, MPC | Byte-identical in both | Byte-identical in both |
 | MPC leaf message | Transition `BundleId` | Multi-message bundle (input → operation) |
-| Lightning | [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) (alpha) | None |
+| Lightning | [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) (alpha) | None from RGB-WG; Bitlight Labs has its own stack (unchecked) |
 | Networks | Mainnet, testnet, signet, regtest | Testnet, signet, regtest; the CLI refuses mainnet |
 
 Shared by both: no confidential amounts (Pedersen commitments were removed), no state extensions or valencies, and no zero-knowledge proofs of history yet.

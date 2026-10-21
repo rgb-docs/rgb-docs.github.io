@@ -9,7 +9,11 @@ last_update:
 
 # Ecosystem
 
-Checked on 2026-10-21 against each project's own pages, GitHub and the npm and crates.io registries. Projects change fast, so check a project's own site before you rely on it. See [Two RGB lines](../getting-started/two-rgbs.md) for what Line A and Line B are.
+:::info Applies to both RGB lines
+Projects are grouped by the line they build on. See [Two RGB lines](/getting-started/two-rgbs).
+:::
+
+Checked on 2026-10-21 against each project's own pages, GitHub and the npm and crates.io registries. Projects change fast, so check a project's own site before you rely on it.
 
 ## Line B: v0.11 (RGB Protocol Association)
 
@@ -20,7 +24,7 @@ Checked on 2026-10-21 against each project's own pages, GitHub and the npm and c
 | [rgb-sandbox](https://github.com/rgb-protocol/rgb-sandbox) | Docker regtest demo of `rgb-cmd` | The quickest way to try Line B. |
 | [Iris Wallet](https://github.com/RGB-Tools/iris-wallet-android) | Android wallet built on rgb-lib | On mainnet since July 2025. |
 | [KaleidoSwap](https://github.com/kaleidoswap) | Lightning DEX on RGB Lightning Node | First RGB asset swap on Lightning mainnet (Sept 2025). Desktop app [v0.6.0](https://github.com/kaleidoswap/desktop-app/releases/tag/v0.6.0) (2026-10-14) bundles its own RLN fork, pinned to 0.10.0; [swap-sdk](https://github.com/kaleidoswap/swap-sdk/releases) v0.12.0 (2026-10-20). Publishes the draft [SSPS](https://github.com/kaleidoswap/ssps) swap spec (Draft 2, 2026-09-29; "not a finalized standard or bLIP"). |
-| [Utexo](https://github.com/UTEXO-Protocol) | RGB infrastructure; Tether WDK modules | `@utexo/rgb-sdk-core` / `-web` / `-rn`, `@utexo/rgb-lib-wasm`, `@utexo/wdk-rgb-lightning` on npm, all beta. Also [`@utexo/webrgb`](https://www.npmjs.com/package/@utexo/webrgb) (a `window.rgb` provider for dApps, 0.1.3, 2026-10-13) and an RLN fork with BFA Lightning channels ([PR #205](https://github.com/UTEXO-Protocol/rgb-lightning-node/pull/205), merged 2026-10-13). `@utexo/wdk-rgb-lightning` is at 0.2.0-beta.5 (2026-10-20). (The older `@utexo/rgb-sdk` repo is archived.) |
+| [Utexo](https://github.com/UTEXO-Protocol) | RGB infrastructure; Tether WDK modules | `@utexo/rgb-sdk-core` / `-web` / `-rn`, `@utexo/rgb-lib-wasm`, `@utexo/wdk-rgb-lightning` on npm, all beta. Also [`@utexo/webrgb`](https://www.npmjs.com/package/@utexo/webrgb) (0.1.3, 2026-10-13: TypeScript declarations, a mock wallet and a conformance suite for the `window.rgb` provider that wallets such as KaleidoSwap's browser extension inject) and an RLN fork with BFA Lightning channels ([PR #205](https://github.com/UTEXO-Protocol/rgb-lightning-node/pull/205), merged 2026-10-13). `@utexo/wdk-rgb-lightning` is at 0.2.0-beta.5 (2026-10-20). (The older `@utexo/rgb-sdk` repo is archived.) |
 | BitMask (DIBA), LNFI, Bitcoin Tribe, Bihelix | Wallets and services | Listed as members on [rgbprotocol.org](https://rgbprotocol.org). |
 | Tether USD₮ | Stablecoin | Announced 2025-08-28. [CoinDesk](https://www.coindesk.com/tech/2026/09/29/tether-s-usdt-is-coming-home-to-bitcoin-this-month-after-more-than-a-decade) (2026-10-02) reports that Utexo has a Tether commercial licence and will start issuing in October 2026. **Not confirmed live** as of 2026-10-21. Utexo's docs describe it as a BFA asset minted against USDT0 locked on Arbitrum, and burned to release USDT0 ([Utexo Mint](https://github.com/UTEXO-Protocol/docs/blob/main/product-suite/mint.mdx); the integration guide uses staging endpoints and signet). |
 
