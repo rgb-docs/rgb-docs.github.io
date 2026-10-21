@@ -59,7 +59,7 @@ The ports are bound to `127.0.0.1` here. Don't publish regtest RPC or indexer po
 
 ### Ready-made environments
 
-- **rgb-sandbox** runs the CLI flow end to end (bitcoind, electrs or esplora, `rgb-cmd` and `bp-wallet`). Its README says it is based on 0.11.1 RC 6. See [Quick Start](/getting-started/quick-start) for the manual steps.
+- **rgb-sandbox** runs the CLI flow end to end (bitcoind, electrs or esplora, `rgb-cmd` and `bp-wallet`). Its README says it is based on 0.11.1 RC 6, but `demo.sh` installs `rgb-cmd` 0.11.1-rc.7 (checked 2026-10-21), not the 0.11.1 final this site is pinned to. See [Quick Start](/getting-started/quick-start) for the manual steps.
 
   ```bash line=B
   git clone https://github.com/rgb-protocol/rgb-sandbox --recurse-submodules --shallow-submodules
