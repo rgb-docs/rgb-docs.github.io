@@ -110,7 +110,7 @@ export default function Playground(): ReactNode {
               marginBottom: '2rem',
               opacity: 0.9
             }}>
-              Explore RGB implementations and start building on testnet
+              Install a pinned CLI for either RGB line and try it on regtest
             </p>
             <a
               href="/getting-started/installation"
@@ -317,45 +317,6 @@ function ModuleTab({active, onClick, emoji, label}: {
       <span>{emoji}</span>
       <span>{label}</span>
     </button>
-  );
-}
-
-function ComingSoonCard({emoji, title, description}: {
-  emoji: string;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div style={{
-      background: 'white',
-      borderRadius: '12px',
-      border: '1px solid #e0e0e0',
-      padding: '1.5rem',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      <div style={{
-        position: 'absolute',
-        top: '0.5rem',
-        right: '0.5rem',
-        background: '#fbbf24',
-        color: '#78350f',
-        fontSize: '0.75rem',
-        fontWeight: '600',
-        padding: '0.25rem 0.75rem',
-        borderRadius: '12px'
-      }}>
-        COMING SOON
-      </div>
-      <div style={{fontSize: '2.5rem', marginBottom: '0.75rem'}}>{emoji}</div>
-      <h3 style={{fontSize: '1.2rem', marginBottom: '0.5rem', color: '#1a1a1a'}}>
-        {title}
-      </h3>
-      <p style={{color: '#666', lineHeight: '1.5', margin: 0}}>
-        {description}
-      </p>
-    </div>
   );
 }
 
