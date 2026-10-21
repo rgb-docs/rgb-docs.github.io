@@ -5,7 +5,7 @@ description: Every command, flag and environment variable of the rgb command fro
 rgb_line: B
 verified_with: rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 # CLI reference (v0.11)
@@ -31,8 +31,8 @@ All of these options can be given before or after the command.
 
 | Option | Env | Default | Meaning |
 |---|---|---|---|
-| `-d, --data-dir <DIR>` | `LNPBP_DATA_DIR` | `~/.lnp-bp` | Data directory |
-| `-n, --network <NET>` | `LNPBP_NETWORK` | `testnet3` | Network (`bitcoin`, `testnet3`, `testnet4`, `signet`, `regtest`) |
+| `-d, --data-dir <DIR>` | `LNPBP_DATA_DIR` | `~/.lnp-bp` (Linux); `~/Library/Application Support/LNP-BP Suite` (macOS) | Data directory |
+| `-n, --network <NET>` | `LNPBP_NETWORK` | `testnet3` | Network: `bitcoin` or `mainnet`, `testnet` or `testnet3`, `testnet4`, `signet`, `regtest`. The default is testnet3, not testnet4 |
 | `--no-network-prefix` | — | off | Don't add the network subdirectory to `--data-dir` |
 | `-w, --wallet <NAME>` | — | the default wallet | Use a named wallet |
 | `-W, --wallet-path <PATH>` | — | — | Use the wallet at this path |
@@ -47,8 +47,9 @@ All of these options can be given before or after the command.
 | `-V, --version` | — | — | Print the version |
 
 - **The `=` is required** with the indexer options: write `--electrum=localhost:50001`. A bare `--electrum` falls back to the placeholder `example.com:50001`, so always give a URL.
+- **`{network}` is only filled in for wallet sync.** The bare `--esplora` and `--mempool` defaults contain `{network}`. `bp-wallet` replaces it when it syncs the wallet (`src/cli/args.rs`), but the RGB resolver used by `transfer`, `validate`, `accept` and consignment `import` passes the URL on unchanged (`rgb-api` 0.11.1 `cli/src/args.rs`, `fn resolver`). Give a full URL with the network spelled out.
 - **The Electrum environment variable is misspelt** `ELECRTUM_SERVER` (`bp-wallet` 0.11.1-alpha.2, `src/cli/opts.rs:59`).
-- Any command that syncs (`--sync`, `--wpkh`, `--tapret-key-only`, or `create`) needs exactly one indexer option. Otherwise it fails with `Error: no blockchain indexer specified; use either --esplora --mempool or --electrum argument`.
+- Any command that syncs (`--sync`, `--wpkh`, `--tapret-key-only`, or `create`) needs exactly one indexer option. Otherwise it fails with `Error: no blockchain indexer specified; use either --esplora --mempool or --electrum argument`. Commands that resolve witness transactions (`validate`, `accept`, importing a contract consignment) need one too, and fail with `Error: resolver error:  - error: no transaction resolver is specified; use either --esplora --mempool or --electrum argument`.
 - Data goes in `<data-dir>/<network>`, for example `data0/regtest`, which contains `stash.dat`, `state.dat`, `index.dat` and `rgb.toml`. Named wallets are subdirectories of the same directory. There is no `init` command: the directory is created on first use. Unless `rgb.toml` there holds a valid config, each command first prints `Unable to find or parse config file; using config defaults`. This is harmless.
 
 ## Commands
@@ -151,7 +152,7 @@ rgb:7Wf1Rne9-BQWvPlL-P50XBTB-D1sZQlF-Wn7eRYV-3_wZZg8	BitcoinRegtest	2026-10-19	r
 
 ### import {#import}
 
-`rgb import [-a] <FILE>`. Imports one file: a kit (schemas, script libraries and types, for example `NonInflatableAsset.rgb` from [rgb-schemas](https://github.com/rgb-protocol/rgb-schemas)) or a contract consignment. Use `-a` for ASCII-armoured input.
+`rgb import [-a] <FILE>`. Imports one file: a kit (schemas, script libraries and types, for example `NonInflatableAsset.rgb` from [rgb-schemas](https://github.com/rgb-protocol/rgb-schemas)) or a contract consignment. Use `-a` for ASCII-armoured input. A kit imports offline. A contract consignment is validated first, so it needs an indexer.
 
 ```bash
 rgb -n regtest -d data0 import NonInflatableAsset.rgb
@@ -177,7 +178,27 @@ Kit is imported
 
 ### issue {#issue}
 
-`rgb issue <ISSUER> <CONTRACT_PATH>`. Issues a contract from a YAML file, where `<ISSUER>` is an identity string such as `ssi:issuer`. The file names the `schema`, its `globals` and its `assignments`. Each assignment has a `seal` (`txid:vout`) and an `amount`. Only fungible assignments can be issued this way. Void and structured assignments hit a `todo!()` in 0.11.1. See [rgb-sandbox `contracts/`](https://github.com/rgb-protocol/rgb-sandbox/tree/master/contracts) for templates.
+`rgb issue <ISSUER> <CONTRACT_PATH>`. Issues a contract from a YAML file, where `<ISSUER>` is an identity string such as `ssi:issuer`. The file names the `schema`, its `globals` and its `assignments`, each keyed by the schema's state name. Each assignment has one `seal` (`txid:vout`) and an `amount`. This NIA file issued offline with the pinned binary on 2026-10-21:
+
+```yaml
+schema: rgb:sch:RWhwUfTMpuP2Zfx1~j4nswCANGeJrYOqDcKelaMV4zU#remote-digital-pegasus
+globals:
+  spec:
+    ticker: DEMO
+    name: Demo Asset
+    details: ~
+    precision: 0
+  terms:
+    text: demo NIA asset
+    media: ~
+  issuedSupply: 1000
+assignments:
+  assetOwner:
+    seal: 02e107ddf4f42757f44fac43feb007606d8caf40616fa92dba62176995513e88:0
+    amount: 1000
+```
+
+If a required global is missing, `issue` fails with `Error: detected a failure that makes the consignment invalid`. Only fungible assignments can be issued this way. Void and structured assignments hit a `todo!()` in 0.11.1. See [rgb-sandbox `contracts/`](https://github.com/rgb-protocol/rgb-sandbox/tree/master/contracts) for templates.
 
 ```bash
 rgb -n regtest -d data0 issue "ssi:issuer" demo.yaml
@@ -204,8 +225,8 @@ Use `export` command to export the contract.
 
 `rgb invoice [--amount N] [--address-based] [--assignment-name NAME] [--token-index I [--token-fraction F]] <CONTRACT_ID>`
 
-- `--amount <N>`: the amount in the smallest unit.
-- `--address-based`: use an address-based (witness-output) invoice instead of a blinded UTXO.
+- `--amount <N>`: the amount in the smallest unit. Give exactly one of `--amount` or `--token-index`, or `invoice` fails with `only amount or token data should be provided`.
+- `--address-based`: use an address-based (witness-output) invoice instead of a blinded UTXO. Without it, the wallet needs an unspent output, or you get `blinded invoice requested but no suitable outpoint is available`.
 - `--assignment-name <NAME>`: the state to invoice. It is detected if you leave it out.
 - `--token-index` and `--token-fraction`: the token and fraction for NFT (UDA) transfers.
 
@@ -249,7 +270,7 @@ Give the consignment to the recipient, and let them `validate` it, before you si
 
 ### accept {#accept}
 
-`rgb accept [-f] <FILE>`. Validates the consignment and adds it to the stash, printing `Transfer accepted into the stash`. Use `-f, --force` to accept consignments whose terminal witness transaction isn't mined yet.
+`rgb accept [-f] <FILE>`. Validates the consignment and adds it to the stash, printing `Transfer accepted into the stash`. The help says `-f, --force` accepts consignments whose terminal witness transaction isn't mined yet, but 0.11.1 ignores the flag (`Command::Accept { force: _, .. }` in `cli/src/command.rs`, with a TODO).
 
 ### finalize {#finalize}
 

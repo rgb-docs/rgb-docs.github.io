@@ -5,7 +5,7 @@ description: Every command, flag, alias and environment variable of the rgb comm
 rgb_line: A
 verified_with: rgb-wallet 0.12.0-rc.3
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 # CLI reference (v0.12)
@@ -42,7 +42,7 @@ bitcoin.testnet/
 
 ### Wallet and indexer options
 
-Commands that use a wallet take `-w, --wallet <NAME>` (env `RGB_WALLET`). Without it, they use the wallet named `default`. `sync` and `fund` take the wallet as a positional argument instead.
+Commands that use a wallet take `-w, --wallet <NAME>` (env `RGB_WALLET`). Without it, they use the wallet named `default`, and if `<data-dir>/<network dir>/default.wallet` doesn't exist they panic with ``unable to load wallet from path `…/default.wallet` `` (exit 101). `sync` and `fund` take the wallet as a positional argument instead.
 
 Commands that can reach the chain also take these options:
 
@@ -158,7 +158,7 @@ A second import prints `already known, skipping`. Issuers are published in [pand
 
 ### contracts {#contracts}
 
-`rgb contracts [-i]`. Lists contracts. With `-i, --issuers`, it also lists issuers (Name, ID, Developer).
+`rgb contracts [-i]`. Prints each contract as a YAML block (id, name, issuer, timestamp, codex, consensus, testnet). With `-i, --issuers`, it first lists the issuers, with the columns Codex ID, Codex name, Standard (e.g. `RGB-20`) and Developer.
 
 ### issue {#issue}
 
@@ -181,7 +181,7 @@ A second import prints `already known, skipping`. Issuers are published in [pand
 
 - `-q, --quiet` exits 0 without printing an error if issuing fails.
 
-Each `seal:` in the file must be an outpoint (`txid:vout`) of the wallet.
+Each `seal:` in the file must be an outpoint (`txid:vout`). `issue` doesn't check that the wallet owns it, so take one from [`seals`](#seals): otherwise the issued state is assigned to an output the wallet can't spend, and `state -o` shows no owned state.
 
 ### purge {#purge}
 
@@ -218,7 +218,7 @@ rgb state -go -w alice
 - `--nonce <N>`: the nonce to derive the seal from.
 - `-a, --api` / `-m, --method` / `-s, --state`: the contract API, method and state name. If you leave them out, the contract's defaults are used.
 
-The wallet must already know the contract, or you get `unknown contract '<name>'`. Without `--wout`, it also needs an unspent output, or you get `Wallet has no unspent outputs; try fund first, or use -w flag to generate a witness output-based seal` (the message means `--wout`). Real output:
+Except with `--seal-only`, the wallet must already know the contract, or you get `unknown contract '<name>'`. Without `--wout`, it also needs an unspent output, or you get `Wallet has no unspent outputs; try fund first, or use -w flag to generate a witness output-based seal` (the message means `--wout`). Real output:
 
 ```bash
 rgb invoice -w alice --nonce 0 --seal-only DemoToken
@@ -238,7 +238,7 @@ The grammar is `contract:[tb@]<contract>/[<api>/][<method>/[<state>/]][<value>@]
 
 `rgb pay [-w WALLET] [-s STRATEGY] [--sats N] [--fee N] [-2] [-p] [-f] [--sync] [--electrum[=URL] | --esplora[=URL]] <INVOICE> <CONSIGNMENT> [PSBT]`
 
-Pays an invoice. It writes a consignment for the beneficiary and a ready-to-sign binary PSBT. If you leave out `PSBT`, the PSBT goes to `<CONSIGNMENT>.psbt`.
+Pays an invoice. It writes a consignment for the beneficiary and a ready-to-sign binary PSBT. The PSBT path always gets the extension `.psbt`: if you leave out `PSBT`, `pay … transfer.rgb` writes `transfer.psbt` (the code calls `with_extension("psbt")`, `cli/src/exec.rs`).
 
 | Option | Env | Default | Meaning |
 |---|---|---|---|
@@ -289,7 +289,7 @@ rgb consign DemoToken -t "$AUTH_TOKEN" transfer.rgb
 
 `rgb finalize [-w WALLET] [-b] [--sync] [--electrum[=URL] | --esplora[=URL]] <PSBT> [TX]`
 
-Finalizes the signed inputs and extracts the transaction. It saves the transaction to `TX` if given, prints it if neither `TX` nor `-b` is given, and broadcasts it with `-b, --broadcast`. It prints on stderr: `<n> of <m> inputs were finalized, transaction is ready for the extraction` and `Extracting signed transaction ... success`.
+Finalizes the signed inputs and extracts the transaction. It saves the transaction to `TX` if given, prints it if neither `TX` nor `-b` is given, and broadcasts it with `-b, --broadcast`. In rc.3 `--broadcast` only sends the transaction: the `runtime.finalize` call that [Payments.md](https://github.com/RGB-WG/rgb/blob/v0.12.0-rc.3/doc/Payments.md) step 8 describes is commented out (`cli/src/exec.rs`). It prints on stderr: `<n> of <m> inputs were finalized, transaction is ready for the extraction` and `Extracting signed transaction ... success`.
 
 ```bash
 rgb finalize -w alice --broadcast --esplora transfer.psbt
