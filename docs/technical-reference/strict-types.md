@@ -47,13 +47,7 @@ From `strict_encoding` 2.9.1 `src/traits.rs`, `src/embedded.rs` and `src/writer.
 
 ### Example
 
-This compiles and runs with `strict_encoding` 2.9.1 and `amplify` 4.9.0, the versions in the Line A lock file (checked 2026-10-21):
-
-```toml
-[dependencies]
-strict_encoding = "=2.9.1"
-amplify = "=4.9.0"
-```
+This compiles and runs with `strict_encoding` 2.9.1 and `amplify` 4.9.0 as the only dependencies, the versions in the Line A lock file (checked 2026-10-21):
 
 ```rust
 use amplify::confinement::{Confined, TinyString};
