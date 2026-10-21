@@ -48,7 +48,7 @@ Most terms are shared. Terms tagged **(v0.11)** exist only in Line B and terms t
 
 **Global state.** Contract-wide data that anyone holding the contract can read, such as the ticker or issued supply. See [Global state](/core-concepts/state/global-state).
 
-**IFA (v0.11).** Inflatable Fungible Asset, a schema with secondary issuance, burn and link. Its README says it is not production-ready. Line B 0.11.2 changes it so that IFA contracts issued with the old schema become invalid ([rgb.info, 2026-10-15](https://rgb.info/rgb-protocol-v0-11-2-rc1-update/)).
+**IFA (v0.11).** Inflatable Fungible Asset, a schema with secondary issuance, burn and link. Its README says it is not production-ready, and `rgb-lib` 0.3.0-beta.7 refuses it on mainnet (`Error::CannotUseIfaOnMainnet`). Line B 0.11.2 changes it so that IFA contracts issued with the old schema become invalid ([rgb.info, 2026-10-15](https://rgb.info/rgb-protocol-v0-11-2-rc1-update/)).
 
 **Indexer.** An Electrum, Esplora or Mempool server that the wallet asks for Bitcoin transactions. Neither CLI uses Bitcoin Core RPC. Validation asks the indexer whether each witness transaction is mined and trusts its answer, so use an indexer you trust. Line B 0.11.2-rc.1 adds optional SPV proofs to reduce this dependence ([rgb.info, 2026-10-15](https://rgb.info/rgb-protocol-v0-11-2-rc1-update/)).
 
