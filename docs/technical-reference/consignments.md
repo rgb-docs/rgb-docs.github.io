@@ -5,7 +5,7 @@ description: What an RGB consignment contains in v0.11 and v0.12, its file forma
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 import Tabs from '@theme/Tabs';
@@ -35,9 +35,9 @@ Both formats are **binary [strict encoding](./strict-types.md)**, not JSON. Neit
 
 | Field | What it holds |
 |---|---|
-| `version` | The container version, `v0` |
+| `version` | The container version, `v0` (`rgb inspect` prints `version: v0`) |
 | `transfer` | Whether it is a transfer (`true`) or a contract consignment |
-| `terminals` | The blinded seals (`utxob`) the transfer ends at, by bundle |
+| `terminals` | The concealed (secret) seals the transfer ends at, by bundle (`SmallOrdMap<BundleId, SecretSeals>`) |
 | `genesis` | The contract's genesis |
 | `bundles` | Each transition bundle with its witness: the Bitcoin transaction (`PubWitness`) and the anchor, i.e. the MPC proof and the tapret or opret proof |
 | `schema` | The contract's schema |
@@ -59,7 +59,7 @@ rgb armor transfer.rgb                              # print the ASCII-armoured f
 Commands are in the [CLI reference (v0.11)](./cli-v011.md#transfer).
 
 :::warning Coming next: consignment format v1
-Line B 0.11.2-rc.1 (2026-10-09) moves consignments from v0 to v1, and schemas are imported once instead of travelling with every consignment. 0.11.2 can still read v0 by converting it ([rgb.info, 2026-10-15](https://rgb.info/rgb-protocol-v0-11-2-rc1-update/)). This page is pinned to 0.11.1.
+Line B 0.11.2-rc.1 (2026-10-09, a release candidate) moves the container to `v1`. Schemas are imported once instead of travelling in each consignment ([rgb.info, 2026-10-15](https://rgb.info/rgb-protocol-v0-11-2-rc1-update/)), and consignments can carry per-witness SPV proofs ([rgb-ops#16](https://github.com/rgb-protocol/rgb-ops/issues/16), St333p, 2026-10-12). 0.11.2 reads v0 by converting it (the `legacy` feature). 0.11.1 can't read v1: it fails with ``unsupported value `1` for enum `ContainerVer` ``, and the maintainers say they won't emit v0 for peers that haven't upgraded ([rgb-ops#26](https://github.com/rgb-protocol/rgb-ops/issues/26), 2026-10-16). Sender and receiver will have to upgrade together. This page is pinned to 0.11.1.
 :::
 
 </TabItem>
@@ -77,7 +77,7 @@ The stream starts with a version byte (`0`) and the contract id, so a wallet can
 **File format:** a `binfile` container with the 8-byte magic `RGBCNSGN` and version `0` (`CONSIGN_MAGIC_NUMBER` and `CONSIGN_VERSION` in `src/contracts.rs`), then the strict-encoded stream. rc.3 has no ASCII-armoured form.
 
 ```bash line=A
-rgb pay -w alice <INVOICE> transfer.rgb          # payer: writes transfer.rgb and transfer.rgb.psbt
+rgb pay -w alice <INVOICE> transfer.rgb          # payer: writes transfer.rgb and transfer.psbt
 rgb accept -w bob transfer.rgb                    # receiver: validates and accepts
 rgb backup DemoToken demo.consignment             # a whole contract
 ```
@@ -93,6 +93,6 @@ The transfer is final as soon as the Bitcoin transaction is mined. If the transa
 
 ## Further reading
 
-- Line B: [Contract transfers](https://github.com/rgb-protocol/RGB-Documentation/blob/master/annexes/contract-transfers.md) in the official docs; `rgb-ops` on [docs.rs](https://docs.rs/rgb-ops/0.11.1)
+- Line B: [Contract transfers](https://github.com/rgb-protocol/RGB-Documentation/blob/master/annexes/contract-transfers.md) in the official docs; `rgb-ops` 0.11.1 [source](https://github.com/rgb-protocol/rgb-ops/tree/0.11.1) (docs.rs failed to build this version)
 - Line A: `rgb-std` on [docs.rs](https://docs.rs/rgb-std/0.12.0-rc.3)
 - [Client-side validation](/core-concepts/client-side-validation)

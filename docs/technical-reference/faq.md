@@ -5,13 +5,13 @@ description: Short answers to common RGB questions, per RGB line, with dated sta
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 # Frequently Asked Questions
 
 :::info Applies to both RGB lines
-Many answers differ between RGB v0.11 (Line B) and v0.12 (Line A). Status answers are dated 2026-10-19. See [Two RGB lines](/getting-started/two-rgbs).
+Many answers differ between RGB v0.11 (Line B) and v0.12 (Line A). Status answers are dated 2026-10-21. See [Two RGB lines](/getting-started/two-rgbs).
 :::
 
 ## Which RGB?
@@ -45,16 +45,16 @@ Line A is testnet-only. On Line B, wallets for real assets are built on `rgb-lib
 
 ### Does RGB work with Lightning?
 
-- **Line B:** the [RGB Lightning Node](/guides/lightning/overview) (RGB-Tools) supports RGB asset channels. It is alpha, with no tagged releases, and its maintainers list open safety issues such as a fixed fee rate and no anchor fee bumping ([rgb.info, 2026-06-23](https://rgb.info/rgb-lightning-roadmap/)). Don't put funds in it that you can't lose.
+- **Line B:** the [RGB Lightning Node](/guides/lightning/overview) (RGB-Tools) supports RGB asset channels. It is alpha, with no tagged releases, and its maintainers list open safety issues such as a fixed fee rate and no anchor fee bumping ([rgb.info, 2026-06-23](https://rgb.info/rgb-lightning-roadmap/)). Open pull requests (2026-10-08/09, unmerged on 2026-10-21) report and fix two more: receivers don't check the RGB amount against the invoice ([#180](https://github.com/RGB-Tools/rgb-lightning-node/pull/180)), and a routing node can be drained by an HTLC whose RGB amount doesn't match what it forwards ([#181](https://github.com/RGB-Tools/rgb-lightning-node/pull/181)). Don't put funds in it that you can't lose, and don't route RGB payments or run an LSP on it until those fixes land.
 - **Line A:** RGB-WG has released no Lightning node. Bitlight Labs builds its own v0.12 Lightning stack.
 
 ### Is USDT on RGB?
 
-Tether announced USD₮ on RGB (Line B) on 2025-08-28. As of 2026-10-19 it isn't confirmed live: reports from 2026-10-02 say Utexo will issue it "in October" under a Tether licence, on-chain first. "USDT on Lightning" through Taproot Assets is a different protocol. See [Ecosystem](./ecosystem.md).
+Tether announced USD₮ on RGB (Line B) on 2025-08-28. As of 2026-10-21 it isn't confirmed live. [CoinDesk reported on 2026-10-02](https://www.coindesk.com/tech/2026/09/29/tether-s-usdt-is-coming-home-to-bitcoin-this-month-after-more-than-a-decade) that Utexo holds a Tether commercial licence and plans to start issuing that month, on-chain first and Lightning later. Utexo's own documentation describes the token as minted on RGB against USDT0 locked in an Arbitrum bridge contract, as a BFA (Burnable Fungible Asset), with burns releasing USDT0 ([Utexo Mint](https://github.com/UTEXO-Protocol/docs/blob/main/product-suite/mint.mdx), updated 2026-10-16; its integration guide uses staging endpoints and signet). A 2025-08-12 "RGB bridge" demo by Tricorn (now part of Utexo) moved *wrapped* USDT and was not Tether issuance ([Bitcoin Magazine](https://bitcoinmagazine.com/news/first-rgb-bridge-brings-usdt-from-ethereum-to-bitcoin-via-lightning)). "USDT on Lightning" through Taproot Assets is a different protocol. See [Ecosystem](./ecosystem.md).
 
 ### Is it audited?
 
-Line B says its code was audited up to v0.11.0-beta.9 (November 2024), but we found no public report. We found no published audit of v0.12. Line B's bug bounty is suspended (rgbprotocol.org, read 2026-10-19).
+Line B says its code was audited up to v0.11.0-beta.9 (November 2024), but we found no public report. We found no published audit of v0.12. Line B's bug bounty is suspended (rgbprotocol.org, read 2026-10-21). rgb-lib and the RGB Lightning Node have a `SECURITY.md` (since 2026-09-16 and 2026-09-17): report vulnerabilities privately to `rgb.bugbounty@proton.me`.
 
 ## Building
 
