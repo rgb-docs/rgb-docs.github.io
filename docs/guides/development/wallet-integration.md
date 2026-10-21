@@ -5,7 +5,7 @@ description: What an RGB wallet must do on top of a Bitcoin wallet, and how to d
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 import Tabs from '@theme/Tabs';
@@ -67,13 +67,13 @@ Keep keys in the platform keychain (Keychain, Android Keystore, Secret Service) 
 
 ## Line B with rgb-lib
 
-[rgb-lib](https://github.com/RGB-Tools/rgb-lib) handles all five responsibilities. The same calls exist in Rust and in the Kotlin, Swift, Python and [Node.js](./rgbjs.md) bindings. Argument lists are in the [Rust guide](./rust-sdk.md).
+[rgb-lib](https://github.com/RGB-Tools/rgb-lib) handles all five responsibilities. The same calls exist in Rust and in the Kotlin, Swift and Python bindings. The [Node.js](./rgbjs.md) bindings lack the IFA calls. Argument lists are in the [Rust guide](./rust-sdk.md).
 
 | Step | Call | Notes |
 |---|---|---|
 | Open | `Wallet::new(WalletData, SinglesigKeys)`, `go_online(OnlineOptions)` | The data directory holds the SQLite database and the RGB stash. |
 | Prepare | `create_utxos(...)` | Creates colored UTXOs to hold allocations. `WalletData::max_allocations_per_utxo` caps how many go on one output. |
-| Receive | `blind_receive(...)` or `witness_receive(...)` | Blinded (`utxob:`) invoices hide which UTXO receives. Witness invoices pay to an address in the sender's transaction. Both take an expiry and the transport endpoints. |
+| Receive | `blind_receive(...)` or `witness_receive(...)` | Blinded (`utxob:`) invoices hide which UTXO receives. Witness invoices pay to an address in the sender's transaction. Both take an expiration (a UTC Unix timestamp, not a duration) and the transport endpoints. |
 | Send | `send(...)`, or `send_begin` + external signing + `send_end` | Selects inputs, adds transitions for every allocation on them, commits with opret, and posts the consignment to the proxy. |
 | Settle | `refresh(online, asset_id, filters, skip_sync)` on both sides | The recipient validates the consignment and ACKs or NACKs it through the proxy. The sender broadcasts after the ACK. Transfers settle after the requested confirmations. |
 | Back up | `backup(path, password)`, `backup_info()`; `restore_backup(path, password, target_dir)` | An encrypted archive of the whole wallet directory, RGB data included. |
@@ -96,7 +96,7 @@ Every time the wallet goes online, rgb-lib checks that its UTXO set hasn't chang
 | Send | `pay_invoice(&invoice, strategy, TxParams, giveaway)` returns the PSBT and a `Payment`; `contracts.consign_to_file(..)` writes the consignment | `rgb pay` |
 | Accept | `consume_from_file(..)` validates and imports the consignment | `rgb accept` |
 | Broadcast | `finalize(psbt, meta)` after signing | `rgb finalize --broadcast` |
-| Back up | Copy the data directory; per contract, `export_to_file` | `rgb backup` |
+| Back up | Copy the data directory; per contract, `export_to_file` | `rgb backup <contract> <file>` writes one contract as a consignment. It doesn't save the wallet. |
 
 Coin selection is the `CoinselectStrategy` passed to `pay_invoice`: `aggregate` or `smallsize`. When the spent outputs hold other contracts' state, the wallet adds blank operations for them, and fails with `ChangeRequired` if there's no change output to put them on (`rgb-std` `src/popls/bp.rs`). There's no transport server: you move the consignment file yourself. See the [v0.12 CLI reference](/technical-reference/cli#pay).
 
