@@ -62,7 +62,7 @@ rgb invoice --address-based --amount 100 <CONTRACT_ID>   # witness output (wvout
 
 A blinded invoice needs an unspent output in the wallet. Without one it fails with `blinded invoice requested but no suitable outpoint is available`. `rgb invoice` stores the blinding secret in the stash, and the receiver can't accept the transfer without it. See [`invoice`](./cli-v011.md#invoice) for the flags.
 
-Apps use [`rgb-lib`](https://github.com/RGB-Tools/rgb-lib) instead (`blind_receive` and `witness_receive`), which also fills in the transport endpoints. The official description is in [Invoices](https://github.com/rgb-protocol/RGB-Documentation/blob/master/annexes/invoices.md) on docs.rgb.info.
+Apps use [`rgb-lib`](https://github.com/RGB-Tools/rgb-lib) instead (`blind_receive` and `witness_receive`), which also fills in the transport endpoints. The official description is in [Invoices](https://docs.rgb.info/annexes/invoices) on docs.rgb.info.
 
 </TabItem>
 <TabItem value="a" label="v0.12 (rgb-wallet)">

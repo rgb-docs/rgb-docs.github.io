@@ -53,7 +53,7 @@ cargo install --locked bp-wallet --version 0.11.1-alpha.2 --root ./bp-wallet --f
 </TabItem>
 <TabItem value="a" label="v0.12 (rgb-wallet)">
 
-`rgb-wallet` 0.12.0-rc.3 was published on 2025-07-15 from [RGB-WG/rgb](https://github.com/RGB-WG/rgb). It is a release candidate, and no later release exists as of 2026-10-19. Always give `--version`: a plain `cargo install rgb-wallet` installs the last *stable* version, 0.10.9, an old RGB v0.10 release.
+`rgb-wallet` 0.12.0-rc.3 was published on 2025-07-15 from [RGB-WG/rgb](https://github.com/RGB-WG/rgb). It is a release candidate, and no later release exists as of 2026-10-21 (crates.io). Always give `--version`: a plain `cargo install rgb-wallet` installs the last *stable* version, 0.10.9, an old RGB v0.10 release.
 
 ```bash line=A
 cargo install --locked rgb-wallet --version 0.12.0-rc.3
@@ -149,4 +149,5 @@ rgb-std = "=0.12.0-rc.3"
 ## Next steps
 
 - [Quick start](/getting-started/quick-start): issue and transfer a test asset.
+- [Testing](/guides/development/testing): regtest stacks for your own project.
 - CLI references: [v0.11](/technical-reference/cli-v011) and [v0.12](/technical-reference/cli).

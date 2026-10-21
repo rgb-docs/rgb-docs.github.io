@@ -14,7 +14,7 @@ last_update:
 CFA is a v0.11 schema. v0.12 has no CFA. Its nearest equivalent is a third-party "RGB25" issuer, described [at the end](#v012-rgb25). See [Two RGB lines](/getting-started/two-rgbs).
 :::
 
-**CFA** (Collectible Fungible Asset) is the v0.11 schema once called "RGB25". The official docs describe it as "similar to NIA, with an additional string (Article) that represents the collectible" ([supported schemas](https://github.com/rgb-protocol/RGB-Documentation/blob/master/rgb-contract-implementation/schema/supported-schemas.md)).
+**CFA** (Collectible Fungible Asset) is the v0.11 schema once called "RGB25". The official docs describe it as "similar to NIA, with an additional string (Article) that represents the collectible" ([supported schemas](https://docs.rgb.info/rgb-contract-implementation/schema/supported-schemas)).
 
 A CFA contract is **one fungible asset**, like NIA. It has no item types, per-item supply, attributes, rarity or royalties. For a set of different collectibles, issue one contract per item. For one-of-a-kind items, use [UDA](/guides/rgb21/creating-nfts).
 

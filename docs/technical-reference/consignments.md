@@ -93,6 +93,6 @@ The transfer is final as soon as the Bitcoin transaction is mined. If the transa
 
 ## Further reading
 
-- Line B: [Contract transfers](https://github.com/rgb-protocol/RGB-Documentation/blob/master/annexes/contract-transfers.md) in the official docs; `rgb-ops` 0.11.1 [source](https://github.com/rgb-protocol/rgb-ops/tree/0.11.1) (docs.rs failed to build this version)
+- Line B: [Contract transfers](https://docs.rgb.info/annexes/contract-transfers) in the official docs; `rgb-ops` 0.11.1 [source](https://github.com/rgb-protocol/rgb-ops/tree/0.11.1) (docs.rs failed to build this version)
 - Line A: `rgb-std` on [docs.rs](https://docs.rs/rgb-std/0.12.0-rc.3)
 - [Client-side validation](/core-concepts/client-side-validation)

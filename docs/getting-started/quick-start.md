@@ -140,7 +140,7 @@ rgb:7Wf1Rne9-BQWvPlL-P50XBTB-D1sZQlF-Wn7eRYV-3_wZZg8	BitcoinRegtest	2026-10-19	r
   Developer: ssi:issuer
 ```
 
-`rgb -d data0 -w issuer --electrum=localhost:50001 state "$contract_id"` shows the 1000 units on `outpoint_issue`.
+Save the contract ID for the next steps, for example `contract_id='rgb:7Wf1Rne9-…'` with your own ID (single quotes stop the shell expanding `~`). `rgb -d data0 -w issuer --electrum=localhost:50001 state "$contract_id"` shows the 1000 units on `outpoint_issue`.
 
 ### 6. Recipient: create an invoice
 
@@ -154,7 +154,7 @@ Example output, from the sandbox README:
 rgb:Tk3d0h5w-8v4XYCg-7e~Sc0o-Lu6rp~X-~Jt7VHS-jqgzFD8/~/BF/bcrt:utxob:MSLQCKkW-w6caphB-12do1nJ-HNfgxvv-WE3zOOC-s8yZyHq-Ihoa5
 ```
 
-The `utxob:` part is the recipient's outpoint, blinded so that the payer never learns it. Use the long option `--amount`: in 0.11.1, `invoice` gives the short flag `-a` to three different options.
+Save it as `invoice='rgb:…'` for the next step. The `utxob:` part is the recipient's outpoint, blinded so that the payer never learns it. Use the long option `--amount`: in 0.11.1, `invoice` gives the short flag `-a` to three different options.
 
 ### 7. Sender: transfer
 
@@ -323,6 +323,8 @@ rgb seals -w alice
 
 ## Next steps
 
+- [Guides](/guides/overview): issuing, transfers, Lightning and app development, by line.
+- [Core concepts](/core-concepts/overview): what the commands above did, from seals to consignments.
 - CLI references: [v0.11 (rgb-cmd)](/technical-reference/cli-v011) and [v0.12 (rgb-wallet)](/technical-reference/cli).
 - Line B: [docs.rgb.info](https://docs.rgb.info), [rgb-lib](https://github.com/RGB-Tools/rgb-lib), and [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) (alpha).
 - Line A: [rgb.tech](https://rgb.tech) and the [RGB-WG/rgb README](https://github.com/RGB-WG/rgb/tree/v0.12.0-rc.3).

@@ -98,5 +98,5 @@ Most terms are shared. Terms tagged **(v0.11)** exist only in Line B and terms t
 
 ## Further reading
 
-- [Glossary](https://github.com/rgb-protocol/RGB-Documentation/blob/master/annexes/glossary.md) in the Line B official docs
+- [Glossary](https://docs.rgb.info/annexes/glossary) in the Line B official docs
 - [FAQ](./faq.md)

@@ -23,20 +23,20 @@ This site covers both. Every page says which line it applies to:
 
 ## At a glance
 
-| | Line A: v0.12 (RGB-WG) | Line B: v0.11 (RGB Protocol Association) |
+| | Line B: v0.11 (RGB Protocol Association) | Line A: v0.12 (RGB-WG) |
 |---|---|---|
-| Pinned on this site | `rgb-wallet` **0.12.0-rc.3** (2025-07-15) | `rgb-cmd` **0.11.1** (2026-09-16) |
-| Release status | Consensus crate `rgb-core` 0.12.0 final (2025-07-10). Standard library, runtime and wallet are still release candidates, with no release since July 2025. | Final since 2026-09-16. 0.11.2-rc.1 is out (2026-10-09). |
-| Networks | The CLI refuses mainnet; testnet, signet and regtest only | Mainnet, testnet, signet and regtest |
-| Install | `cargo install --locked rgb-wallet --version 0.12.0-rc.3` | `cargo install --locked rgb-cmd --version 0.11.1` |
-| Core crates | `rgb-core`, `rgb-std`, `rgb-runtime`, `rgb-invoice`, `rgb-psbt` | `rgb-consensus`, `rgb-ops`, `rgb-api`, `rgb-invoicing`, `rgb-psbt-utils`, `rgb-schemas` |
-| Application library | Rust only (`rgb-runtime`) | [`rgb-lib`](https://github.com/RGB-Tools/rgb-lib): Rust with Kotlin, Swift, Python and Node.js bindings |
-| Contract model | Codexes, issuers and APIs (SONIC/UltraSONIC), with state held as field elements | Schemas: NIA, IFA, UDA, CFA, PFA |
-| Virtual machine | zk-AluVM 0.12 | `rgb-aluvm` (a fork of AluVM 0.11) |
-| Tapret commitment prefix | 29 × `OP_NOP` (0x61) | 29 × `OP_RESERVED` (0x50) |
-| Invoice format | `contract:tb@<id>/…` | `rgb:<id>/<schema>/…` |
-| Lightning | No implementation | [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) (alpha; its README says it "can be tested only in regtest or testnet") |
-| Main users | Bitlight Labs | Bitfinex, Tether (USD₮ announced 2025-08-28; not live as of 2026-10-21), Utexo, Iris, KaleidoSwap, BitMask and others |
+| Pinned on this site | `rgb-cmd` **0.11.1** (2026-09-16) | `rgb-wallet` **0.12.0-rc.3** (2025-07-15) |
+| Release status | Final since 2026-09-16. 0.11.2-rc.1 is out (2026-10-09). | Consensus crate `rgb-core` 0.12.0 final (2025-07-10). Standard library, runtime and wallet are still release candidates, with no release since July 2025. |
+| Networks | Mainnet, testnet, signet and regtest | The CLI refuses mainnet; testnet, signet and regtest only |
+| Install | `cargo install --locked rgb-cmd --version 0.11.1` | `cargo install --locked rgb-wallet --version 0.12.0-rc.3` |
+| Core crates | `rgb-consensus`, `rgb-ops`, `rgb-api`, `rgb-invoicing`, `rgb-psbt-utils`, `rgb-schemas` | `rgb-core`, `rgb-std`, `rgb-runtime`, `rgb-invoice`, `rgb-psbt` |
+| Application library | [`rgb-lib`](https://github.com/RGB-Tools/rgb-lib): Rust with Kotlin, Swift, Python and Node.js bindings | Rust only (`rgb-runtime`) |
+| Contract model | Schemas: NIA, IFA, UDA, CFA, PFA | Codexes, issuers and APIs (SONIC/UltraSONIC), with state held as field elements |
+| Virtual machine | `rgb-aluvm` (a fork of AluVM 0.11) | zk-AluVM 0.12 |
+| Tapret commitment prefix | 29 × `OP_RESERVED` (0x50) | 29 × `OP_NOP` (0x61) |
+| Invoice format ([details](/technical-reference/invoices)) | `rgb:<contract>/<schema or ~>/<amount>/<chain>:<seal>` | `contract:<network>@<contract>/<amount>@<seal>/` |
+| Lightning | [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) (alpha; its README says it "can be tested only in regtest or testnet") | None released by RGB-WG. Bitlight Labs develops its own stack, which this site hasn't checked |
+| Main users | Bitfinex, Tether (USD₮ announced 2025-08-28; not live as of 2026-10-21), Utexo, Iris, KaleidoSwap, BitMask and others | Bitlight Labs |
 
 The tapret prefix row is a consensus difference: a tapret commitment made by one line doesn't verify under the other. Source: `bp-core` `dbc/src/tapret/tapscript.rs` (Line A) and `rgb-consensus` `src/dbc/tapret/tapscript.rs` (Line B).
 
@@ -44,7 +44,7 @@ The tapret prefix row is a consensus difference: a tapret commitment made by one
 
 | Date | Event |
 |---|---|
-| 2024-11 | v0.11.0-beta.9: the last common, audited base. |
+| 2024-11 | v0.11.0-beta.9: the last common base. Line B says it was audited; this site found no public report ([FAQ](/technical-reference/faq#is-it-audited)). |
 | 2025-05-20 | v0.12 release candidate 1, a protocol redesign. RGB-WG states that contracts issued before it aren't compatible. |
 | 2025-07-01 | The `rgb-protocol` org publishes `rgb-consensus` / `rgb-cmd` 0.11.1-rc.1, continuing v0.11. |
 | 2025-07-10 | RGB-WG releases the v0.12 consensus layer (`rgb-core` 0.12.0). |
@@ -74,3 +74,8 @@ Line B 0.11.2 (release candidate since 2026-10-09) moves consignments to a new f
 - **Taproot Assets** (Lightning Labs) is a different asset protocol on Bitcoin.
 - **USDT0** (LayerZero's omnichain USDT) is not RGB. Utexo's [mint documentation](https://github.com/UTEXO-Protocol/docs/blob/main/product-suite/mint.mdx) uses USDT0 locked on Arbitrum as the backing for USDT on RGB.
 - **SONIC, UltraSONIC and Prism** are names RGB-WG uses for parts of the v0.12 design. **Ultraviolet** is a separate project of Pandora Prime.
+
+## Next steps
+
+- [Installation](/getting-started/installation): install the CLI for your line.
+- [Quick start](/getting-started/quick-start): issue and transfer a test asset.
