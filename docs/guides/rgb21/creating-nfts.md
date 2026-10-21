@@ -3,18 +3,18 @@ sidebar_position: 1
 title: Issuing NFTs (UDA)
 description: Issue a non-fungible token as a Unique Digital Asset (UDA) contract in RGB v0.11 with rgb-lib or the Rust builder. One token per contract.
 rgb_line: B
-verified_with: rgb-cmd 0.11.1
+verified_with: rgb-cmd 0.11.1; rgb-wallet 0.12.0-rc.3
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 # Issuing NFTs (UDA)
 
 :::info RGB v0.11 line (rgb-cmd 0.11.1)
-NFTs are issued as UDA contracts in v0.11. v0.12 rc.3 ships no NFT issuer: `rgb-interfaces` 0.12 defines NFT data types, but no issuer uses them yet. See [Two RGB lines](/getting-started/two-rgbs).
+This page covers UDA contracts in v0.11. v0.12 has no NFT issuer of its own; a third-party one is described [at the end](#v012-rgb21). See [Two RGB lines](/getting-started/two-rgbs).
 :::
 
-An RGB NFT is a contract of the **UDA** (Unique Digital Asset) schema. Line B used to call this "RGB21", a name it now treats as deprecated.
+In v0.11 an NFT is a contract of the **UDA** (Unique Digital Asset) schema. "RGB21" is the older interface name. Line B's docs now call the RGB20/RGB21 names deprecated in favour of the schema names ([`context7.json`](https://github.com/rgb-protocol/RGB-Documentation/blob/master/context7.json)), while Line A's issuers still use RGB21.
 
 ## One token per contract
 
@@ -46,7 +46,7 @@ eq.n    a64[0],a64[1];
 test;
 ```
 
-The script doesn't check `precision`. Wallets usually use 0.
+The script doesn't check `precision`, and rgb-lib accepts any value from 0 to 18. Use 0 for a token that can't be split.
 
 ## With rgb-lib
 
@@ -77,6 +77,7 @@ println!("{}", nft.asset_id);
 To set the preview or other fields yourself, build genesis directly. This is the core of [`examples/uda.rs`](https://github.com/rgb-protocol/rgb-schemas/blob/0.11.1/examples/uda.rs) in `rgb-schemas` 0.11.1 (crate `rgb-ops`, library name `rgbstd`):
 
 ```rust
+use amplify::Wrapper; // for TokenIndex::from_inner
 use rgbstd::stl::{AssetSpec, ContractTerms, EmbeddedMedia, MediaType, RicardianContract, TokenData};
 use rgbstd::invoice::Precision;
 use rgbstd::{Allocation, ChainNet, TokenIndex};
@@ -99,11 +100,72 @@ let contract = stock
     .issue_contract()?;
 ```
 
-`thumbnail_blob` is a `SmallBlob` (at most 65,535 bytes). `genesis_seal` and `stock` are set up as in the [fungible example](/guides/rgb20/creating-tokens).
+`thumbnail_blob` is an `amplify::confinement::SmallBlob` (at most 65,535 bytes), and `media_attachment` an `Attachment { ty, digest }` with the file's SHA-256. `genesis_seal` and `stock` are set up as in the [fungible example](/guides/rgb20/creating-tokens).
 
 :::danger Back up the contract and the media
 A seed phrase doesn't recover RGB assets. Back up the RGB data directory, or use rgb-lib's `backup`. Keep the original media files too: the contract holds only their digests, and a file that is lost can't be recreated from the digest.
 :::
+
+## v0.12: third-party RGB21 issuer {#v012-rgb21}
+
+:::danger Unaudited, test networks only
+`rgb-wallet` 0.12.0-rc.3 refuses mainnet, and Pandora Prime's README says no external audit of its issuers has been made.
+:::
+
+RGB-WG's `rgb` release ships no NFT issuer. [pandora-prime/rgb-issuers](https://github.com/pandora-prime/rgb-issuers) publishes `compiled/RGB21-UniqueNFT-v0-FtU80Q.issuer` ("Non-Fungible Unique Asset", NFU), with a template in `templates/RGB21-UniqueNFT.yaml`. The token data is `NftSpec { name, embedded, external, reserves }` from `rgb-interfaces` 0.12 `src/nft.rs`; `embedded` is required, `external` is one optional attachment.
+
+Run offline with rgb-wallet 0.12.0-rc.3 on 2026-10-21, using the `alice` wallet from the `RGB-WG/rgb` examples:
+
+```yaml
+consensus: bitcoin
+testnet: true
+issuer:
+  codexId: 1T9uRsVB-_A8owmV-mv9SMiF-vgFFjN2-kxd9AZz-lpU8K1A
+  version: 0
+  checksum: FtU80Q
+name: DemoNft
+method: issue
+timestamp: "2026-10-21T12:00:00+00:00"
+
+global:
+  - name: ticker
+    verified: DNFT
+  - name: name
+    verified: Demo NFT
+  - name: maxFractions
+    verified: 1
+  - name: token
+    verified: 1
+    unverified:
+      name: Demo NFT 1
+      embedded:
+        mime:
+          type: image
+          subtype: png
+          charset: ~
+        data: [137, 80, 78, 71]   # the bytes, as a list
+      external: ~
+      reserves: ~
+
+owned:
+  - name: balance
+    seal: <txid>:<vout>
+    data:
+      tokenNo: 1
+      fractions: 1
+```
+
+```bash line=A
+rgb -d examples/data import RGB21-UniqueNFT-v0-FtU80Q.issuer
+rgb -d examples/data issue -w alice nft.yaml
+```
+
+```text
+Processing 'RGB21-UniqueNFT-v0-FtU80Q.issuer' ... codex id 1T9uRsVB-_A8owmV-mv9SMiF-vgFFjN2-kxd9AZz-lpU8K1A#touch-city-shelter ... success
+A new contract issued with ID contract:f5cu3j2Z-F6cePQE-q~XV2td-BMQw6Lb-LoNmzq~-VPAx6VU
+```
+
+Two things in the upstream template need changing. Its owned fields `tokenIndex` and `fraction` are rejected (`ExtraField(FieldName("tokenIndex"))`); the type uses `tokenNo` and `fractions`. And its comment says to paste hex for `data`, but a quoted hex string is stored as its ASCII characters, and an unquoted one can parse as a YAML number and fails with `data did not match any variant of untagged enum StrictVal`. Give the bytes as a list, as above. Transfers aren't documented here, because `rgb invoice <contract> 1` followed by `rgb pay` failed with `the state owned by the wallet is not enough to fulfill the invoice` (2026-10-21).
 
 ## Next
 

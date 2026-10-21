@@ -5,13 +5,13 @@ description: Send a UDA NFT in RGB v0.11 with rgb-cmd or rgb-lib. Same flow as a
 rgb_line: B
 verified_with: rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 # Transferring NFTs
 
 :::info RGB v0.11 line (rgb-cmd 0.11.1)
-This covers UDA NFTs in v0.11. v0.12 rc.3 has no NFT issuer, so there is no v0.12 NFT transfer to document yet. See [Two RGB lines](/getting-started/two-rgbs).
+This covers UDA NFTs in v0.11. v0.12 has only a third-party NFT issuer, and a transfer with it failed when tested, so there is no v0.12 NFT transfer to document (see [Issuing NFTs](/guides/rgb21/creating-nfts#v012-rgb21)). See [Two RGB lines](/getting-started/two-rgbs).
 :::
 
 A UDA NFT moves exactly like a fungible asset: invoice → transfer (consignment plus PSBT) → recipient validates → payer signs and broadcasts → recipient accepts. Read [Transferring fungible assets](/guides/rgb20/transferring-assets) first. This page covers only what is different.
@@ -26,9 +26,10 @@ Send the consignment and get it validated **before** you broadcast. If the witne
 
 ## With the CLI
 
-The commands are the same as in the [Quick Start](/getting-started/quick-start), apart from the invoice:
+The commands are the same as in the [Quick Start](/getting-started/quick-start) regtest demo, apart from the invoice. Set the network first: `rgb-cmd` defaults to testnet3.
 
 ```bash
+export LNPBP_NETWORK=regtest
 # recipient (the contract and the UDA kit must be imported first)
 rgb -d data1 -w rcpt1 --electrum=localhost:50001 invoice --token-index 0 --token-fraction 1 "$contract_id"
 # payer
@@ -41,13 +42,15 @@ rgb -d data0 -w issuer --electrum=localhost:50001 finalize -p nft.psbt nft.tx
 rgb -d data1 -w rcpt1 --electrum=localhost:50001 accept nft.rgb
 ```
 
-rgb-lib issues its UDAs with token index 0. See [`invoice`](/technical-reference/cli-v011#invoice) and [`transfer`](/technical-reference/cli-v011#transfer).
+rgb-lib issues its UDAs with token index 0. Always pass `--token-fraction 1`: without it, `rgb-cmd` puts a fraction of 0 in the invoice (`cli/src/command.rs`), and the UDA script accepts only a fraction of 1. See [`invoice`](/technical-reference/cli-v011#invoice) and [`transfer`](/technical-reference/cli-v011#transfer).
 
 ## With rgb-lib
 
-For `rgb-lib` 0.3.0-beta.7. This is the same code as the [fungible example](/guides/rgb20/transferring-assets), with `Assignment::NonFungible`:
+For `rgb-lib` 0.3.0-beta.7. This is the same code as the [fungible example](/guides/rgb20/transferring-assets), with `Assignment::NonFungible`. `refresh` is a method of the `RgbWalletOpsOnline` trait, so import it:
 
 ```rust
+use std::collections::HashMap;
+use rgb_lib::wallet::{Invoice, Recipient, RgbWalletOpsOnline};
 use rgb_lib::Assignment;
 
 let receive = bob.blind_receive(Some(nft_id.clone()), Assignment::NonFungible, expiry, vec![proxy.clone()], 1)?;

@@ -5,20 +5,20 @@ description: What an RGB v0.11 UDA token can carry (TokenData, embedded preview,
 rgb_line: B
 verified_with: rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 # Metadata and attachments
 
 :::info RGB v0.11 line (rgb-cmd 0.11.1)
-This page describes UDA token data in v0.11. In v0.12, `rgb-interfaces` 0.12 has an `NftSpec` type with one optional external attachment, but rc.3 ships no NFT issuer that uses it. See [Two RGB lines](/getting-started/two-rgbs).
+This page describes UDA token data in v0.11. In v0.12, `rgb-interfaces` 0.12 defines `NftSpec { name, embedded, external, reserves }`: one required embedded media item and at most one external attachment. Only a third-party issuer uses it (see [Issuing NFTs](/guides/rgb21/creating-nfts#v012-rgb21)). See [Two RGB lines](/getting-started/two-rgbs).
 :::
 
 A UDA token's data sits in the contract's `tokens` global, so it is part of genesis. Genesis is client-side data: it travels in every consignment of the contract, and none of it is written to the blockchain.
 
 ## TokenData
 
-From `rgb-ops` 0.11.1 `src/stl/specs.rs`:
+From `rgb-ops` 0.11.1 `src/stl/specs.rs` (`ProofOfReserves` is in `src/stl/chain.rs`):
 
 ```rust
 pub struct TokenData {
@@ -45,7 +45,7 @@ pub struct ProofOfReserves { pub utxo: Outpoint, pub proof: SmallBlob }
 | `preview.data` | At most 65,535 bytes (`SmallBlob`) |
 | `attachments` | At most **20**, keyed by a `u8` |
 | `AttachmentType.name` (`attachmentTypes` global) | 1–20 ASCII characters |
-| Contract `terms.text` | At most 65,535 characters (`SmallString`) |
+| Contract `terms.text` | At most 65,535 bytes (`SmallString`) |
 
 `MediaType` is a MIME type, such as `image/png`, or a wildcard such as `image/*` as in the rgb-schemas example.
 
@@ -53,7 +53,7 @@ pub struct ProofOfReserves { pub utxo: Outpoint, pub proof: SmallBlob }
 
 There are two ways to tie a file to a token:
 
-- **Embed (`preview`).** The bytes are inside genesis. Every holder receives them in the consignment, and nothing else is needed to show them. The cost is size: the preview is copied into every future consignment of the contract, so keep it to a small thumbnail. The hard limit is 64 KiB.
+- **Embed (`preview`).** The bytes are inside genesis. Every holder receives them in the consignment, and nothing else is needed to show them. The cost is size: the preview is copied into every future consignment of the contract, so keep it to a small thumbnail. The hard limit is 65,535 bytes.
 - **Reference (`media`, `attachments`).** Genesis holds only the media type and a 32-byte digest. The file can be any size and lives somewhere else. Anyone who has the file can check it against the digest, but the contract doesn't say where to find the file, and a file that is lost can't be recovered.
 
 The digest is just 32 bytes, and the protocol doesn't name a hash function. rgb-lib and the rgb-schemas example both use **SHA-256** of the file contents, so use it too if you want other wallets to verify your files.
@@ -74,5 +74,5 @@ The [RGB Lightning Node](/guides/lightning/overview) has `POST /postassetmedia` 
 If you store files elsewhere, for example on your own server or a content-addressed network, publish only the media itself. **Never publish consignments.** A consignment contains the token's full ownership history.
 
 :::danger Keep the originals
-rgb-lib's backup covers its `media_files` directory, but a referenced file exists only where someone stored it. If every copy is lost, the token still validates, but it points to nothing. Keep your own backup of every file you attach.
+rgb-lib's `backup` zips the whole wallet directory, `media_files` included (`src/wallet/backup.rs`), but a referenced file exists only where someone stored it. If every copy is lost, the token still validates, but it points to nothing. Keep your own backup of every file you attach.
 :::
