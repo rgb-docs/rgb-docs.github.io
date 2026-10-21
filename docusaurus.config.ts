@@ -5,7 +5,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 const config: Config = {
   // Basic site metadata
   title: 'RGB Protocol Docs',
-  tagline: 'Smart Contracts for Bitcoin and Lightning Network',
+  tagline: 'Client-side-validated assets and contracts on Bitcoin, for both RGB lines',
   favicon: 'img/favicon.ico',
 
   // Deployment configuration
@@ -57,7 +57,7 @@ const config: Config = {
         '@context': 'https://schema.org',
         '@type': 'TechArticle',
         headline: 'RGB Protocol Documentation',
-        description: 'Complete technical documentation for RGB Protocol v0.12 - Smart contracts for Bitcoin and Lightning Network',
+        description: 'Documentation for both RGB lines: v0.11 (RGB Protocol Association) and v0.12 (RGB-WG). Client-side-validated assets and contracts on Bitcoin.',
         author: {
           '@type': 'Organization',
           name: 'RGB Docs community',
@@ -115,18 +115,18 @@ const config: Config = {
     metadata: [
       // General SEO
       {name: 'keywords', content: 'RGB, Bitcoin, Smart Contracts, Lightning Network, Client-side Validation, AluVM, RGB20, RGB21, RGB25, Tapret, NFT, DeFi'},
-      {name: 'description', content: 'Technical documentation for RGB Protocol v0.12 - Smart contracts for Bitcoin and Lightning Network with client-side validation'},
+      {name: 'description', content: 'Documentation for both RGB lines, v0.11 and v0.12: client-side validation, single-use seals, AluVM, assets, invoices, consignments, and RGB on Lightning (v0.11).'},
       {name: 'author', content: 'RGB Docs community'},
 
       // Open Graph Protocol
       {property: 'og:type', content: 'website'},
       {property: 'og:site_name', content: 'RGB Protocol Documentation'},
       {property: 'og:title', content: 'RGB Protocol Docs - Smart Contracts for Bitcoin'},
-      {property: 'og:description', content: 'Complete technical documentation for RGB v0.12: client-side validation, AluVM virtual machine, RGB20/RGB21 tokens, Bitcoin commitments, and Lightning Network integration.'},
+      {property: 'og:description', content: 'Documentation for both RGB lines, v0.11 (rgb-cmd 0.11.1) and v0.12 (rgb-wallet 0.12.0-rc.3): client-side validation, AluVM, fungible and unique assets, Bitcoin commitments, and RGB on Lightning.'},
       {property: 'og:image', content: 'https://rgb-docs.github.io/img/rgb-social-card.png'},
       {property: 'og:image:width', content: '1200'},
       {property: 'og:image:height', content: '630'},
-      {property: 'og:image:alt', content: 'RGB Protocol - Smart Contracts for Bitcoin and Lightning Network'},
+      {property: 'og:image:alt', content: 'RGB Docs: assets and contracts on Bitcoin'},
       {property: 'og:url', content: 'https://rgb-docs.github.io'},
       {property: 'og:locale', content: 'en_US'},
 
@@ -134,7 +134,7 @@ const config: Config = {
       {name: 'twitter:card', content: 'summary_large_image'},
       {name: 'twitter:site', content: '@RGB_Protocol'},
       {name: 'twitter:title', content: 'RGB Protocol Docs - Smart Contracts for Bitcoin'},
-      {name: 'twitter:description', content: 'Complete technical documentation for RGB v0.12: client-side validation, AluVM, RGB20/RGB21 tokens, and Lightning integration.'},
+      {name: 'twitter:description', content: 'Documentation for both RGB lines, v0.11 and v0.12: client-side validation, AluVM, assets and RGB on Lightning.'},
       {name: 'twitter:image', content: 'https://rgb-docs.github.io/img/rgb-social-card.png'},
       {name: 'twitter:image:alt', content: 'RGB Protocol Documentation'},
 
@@ -156,7 +156,7 @@ const config: Config = {
     // Optional announcement bar
     announcementBar: {
       id: 'rewrite_2026_10',
-      content: 'These docs are being rewritten for the two RGB lines: v0.12 (RGB-WG, release candidate 0.12.0-rc.3) and v0.11 (RGB Protocol Association, 0.11.1). Many pages predate the split. Check every command against rgb --help before using real funds.',
+      content: 'This site covers two incompatible RGB lines: v0.11 (RGB Protocol Association, rgb-cmd 0.11.1) and v0.12 (RGB-WG, rgb-wallet 0.12.0-rc.3). Each page says which it applies to. Test on regtest or testnet before using real funds.',
       backgroundColor: '#B45309',
       textColor: '#fff',
       isCloseable: false,
@@ -188,7 +188,7 @@ const config: Config = {
           position: 'left',
         },
         {
-          to: '/technical-reference/cli',
+          to: '/technical-reference/cli-v011',
           label: 'Reference',
           position: 'left',
         },
@@ -235,7 +235,8 @@ const config: Config = {
         {
           title: 'Community',
           items: [
-            {label: 'GitHub', href: 'https://github.com/RGB-WG'},
+            {label: 'GitHub: rgb-protocol (v0.11)', href: 'https://github.com/rgb-protocol'},
+            {label: 'GitHub: RGB-WG (v0.12)', href: 'https://github.com/RGB-WG'},
             {label: 'Telegram', href: 'https://t.me/rgbtelegram'},
             {label: 'Twitter', href: 'https://twitter.com/rgb_protocol'},
           ],
@@ -243,9 +244,11 @@ const config: Config = {
         {
           title: 'More',
           items: [
-            {label: 'RGB.tech', href: 'https://rgb.tech'},
-            {label: 'Releases', href: 'https://github.com/RGB-WG/rgb-core/releases'},
-            {label: 'FAQ', href: 'https://www.rgbfaq.com'},
+            {label: 'rgb.info (v0.11)', href: 'https://rgb.info'},
+            {label: 'rgb.tech (v0.12)', href: 'https://rgb.tech'},
+            {label: 'Releases: rgb-cmd (v0.11)', href: 'https://crates.io/crates/rgb-cmd'},
+            {label: 'Releases: rgb-wallet (v0.12)', href: 'https://crates.io/crates/rgb-wallet'},
+            {label: 'RGB FAQ (rgbfaq.com, predates the split)', href: 'https://www.rgbfaq.com'},
           ],
         },
       ],
