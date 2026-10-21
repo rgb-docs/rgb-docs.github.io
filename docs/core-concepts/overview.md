@@ -38,6 +38,8 @@ Bob validates it and tells Alice it's fine. Only then does Alice sign and broadc
 The Bitcoin tx confirms, Bob accepts the consignment, and the 600 is now Bob's.
 ```
 
+This is the `rgb-cmd` (Line B) order. With `rgb-wallet` (Line A), Bob runs `accept` before Alice broadcasts, and his wallet then tracks the transaction ([Transferring assets](/guides/rgb20/transferring-assets)).
+
 Nothing on chain says "RGB", shows amounts or names the contract. An observer sees an ordinary Bitcoin transaction with an `OP_RETURN` output (opret) or a taproot output (tapret).
 
 ## Where the two lines differ
