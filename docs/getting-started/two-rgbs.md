@@ -35,7 +35,7 @@ This site covers both. Every page says which line it applies to:
 | Virtual machine | zk-AluVM 0.12 | `rgb-aluvm` (a fork of AluVM 0.11) |
 | Tapret commitment prefix | 29 × `OP_NOP` (0x61) | 29 × `OP_RESERVED` (0x50) |
 | Invoice format | `contract:tb@<id>/…` | `rgb:<id>/<schema>/…` |
-| Lightning | No implementation | [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) (alpha, regtest and testnet) |
+| Lightning | No implementation | [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) (alpha; its README says it "can be tested only in regtest or testnet") |
 | Main users | Bitlight Labs | Bitfinex, Tether (USD₮ announced 2025-08-28; not live as of 2026-10-21), Utexo, Iris, KaleidoSwap, BitMask and others |
 
 The tapret prefix row is a consensus difference: a tapret commitment made by one line doesn't verify under the other. Source: `bp-core` `dbc/src/tapret/tapscript.rs` (Line A) and `rgb-consensus` `src/dbc/tapret/tapscript.rs` (Line B).

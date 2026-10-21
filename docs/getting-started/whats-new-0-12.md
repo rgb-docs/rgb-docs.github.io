@@ -5,7 +5,7 @@ description: The changes RGB-WG made in RGB v0.12, as stated in its release post
 rgb_line: A
 verified_with: rgb-wallet 0.12.0-rc.3
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 # What's new in v0.12 (Line A)
@@ -20,14 +20,16 @@ The RGB Protocol Association didn't adopt v0.12. It continued the v0.11 protocol
 
 Except where noted, everything below comes from RGB-WG's own posts: [v0.12 release candidate 1](https://rgb.tech/blog/release-v0-12-rc-1/) (2025-05-20), [release candidate 2](https://rgb.tech/blog/release-v0-12-rc-2/) (2025-06-01) and the [v0.12 consensus release](https://rgb.tech/blog/release-v0-12-consensus/) (2025-07-10). These are the project's own claims. This site hasn't benchmarked them.
 
-## Release status (2026-10-19)
+## Release status (2026-10-21)
 
 | Component | Version | Date | Status |
 |---|---|---|---|
 | `rgb-core` (consensus) | 0.12.0 | 2025-07-10 | final |
 | `rgb-std`, `rgb-runtime`, `rgb-wallet` (CLI) | 0.12.0-rc.3 | 2025-07-15 | release candidate |
 
-There has been no Line A release since 2025-07-15 (crates.io). The consensus post says the release candidate "will become a full release" once the ecosystem adopts it. The rc.3 CLI refuses mainnet: it panics with "Non-testnet networks are not yet supported".
+There has been no Line A release since 2025-07-15 (crates.io, checked 2026-10-21). The `RGB-WG/rgb` repository has had commits since then, most recently a merge on 2026-10-01, but no new tag. The consensus post says the release candidate "will become a full release" once the ecosystem adopts it.
+
+The consensus post also says issuers "can now do contracts on testnet and bitcoin mainnet" with the consensus release. The rc.3 CLI doesn't allow that: with `-n bitcoin` it panics with "Non-testnet networks are not yet supported" on any command that loads contracts (`cli/src/args.rs:137`).
 
 ## Breaking change
 
@@ -65,7 +67,7 @@ The consensus post also says that with consensus frozen, "contracts are now forw
 
 ## Lightning
 
-v0.12 has no released Lightning implementation. RC1 lists Lightning channel operations as a use for payment scripts. As of 2026-10-19, the only RGB Lightning node that has been released is [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) (Line B, alpha).
+v0.12 has no released Lightning implementation. RC1 lists Lightning channel operations as a use for payment scripts. As of 2026-10-21, the only RGB Lightning node that has been released is [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) (Line B, alpha).
 
 ## Try it
 

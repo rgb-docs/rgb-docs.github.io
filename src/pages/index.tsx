@@ -89,7 +89,7 @@ function HomepageHeader() {
             🎮 Try Playground
           </Link>
           <Link
-            to="https://github.com/RGB-WG"
+            to="https://github.com/rgb-docs/rgb-docs.github.io"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -220,7 +220,7 @@ function HomepageFeatures() {
           <Feature
             emoji="⚡"
             title="Lightning (v0.11 line)"
-            description="RGB Lightning Node runs RGB assets in Lightning channels on the v0.11 line. It is alpha and supports regtest and testnet. The v0.12 line has no Lightning implementation yet."
+            description="RGB Lightning Node runs RGB assets in Lightning channels on the v0.11 line. It is alpha, and its maintainers say to test it only on regtest or testnet. The v0.12 line has no Lightning implementation yet."
             link="/guides/lightning/overview"
           />
         </div>
