@@ -5,7 +5,7 @@ description: The invoice formats of RGB v0.11 (rgb:…) and RGB v0.12 (contract:
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 import Tabs from '@theme/Tabs';
@@ -17,7 +17,7 @@ import TabItem from '@theme/TabItem';
 Both lines use URI-style invoices, but the formats differ and neither line can parse the other's. See [Two RGB lines](/getting-started/two-rgbs).
 :::
 
-An RGB invoice is a string the receiver gives the payer. It names the contract, the amount (or token), and the **seal** that should receive the state. That seal is either a UTXO of the receiver's wallet, possibly blinded, or an output of the payer's own transaction. The payer's wallet reads the invoice, builds the transfer and writes a [consignment](./consignments.md) for the receiver.
+An RGB invoice is a string the receiver gives the payer. It names the contract, the amount (or token), and the **seal** that should receive the state. That seal is either a UTXO of the receiver's wallet (blinded with a secret in v0.11, referenced by an auth token in v0.12, which has no blinded seals) or an output of the payer's own transaction. The payer's wallet reads the invoice, builds the transfer and writes a [consignment](./consignments.md) for the receiver.
 
 An invoice is only a request. It doesn't carry bitcoin or any proof of payment.
 
@@ -35,9 +35,9 @@ rgb:<contract-id|~>/<schema-id|~>/<state|~>/<chain>:<beneficiary>[?<query>]
 | `rgb:<contract-id>` | The contract id in [Baid64](./encodings.md) (`rgb` HRI, chunked). `rgb:~` leaves it open |
 | `<schema-id>` | The schema id without its `rgb:sch:` prefix or mnemonic, or `~`. `rgb invoice` always writes `~` here |
 | `<state>` | The amount; for a UDA token, `<fraction>@<token-index>`; or `~` |
-| `<chain>` | `bc` (mainnet), `tb3` (testnet3), `tb4` (testnet4), `sb` (signet) or `bcrt` (regtest) |
+| `<chain>` | `bc` (mainnet), `tb3` (testnet3), `tb4` (testnet4), `sb` (signet), `sbc` (custom signet) or `bcrt` (regtest). The code also defines `lq` and `tl` for Liquid (`rgb-consensus` 0.11.1 `src/operation/layer1.rs`) |
 | `<beneficiary>` | `utxob:…`, a blinded UTXO; or `wvout:…`, a witness output (an address payload), optionally followed by `+<internal key>` |
-| `?<query>` | `expiry=<unix seconds>`, `endpoints=<url>,<url>` (transports such as `rpc://` or `rpcs://` for a consignment proxy) and `assignment_name=<name>`. Unknown keys are kept |
+| `?<query>` | `expiry=<unix seconds>`, `endpoints=<url>,<url>` (transports `rpc://`, `rpcs://`, `http(s)://`, `ws(s)://` or `storm://`; RGB proxies use `rpc`/`rpcs`) and `assignment_name=<name>`. Unknown keys are kept |
 
 **Amounts aren't decimal.** `<state>` holds the amount's little-endian bytes in a base32 alphabet with no digits, `abcdefghkmnABCDEFGHKMNPQRSTVWXYZ` (`invoice/src/amount.rs`). So `BF` is 100 and `Sa` is 200. Read and write invoices with the library or the CLI, not by hand.
 
@@ -82,7 +82,7 @@ contract:<layer1>@<contract-id>/[<api>/][<method>/[<state>/]][<value>@]<seal>/[?
 | `<seal>` | `at:…`, an **auth token** derived from a wallet UTXO; or `wout:…`, an output of the payer's witness transaction |
 | `?<query>` | `lock=…`, `expiry=<RFC 3339 time>`, `endpoints=…` |
 
-**Real output** from `rgb invoice` (rgb-wallet 0.12.0-rc.3, run offline on 2026-10-19 with `DemoToken` issued from the `RGB-WG/rgb` examples):
+**Real output** from `rgb invoice` (rgb-wallet 0.12.0-rc.3, run offline on 2026-10-21 with a fresh copy of `examples/data` and `DemoToken` issued from the `RGB-WG/rgb` examples):
 
 ```bash line=A
 rgb invoice -w alice --wout DemoToken 10
@@ -91,19 +91,19 @@ rgb invoice -w alice --nonce 0 --seal-only DemoToken
 ```
 
 ```text
-contract:tb@contract:nztjpjRX-_NVDDgd-EHENsqL-AKsGsyV-F6LzljB-X4WTv0Y/10@wout:AQAAAAAA-AAAQsRRS-XNsv2N5Y-GwpKKH1Y-5iNzbEal-IiLv/
-contract:tb@contract:nztjpjRX-_NVDDgd-EHENsqL-AKsGsyV-F6LzljB-X4WTv0Y/RGB20/transfer/amount/10@wout:AgAAAAAA-AAAQBDa8-5gLBB7Ak-ElBtuHev-bIGANisj-eXkg/
+contract:tb@contract:nztjpjRX-_NVDDgd-EHENsqL-AKsGsyV-F6LzljB-X4WTv0Y/10@wout:AAAAAAAA-AAAQI6Ji-M00AJxeO-tYwYd2u7-iKteBoc2-eHjo/
+contract:tb@contract:nztjpjRX-_NVDDgd-EHENsqL-AKsGsyV-F6LzljB-X4WTv0Y/RGB20/transfer/amount/10@wout:AQAAAAAA-AAAQsRRS-XNsv2N5Y-GwpKKH1Y-5iNzbEal-IiLv/
 at:VbJYsl3B-FccP_ZkJ-Yi49U0M6-DLNra14f-SyXj7URN-pmdnfQ
 ```
 
-Each `--wout` call uses the next nonce, so each prints a different seal. Without `--wout`, the wallet needs an unspent output for the `at:` seal. Otherwise it fails with ``Wallet has no unspent outputs; try `fund` first, or use `-w` flag to generate a witness output-based seal``. The message means `--wout`, not `-w`. See [`invoice`](./cli.md#invoice) for the flags.
+Each `--wout` call uses the next nonce, so each prints a different seal (the leading `AAAAAAAA`, `AQAAAAAA` is the nonce). Without `--wout`, the wallet needs an unspent output for the `at:` seal. Otherwise it fails with ``Wallet has no unspent outputs; try `fund` first, or use `-w` flag to generate a witness output-based seal``. The message means `--wout`, not `-w`. See [`invoice`](./cli.md#invoice) for the flags.
 
 </TabItem>
 </Tabs>
 
 ## Lightning
 
-Only Line B has Lightning. The [RGB Lightning Node](/guides/lightning/overview) uses ordinary BOLT11 invoices (`lnbc…`, `lntb…`, `lnbcrt…`) with two extra tagged fields: 30 for the RGB amount and 31 for the contract id (`lightning-invoice/src/lib.rs` in the RGB-Tools `rust-lightning` fork). There is no `lnrgb:` scheme.
+This section covers Line B's [RGB Lightning Node](/guides/lightning/overview); this site hasn't checked Bitlight Labs' separate v0.12 Lightning stack. The RGB Lightning Node uses ordinary BOLT11 invoices (`lnbc…`, `lntb…`, `lnbcrt…`) with two extra tagged fields: 30 for the RGB amount and 31 for the contract id (`lightning-invoice/src/lib.rs` in the RGB-Tools `rust-lightning` fork). There is no `lnrgb:` scheme.
 
 :::danger Pay only from the same line and network
 An invoice from one line can't be paid from the other, and a `tb` or `bcrt` invoice isn't a mainnet invoice. Always pay with a wallet on the same line and network as the receiver's.
