@@ -238,7 +238,7 @@ The grammar is `contract:[tb@]<contract>/[<api>/][<method>/[<state>/]][<value>@]
 
 `rgb pay [-w WALLET] [-s STRATEGY] [--sats N] [--fee N] [-2] [-p] [-f] [--sync] [--electrum[=URL] | --esplora[=URL]] <INVOICE> <CONSIGNMENT> [PSBT]`
 
-Pays an invoice. It writes a consignment for the beneficiary and a ready-to-sign binary PSBT. The PSBT path always gets the extension `.psbt`: if you leave out `PSBT`, `pay … transfer.rgb` writes `transfer.psbt` (the code calls `with_extension("psbt")`, `cli/src/exec.rs`).
+Pays an invoice. It writes a consignment for the beneficiary and a ready-to-sign binary PSBT. The PSBT path always gets the extension `.psbt`: if you leave out `PSBT`, `pay … transfer.rgb` writes `transfer.psbt` (the code calls `with_extension("psbt")`, `cli/src/exec.rs`). `pay` needs an indexer: without `--esplora` or `--electrum`, rc.3 exits with "no blockchain indexer specified" and writes nothing (run 2026-10-21).
 
 | Option | Env | Default | Meaning |
 |---|---|---|---|

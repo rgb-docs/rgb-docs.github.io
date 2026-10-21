@@ -48,7 +48,7 @@ Nothing on chain says "RGB", shows amounts or names the contract. An observer se
 | State | Typed: owned `Declarative` / `Fungible` (u64) / `Structured`, global values, metadata | Memory cells of up to four 256-bit field elements, plus raw bytes the VM can't read; no per-operation metadata (only contract-level `ContractMeta`) |
 | VM | `rgb-aluvm` 0.11.1 (a, f, r and s registers) | zk-AluVM 0.12 (field-element registers) |
 | Seals in invoices | `utxob:` (blinded UTXO), `wvout:` (witness output) | `at:` (auth token), `wout:` (witness output) |
-| Contract id | `rgb:Ca0d5l5K-Cr4Wm6I-…` | `contract:XgHwkqS4-RcYeRtr-…` |
+| Contract id | `rgb:Ca0d5l5K-Cr4Wm6I-…` | `contract:nztjpjRX-_NVDDgd-…` |
 | Tapret leaf prefix | 29 × `OP_RESERVED` (0x50) | 29 × `OP_NOP` (0x61) |
 | Opret, MPC | Byte-identical in both | Byte-identical in both |
 | MPC leaf message | Transition `BundleId` | Multi-message bundle (input → operation) |
