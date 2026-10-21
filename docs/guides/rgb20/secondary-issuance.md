@@ -5,16 +5,16 @@ description: Inflatable Fungible Assets in RGB v0.11 — max supply, inflation r
 rgb_line: B
 verified_with: rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 # Secondary issuance (IFA)
 
 :::info RGB v0.11 line (rgb-cmd 0.11.1)
-Secondary issuance exists only in v0.11, through the IFA schema. v0.12 rc.3 ships only a fixed-supply issuer (RGB20-FNA). See [Two RGB lines](/getting-started/two-rgbs).
+Secondary issuance exists only in v0.11, through the IFA schema. No published v0.12 issuer can inflate: `RGB-WG/rgb` rc.3 ships RGB20-FNA, and [pandora-prime/rgb-issuers](https://github.com/pandora-prime/rgb-issuers) has fixed-supply RGB20, RGB21 and RGB25 issuers only (checked 2026-10-21). See [Two RGB lines](/getting-started/two-rgbs).
 :::
 
-A token whose supply can grow after genesis is a contract of the **IFA** (Inflatable Fungible Asset) schema. NIA, CFA and PFA contracts are fixed at genesis and can never be inflated or burned.
+A token whose supply can grow after genesis is a contract of the **IFA** (Inflatable Fungible Asset) schema. NIA, CFA, PFA and UDA contracts have only a `transfer` transition, so their supply is fixed at genesis and can never be inflated or burned (`rgb-schemas` 0.11.1 `src/*.rs`).
 
 :::warning Not production-ready, and changing in 0.11.2
 - The `rgb-schemas` 0.11.1 README marks IFA **"Not production-ready"**.
@@ -50,7 +50,7 @@ There is no inflation schedule and no signature-based issuance. Control comes fr
 
 ## With rgb-lib
 
-For `rgb-lib` 0.3.0-beta.7 (`src/wallet/singlesig.rs`). Wallet setup is as in [Issuing fungible tokens](/guides/rgb20/creating-tokens). This code wasn't run for this page.
+For `rgb-lib` 0.3.0-beta.7 (`src/wallet/singlesig.rs`). Wallet setup is as in [Issuing fungible tokens](/guides/rgb20/creating-tokens), except that `supported_schemas` must include `AssetSchema::Ifa`. rgb-lib refuses IFA on mainnet: `Wallet::new` fails with `CannotUseIfaOnMainnet` if a mainnet wallet lists it (`src/wallet/core.rs`). This code wasn't run for this page.
 
 ```rust
 // Issue: 1,000 in circulation, plus inflation rights for 500 more (maxSupply = 1,500).
@@ -108,7 +108,7 @@ assignments:
 rgb -n regtest -d data0 issue "ssi:issuer" ifa.yaml
 ```
 
-Real output: `A new contract rgb:HuhVTxeu-e_t~olZ-wRPYYOB-jr93HHf-1lSkoEd-EhlPbiI is issued and added to the stash.` rgb-cmd 0.11.1 has no `inflate` or `burn` command. Use rgb-lib or RLN for those.
+Real output: `A new contract rgb:HuhVTxeu-e_t~olZ-wRPYYOB-jr93HHf-1lSkoEd-EhlPbiI is issued and added to the stash.` rgb-cmd 0.11.1 has no `inflate` or `burn` command. Use rgb-lib for both. RLN has `/inflate` but no burn endpoint (`openapi.yaml`).
 
 ## Related: PFA
 

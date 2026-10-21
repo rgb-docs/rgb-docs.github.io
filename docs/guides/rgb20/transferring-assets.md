@@ -5,7 +5,7 @@ description: How an RGB transfer works (invoice, transfer, consignment, validati
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 import Tabs from '@theme/Tabs';
@@ -23,7 +23,7 @@ An RGB transfer moves state from seals the payer owns to a seal the recipient co
 2. **Transfer.** The payer's wallet selects RGB inputs, builds the state transition, commits it into a PSBT and writes the consignment, all in one step.
 3. **Validate.** The recipient validates the consignment: the whole history back to genesis, against the schema (v0.11) or codex (v0.12).
 4. **Sign and broadcast.** Only after the recipient has the consignment does the payer sign and publish the witness transaction.
-5. **Accept.** Once the transaction confirms, the recipient accepts the consignment into their stash and can spend the new allocation.
+5. **Accept.** The recipient adds the transfer to their stash. When this happens differs: `rgb-cmd` 0.11.1 `accept` refuses a consignment whose witness transaction isn't mined yet (unless `--force`), rgb-lib settles the transfer after the confirmations you asked for, and `rgb-wallet` 0.12 `accept` takes the consignment before broadcast and tracks the witness status afterwards. The new allocation is spendable once its witness transaction confirms.
 
 :::danger Consignment before broadcast
 Send the consignment, and wait until the recipient has validated it, **before** you broadcast. If the witness transaction is published and the consignment is lost, the assets are gone for good. rgb-lib enforces this order: it broadcasts only after the recipient's ACK, unless you set `donation` to true.
@@ -124,14 +124,14 @@ alice.refresh(alice_online, None, vec![], false)?; // see the ACK, broadcast
 
 ### With the CLI
 
-The [Quick Start](/getting-started/quick-start), steps 2–4, runs this offline with the upstream demo wallets:
+The [Quick Start](/getting-started/quick-start), steps 2–4, uses the upstream demo wallets. `invoice` and `accept` run offline. `pay` doesn't: with the pinned binary and no indexer it exits with `Error: no blockchain indexer specified; use either --esplora or --electrum argument` (tested 2026-10-21), so pass `--esplora` or `--electrum` to it.
 
 ```bash line=A
 # recipient (the contract must already be known: rgb accept -u <contract file>)
 rgb -d examples/data2 invoice -w bob --nonce 0 DemoToken 10
-# payer: writes the consignment and a ready-to-sign PSBT, prints nothing
-rgb -d examples/data pay -w alice "$INVOICE" transfer.rgb transfer.psbt
-# recipient
+# payer: writes the consignment and a ready-to-sign PSBT; needs an indexer
+rgb -d examples/data pay -w alice --esplora "$INVOICE" transfer.rgb transfer.psbt
+# recipient, before anything is broadcast
 rgb -d examples/data2 accept -w bob transfer.rgb
 # payer: sign the PSBT with your signer (rgb doesn't sign), then publish
 rgb -d examples/data finalize -w alice --broadcast --esplora transfer.psbt
