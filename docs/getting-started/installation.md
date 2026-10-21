@@ -5,7 +5,7 @@ description: Install the rgb command-line tool for RGB v0.11 (rgb-cmd) or RGB v0
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 import Tabs from '@theme/Tabs';
@@ -45,7 +45,7 @@ rgb --version
 `rgb-cmd` does RGB work only. To sign transactions you need a Bitcoin wallet that holds the keys. The official sandbox uses `bp-wallet` for this, installing its `bp` and `bp-hot` tools:
 
 ```bash line=B
-cargo install bp-wallet --version 0.11.1-alpha.2 --root ./bp-wallet --features=cli,hot
+cargo install --locked bp-wallet --version 0.11.1-alpha.2 --root ./bp-wallet --features=cli,hot
 ```
 
 **Defaults:** the data directory is `~/.lnp-bp` (env `LNPBP_DATA_DIR`) and the network is `testnet3` (env `LNPBP_NETWORK`). Data goes in a per-network subdirectory, such as `~/.lnp-bp/regtest`. There is no `init` step: the directory is created on first use.
@@ -53,7 +53,7 @@ cargo install bp-wallet --version 0.11.1-alpha.2 --root ./bp-wallet --features=c
 </TabItem>
 <TabItem value="a" label="v0.12 (rgb-wallet)">
 
-`rgb-wallet` 0.12.0-rc.3 was published on 2025-07-15 from [RGB-WG/rgb](https://github.com/RGB-WG/rgb). It is a release candidate, and no later release exists as of 2026-10-19. Always give `--version`: a plain `cargo install rgb-wallet` installs the last *stable* version, the unrelated 0.10.9.
+`rgb-wallet` 0.12.0-rc.3 was published on 2025-07-15 from [RGB-WG/rgb](https://github.com/RGB-WG/rgb). It is a release candidate, and no later release exists as of 2026-10-19. Always give `--version`: a plain `cargo install rgb-wallet` installs the last *stable* version, 0.10.9, an old RGB v0.10 release.
 
 ```bash line=A
 cargo install --locked rgb-wallet --version 0.12.0-rc.3
@@ -66,7 +66,7 @@ This `rgb` has no `--version` flag, so use `--help` to check the install. `rgb i
 **Defaults:** the data directory is `~/.local/share/rgb` on Linux (or `$XDG_DATA_HOME/rgb`; env `RGB_DATA_DIR`). The network is `testnet4` (env `RGB_NETWORK`). All test networks share the subdirectory `bitcoin.testnet`.
 
 :::danger Testnet only
-`rgb-wallet` 0.12.0-rc.3 panics with "Non-testnet networks are not yet supported" on `-n bitcoin` (`cli/src/args.rs`). Use it with testnet, signet or regtest only.
+With `-n bitcoin`, `rgb-wallet` 0.12.0-rc.3 panics with "Non-testnet networks are not yet supported" on every command that loads contracts, such as `contracts` or `issue` (`cli/src/args.rs:137`). `init`, `create` and `wallets` still run, so the refusal comes late. Use it with testnet, signet or regtest only.
 :::
 
 **Known rc.3 bugs**
@@ -79,10 +79,10 @@ This `rgb` has no `--version` flag, so use `--help` to check the install. `rgb i
 
 ## Blockchain access
 
-Neither CLI talks to Bitcoin Core RPC. Both read the chain through an indexer that you choose per command: `--electrum=<URL>` or `--esplora=<URL>`, and on Line B also `--mempool=<URL>`. The `=` is required. In an Esplora or Mempool URL, `{network}` is replaced with the network name.
+Neither CLI talks to Bitcoin Core RPC. Both read the chain through an indexer that you choose per command: `--electrum=<URL>` or `--esplora=<URL>`, and on Line B also `--mempool=<URL>`. The `=` is required. Give a full URL with the network already in it.
 
-- **Line A:** a bare `--electrum` uses `mycitadel.io:50001`, and a bare `--esplora` uses `https://mempool.space/{network}/api`.
-- **Line B:** a bare `--electrum` uses the placeholder `example.com:50001`, so always give a URL. A bare `--esplora` uses `https://blockstream.info/{network}/api`. The Electrum environment variable in `bp-wallet` 0.11.1-alpha.2 has the same typo, `ELECRTUM_SERVER`.
+- **Line A:** a bare `--electrum` uses `mycitadel.io:50001`, and a bare `--esplora` uses `https://mempool.space/{network}/api`, with `{network}` replaced by the network name (`cli/src/args.rs`, `resolver`).
+- **Line B:** a bare `--electrum` uses the placeholder `example.com:50001`, so always give a URL. A bare `--esplora` uses `https://blockstream.info/{network}/api`. In 0.11.1, `{network}` is replaced only when the wallet syncs (`bp-wallet` 0.11.1-alpha.2 `src/cli/args.rs`, `indexer`). The RGB resolver used by `validate`, `accept` and `transfer` gets the URL unchanged (`rgb-cmd` `src/args.rs`, `resolver`), so a URL that still contains `{network}` breaks those commands. The Electrum environment variable in `bp-wallet` 0.11.1-alpha.2 has the same typo, `ELECRTUM_SERVER`.
 
 For local testing, run regtest with an Electrum server. [rgb-sandbox](https://github.com/rgb-protocol/rgb-sandbox) (below) packages `bitcoind` and `electrs` with Docker Compose.
 
@@ -96,7 +96,7 @@ cd rgb-sandbox
 bash demo.sh
 ```
 
-`demo.sh` installs `bp-wallet` and `rgb-cmd` into the project directory, starts the services, issues an asset, runs transfers and cleans up. As of its last commit (2026-09-22), the sandbox README says it is "based on RGB version 0.11.1 RC 6", not the 0.11.1 final this site is pinned to. The [quick start](/getting-started/quick-start) walks through the manual version.
+`demo.sh` installs `bp-wallet` and `rgb-cmd` into the project directory, starts the services, issues an asset, runs transfers and cleans up. As of its last commit (2026-09-22) the sandbox isn't on 0.11.1 final: `demo.sh` installs `rgb-cmd` 0.11.1-rc.7 (`RGB_CMD_VER`), and the README says it is "based on RGB version 0.11.1 RC 6" and installs rc.6 in its manual steps. The [quick start](/getting-started/quick-start) walks through the manual version.
 
 ## Libraries
 
@@ -124,7 +124,11 @@ rgb-consensus = "=0.11.1"
 rgb-schemas = "=0.11.1"
 ```
 
-Pin these exactly. 0.11.2 (release candidate since 2026-10-09) changes the consignment format. API docs are on [docs.rs/rgb-api](https://docs.rs/rgb-api/0.11.1) and [docs.rs/rgb-lib](https://docs.rs/rgb-lib).
+Pin these exactly. 0.11.2 (release candidate since 2026-10-09) changes the consignment format.
+
+rgb-lib 0.3.0-beta.7 still depends on `rgb-ops` 0.11.1-rc.11 and the strict libraries 1.0.2 (`rgb-lib` `Cargo.toml`), while `rgb-cmd` 0.11.1 uses 1.0.4 and 0.11.2-rc.1 uses 1.0.5 (release notes). rgb-lib's `next` branch moves to 0.11.2-rc.1, unreleased as of 2026-10-21.
+
+API docs: [docs.rs/rgb-lib](https://docs.rs/rgb-lib/0.3.0-beta.7/rgb_lib/) builds. As of 2026-10-21, docs.rs failed to build `rgb-api`, `rgb-ops` and `rgb-consensus` 0.11.1, so run `cargo doc --open` in your project, or read the source on GitHub.
 
 </TabItem>
 <TabItem value="a" label="v0.12 (rgb-wallet)">
