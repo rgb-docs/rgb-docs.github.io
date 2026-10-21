@@ -90,7 +90,7 @@ rgb validate transfer.rgb   # check only (needs an indexer to look up witness tx
 rgb accept transfer.rgb     # check and add to the stash
 ```
 
-`rgb accept --force` accepts a consignment whose last witness transaction isn't mined yet. Don't use it for payments you haven't otherwise confirmed.
+`rgb accept --force` is documented as accepting a consignment whose last witness transaction isn't mined yet, but 0.11.1 ignores the flag ([CLI reference](/technical-reference/cli-v011#accept)). Wait for the witness transaction to confirm before you accept.
 
 </TabItem>
 <TabItem value="a" label="v0.12 (rgb-wallet)">

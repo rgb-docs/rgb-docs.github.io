@@ -6,8 +6,8 @@ Since 2025 there have been two incompatible RGB implementations, and this site c
 
 | | Pinned version | Upstream |
 |---|---|---|
-| **Line A: RGB v0.12** (LNP/BP Standards Association) | `rgb-wallet` 0.12.0-rc.3 | [RGB-WG](https://github.com/RGB-WG), [rgb.tech](https://rgb.tech) |
 | **Line B: RGB v0.11** (RGB Protocol Association) | `rgb-cmd` 0.11.1 | [rgb-protocol](https://github.com/rgb-protocol), [RGB-Tools](https://github.com/RGB-Tools), [rgb.info](https://rgb.info) |
+| **Line A: RGB v0.12** (LNP/BP Standards Association) | `rgb-wallet` 0.12.0-rc.3 | [RGB-WG](https://github.com/RGB-WG), [rgb.tech](https://rgb.tech) |
 
 This is not an official publication of either project.
 

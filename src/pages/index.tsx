@@ -150,8 +150,8 @@ function StatsSection() {
           gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
           gap: '1.5rem'
         }}>
-          <StatCard emoji="🅰️" number="v0.12" label="RGB-WG · rgb-wallet 0.12.0-rc.3" />
           <StatCard emoji="🅱️" number="v0.11" label="RGB Protocol Association · rgb-cmd 0.11.1" />
+          <StatCard emoji="🅰️" number="v0.12" label="RGB-WG · rgb-wallet 0.12.0-rc.3" />
           <StatCard emoji="🔒" number="Off-chain state" label="Client-side validation" />
           <StatCard emoji="₿" number="Bitcoin seals" label="Ownership is a UTXO" />
         </div>
@@ -220,7 +220,7 @@ function HomepageFeatures() {
           <Feature
             emoji="⚡"
             title="Lightning (v0.11 line)"
-            description="RGB Lightning Node runs RGB assets in Lightning channels on the v0.11 line. It is alpha, and its maintainers say to test it only on regtest or testnet. The v0.12 line has no Lightning implementation yet."
+            description="RGB Lightning Node runs RGB assets in Lightning channels on the v0.11 line. It is alpha, and its maintainers say to test it only on regtest or testnet. RGB-WG has released no Lightning node for the v0.12 line."
             link="/guides/lightning/overview"
           />
         </div>

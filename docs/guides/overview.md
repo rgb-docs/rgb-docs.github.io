@@ -22,7 +22,7 @@ This page routes you to the guide for your line. Some guides cover both lines in
 | CLI | `rgb` from [`rgb-cmd`](/technical-reference/cli-v011) 0.11.1 | `rgb` from [`rgb-wallet`](/technical-reference/cli) 0.12.0-rc.3 (refuses mainnet) |
 | App library | [`rgb-lib`](https://github.com/RGB-Tools/rgb-lib) (Rust, plus Kotlin, Swift, Python and Node.js bindings) | `rgb-runtime` (Rust only) |
 | Contracts | Schemas: NIA, IFA, UDA, CFA, PFA | Codexes and issuers (`.issuer` files) |
-| Lightning | [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) (alpha) | None |
+| Lightning | [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) (alpha) | None from RGB-WG; Bitlight Labs has its own stack (unchecked) |
 
 If you're not sure, use Line B. Neither line can read the other's contracts, invoices or consignments.
 

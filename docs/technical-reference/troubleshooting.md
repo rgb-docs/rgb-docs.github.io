@@ -28,7 +28,7 @@ rgb --version
 
 - `rgb-cmd 0.11.1`: Line B.
 - `error: unexpected argument '--version' found`: probably Line A, whose `rgb` has no `--version`. `rgb --help` lists `init`, `wallets`, `fund`, `seals`, `pay` and `script`.
-- Any other version: the wrong crate. The crate `rgb-cli` is the old 0.9.1 (2023) tool from before v0.10, and a plain `cargo install rgb-wallet` installs the unrelated 0.10.9. Reinstall with the exact version, as in [Installation](/getting-started/installation):
+- Any other version: the wrong crate. The crate `rgb-cli` is the old 0.9.1 (2023) tool from before v0.10, and a plain `cargo install rgb-wallet` installs 0.10.9, an old RGB v0.10 release of the same crate. Reinstall with the exact version, as in [Installation](/getting-started/installation):
 
 ```bash line=B
 cargo install --locked rgb-cmd --version 0.11.1

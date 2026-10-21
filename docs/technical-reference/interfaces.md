@@ -91,5 +91,5 @@ The parameter file names the codex, the method (`issue`) and the initial global 
 
 ## Further reading
 
-- Line B: [Schemas guide](/guides/contracts/schemas); [Schema](https://github.com/rgb-protocol/RGB-Documentation/blob/master/rgb-contract-implementation/schema/README.md) in the official docs; `rgb-ops` 0.11.1 [source](https://github.com/rgb-protocol/rgb-ops/tree/0.11.1) (docs.rs failed to build this version)
+- Line B: [Schemas guide](/guides/contracts/schemas); [Schema](https://docs.rgb.info/rgb-contract-implementation/schema) in the official docs; `rgb-ops` 0.11.1 [source](https://github.com/rgb-protocol/rgb-ops/tree/0.11.1) (docs.rs failed to build this version)
 - Line A: `sonic-api` on [docs.rs](https://docs.rs/sonic-api/0.12.0) and `ultrasonic` on [docs.rs](https://docs.rs/ultrasonic/0.12.0); [Genesis](/guides/contracts/genesis)

@@ -11,7 +11,7 @@ last_update:
 # RGB on Lightning
 
 :::info RGB v0.11 line (rgb-cmd 0.11.1)
-RGB on Lightning exists only for v0.11, through the RGB Lightning Node. See [Two RGB lines](/getting-started/two-rgbs).
+This page covers the RGB Lightning Node, a v0.11 implementation. RGB-WG has released no Lightning node for v0.12; see the note at the end of this page. See [Two RGB lines](/getting-started/two-rgbs).
 :::
 
 The [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) (RLN, maintained by RGB-Tools) is a daemon that opens Lightning channels holding an RGB asset and routes payments of that asset. It is built on [rgb-lib](https://github.com/RGB-Tools/rgb-lib) and on RGB-Tools' [fork of rust-lightning](https://github.com/RGB-Tools/rust-lightning) (LDK), whose changes are applied to LDK v0.2.2. RLN's `Cargo.toml` asks for `rgb-lib = "=0.3.0-beta.7"` but patches it to rgb-lib's git `master`, so the published 0.3.0-beta.7 crate isn't exactly what it runs (`Cargo.lock`, commit of 2026-09-17). You control it through a REST API. It has no CLI.
@@ -125,9 +125,9 @@ curl -X POST -H "Content-type: application/json" \
 
 ## Who uses it
 
-The RLN README lists Iris Wallet desktop, KaleidoSwap, Lnfi, Spectrum, Thunderstack and Tiramisu Wallet (2026-09-17). Utexo's `wdk-rgb-lightning` module for Tether's WDK, announced in beta on 2026-08-28, is described as an "RLN Community Module" ([rgb.info](https://rgb.info/rgb-lightning-tether-wdk/)). KaleidoSwap ships its own RLN fork ([v0.10.1](https://github.com/kaleidoswap/rgb-lightning-node/releases), 2026-10-14) in its desktop app v0.6.0.
+The RLN README lists Iris Wallet desktop, KaleidoSwap, Lnfi, Spectrum, Thunderstack and Tiramisu Wallet (2026-09-17). Utexo's `wdk-rgb-lightning` module for Tether's WDK, announced in beta on 2026-08-28, is described as an "RLN Community Module" ([rgb.info](https://rgb.info/rgb-lightning-tether-wdk/)). KaleidoSwap maintains its own RLN fork (latest [v0.10.1](https://github.com/kaleidoswap/rgb-lightning-node/releases), 2026-10-14). Its desktop app [v0.6.0](https://github.com/kaleidoswap/desktop-app/releases/tag/v0.6.0) (2026-10-14) bundles that fork pinned to 0.10.0.
 
-:::info RGB v0.12 has no Lightning implementation
+:::info No RGB-WG Lightning node for v0.12
 RGB-WG hasn't released a Lightning node for v0.12, and the old `lnp-node` (0.9, 2023) has no RGB support. Bitlight Labs develops its own v0.12 Lightning stack, which this site hasn't checked. As of 2026-10-21, there is nothing to document for Line A.
 :::
 

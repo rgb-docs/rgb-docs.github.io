@@ -38,6 +38,8 @@ Bob validates it and tells Alice it's fine. Only then does Alice sign and broadc
 The Bitcoin tx confirms, Bob accepts the consignment, and the 600 is now Bob's.
 ```
 
+This is the `rgb-cmd` (Line B) order. With `rgb-wallet` (Line A), Bob runs `accept` before Alice broadcasts, and his wallet then tracks the transaction ([Transferring assets](/guides/rgb20/transferring-assets)).
+
 Nothing on chain says "RGB", shows amounts or names the contract. An observer sees an ordinary Bitcoin transaction with an `OP_RETURN` output (opret) or a taproot output (tapret).
 
 ## Where the two lines differ
@@ -52,7 +54,7 @@ Nothing on chain says "RGB", shows amounts or names the contract. An observer se
 | Tapret leaf prefix | 29 × `OP_RESERVED` (0x50) | 29 × `OP_NOP` (0x61) |
 | Opret, MPC | Byte-identical in both | Byte-identical in both |
 | MPC leaf message | Transition `BundleId` | Multi-message bundle (input → operation) |
-| Lightning | [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) (alpha) | None |
+| Lightning | [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) (alpha) | None from RGB-WG; Bitlight Labs has its own stack (unchecked) |
 | Networks | Mainnet, testnet, signet, regtest | Testnet, signet, regtest; the CLI refuses mainnet |
 
 Shared by both: no confidential amounts (Pedersen commitments were removed), no state extensions or valencies, and no zero-knowledge proofs of history yet.

@@ -24,7 +24,7 @@ A token whose supply can grow after genesis is a contract of the **IFA** (Inflat
 
 ## How IFA works
 
-From `rgb-schemas` 0.11.1 `src/ifa.rs` and the official [supported schemas](https://github.com/rgb-protocol/RGB-Documentation/blob/master/rgb-contract-implementation/schema/supported-schemas.md) page:
+From `rgb-schemas` 0.11.1 `src/ifa.rs` and the official [supported schemas](https://docs.rgb.info/rgb-contract-implementation/schema/supported-schemas) page:
 
 | Element | Kind | Meaning |
 |---|---|---|

@@ -23,7 +23,7 @@ An RGB transfer moves state from seals the payer owns to a seal the recipient co
 2. **Transfer.** The payer's wallet selects RGB inputs, builds the state transition, commits it into a PSBT and writes the consignment, all in one step.
 3. **Validate.** The recipient validates the consignment: the whole history back to genesis, against the schema (v0.11) or codex (v0.12).
 4. **Sign and broadcast.** Only after the recipient has the consignment does the payer sign and publish the witness transaction.
-5. **Accept.** The recipient adds the transfer to their stash. When this happens differs: `rgb-cmd` 0.11.1 `accept` refuses a consignment whose witness transaction isn't mined yet (unless `--force`), rgb-lib settles the transfer after the confirmations you asked for, and `rgb-wallet` 0.12 `accept` takes the consignment before broadcast and tracks the witness status afterwards. The new allocation is spendable once its witness transaction confirms.
+5. **Accept.** The recipient adds the transfer to their stash. The timing depends on the tool: `rgb-cmd` 0.11.1 expects the witness transaction to be mined first (its `--force` flag is ignored); rgb-lib settles after the confirmations you asked for; `rgb-wallet` 0.12 accepts before broadcast and tracks the witness afterwards. The new allocation is spendable once its witness transaction confirms.
 
 :::danger Consignment before broadcast
 Send the consignment, and wait until the recipient has validated it, **before** you broadcast. If the witness transaction is published and the consignment is lost, the assets are gone for good. rgb-lib enforces this order: it broadcasts only after the recipient's ACK, unless you set `donation` to true.

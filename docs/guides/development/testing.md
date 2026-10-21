@@ -20,7 +20,7 @@ Both lines test on regtest with a local indexer. Line B also needs an RGB proxy 
 RGB needs more than `bitcoind -regtest`. Wallets read the chain through an **Electrum or Esplora indexer**, not through Bitcoin Core RPC. Line B apps built on rgb-lib also exchange consignments through an **RGB proxy server**. The stacks below are the ones the upstream projects test with.
 
 :::danger Keep tests off mainnet
-Use regtest in CI and testnet4 or signet for manual tests. Never point a CI job at mainnet services or keys. Line A refuses mainnet anyway. RGB Lightning Node is alpha and supports only regtest and testnet.
+Use regtest in CI and testnet4 or signet for manual tests. Never point a CI job at mainnet services or keys. Line A refuses mainnet anyway. RGB Lightning Node is alpha, and its maintainers say to test it only on regtest or testnet (its code doesn't block mainnet).
 :::
 
 <Tabs groupId="rgb-line">

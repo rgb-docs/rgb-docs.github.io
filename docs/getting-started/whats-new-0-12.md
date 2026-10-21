@@ -67,7 +67,7 @@ The consensus post also says that with consensus frozen, "contracts are now forw
 
 ## Lightning
 
-v0.12 has no released Lightning implementation. RC1 lists Lightning channel operations as a use for payment scripts. As of 2026-10-21, the only RGB Lightning node that has been released is [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) (Line B, alpha).
+v0.12 has no released Lightning implementation. RC1 lists Lightning channel operations as a use for payment scripts. As of 2026-10-21, the RGB Lightning node in public use is [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) (Line B, alpha, no tagged releases). Bitlight Labs develops a separate v0.12 Lightning stack, which this site hasn't checked ([Ecosystem](/technical-reference/ecosystem)).
 
 ## Try it
 

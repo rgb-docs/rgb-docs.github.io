@@ -119,4 +119,4 @@ See the [CLI reference (v0.11)](/technical-reference/cli-v011) and the [CLI refe
 
 - [BIP 341](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki) (Taproot) and [BIP 340](https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki) (tagged hashes).
 - [Tapret](https://docs.rgb.info/commitment-layer/deterministic-bitcoin-commitments-dbc/tapret) on docs.rgb.info (Line B).
-- [`bp-core` `dbc/src/tapret`](https://github.com/BP-WG/bp-core/tree/master/dbc/src/tapret) (Line A).
+- [`bp-core` `dbc/src/tapret`](https://github.com/BP-WG/bp-core/tree/v0.12.0/dbc/src/tapret) (Line A).
