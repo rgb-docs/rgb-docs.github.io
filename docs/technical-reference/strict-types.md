@@ -5,7 +5,7 @@ description: The deterministic type system and binary encoding behind all RGB da
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 # Strict Types
@@ -18,10 +18,10 @@ Both lines encode all consensus data with strict encoding; they pin different cr
 
 | | Line B (rgb-cmd 0.11.1) | Line A (rgb-wallet 0.12.0-rc.3) |
 |---|---|---|
-| `strict_encoding` | 2.8.2 | 2.9.1 |
-| `strict_types` | 2.8.3 | 2.9.0 |
+| Encoding crate | `rgb-strict-encoding` 1.0.4 | `strict_encoding` 2.9.1 |
+| Types crate | `rgb-strict-types` 1.0.4 | `strict_types` 2.9.0 |
 
-Versions are from the `Cargo.lock` files of `rgb-api` 0.11.1 and `RGB-WG/rgb` 0.12.0-rc.3.
+Line B's RGB crates (`rgb-consensus`, `rgb-ops`, `rgb-invoicing`, `rgb-aluvm`) depend on `rgb-strict-encoding` and `rgb-strict-types`, the RGB Protocol Association's forks ([rgb-protocol/rgb-strict-types](https://github.com/rgb-protocol/rgb-strict-types)), not on the UBIDECO crates. The `bp-*` 0.11.1-alpha.2 Bitcoin crates under `rgb-cmd` still pull in `strict_encoding` 2.8.2 and `strict_types` 2.8.3. Versions are from the `Cargo.lock` files of `rgb-api` 0.11.1 and `RGB-WG/rgb` 0.12.0-rc.3. The forks are at 1.0.5 since 2026-10-09 (crates.io), and `rgb-lib` 0.3.0-beta.7 pins 1.0.2.
 
 ## Why "strict"
 
@@ -31,7 +31,7 @@ Versions are from the `Cargo.lock` files of `rgb-api` 0.11.1 and `RGB-WG/rgb` 0.
 
 ## Encoding rules
 
-From `strict_encoding` 2.9.1 `rust/src/traits.rs`, `rust/src/embedded.rs` and `rust/src/writer.rs`:
+From `strict_encoding` 2.9.1 `src/traits.rs`, `src/embedded.rs` and `src/writer.rs`:
 
 | Type | Encoding |
 |---|---|
@@ -47,7 +47,13 @@ From `strict_encoding` 2.9.1 `rust/src/traits.rs`, `rust/src/embedded.rs` and `r
 
 ### Example
 
-This is tested with `strict_encoding` 2.9.1 and `amplify` 4.9.0, the versions in the Line A lock file:
+This compiles and runs with `strict_encoding` 2.9.1 and `amplify` 4.9.0, the versions in the Line A lock file (checked 2026-10-21):
+
+```toml
+[dependencies]
+strict_encoding = "=2.9.1"
+amplify = "=4.9.0"
+```
 
 ```rust
 use amplify::confinement::{Confined, TinyString};
@@ -71,12 +77,15 @@ fn main() {
     let a = Asset { ticker: TinyString::try_from(String::from("DEMO")).unwrap(),
                     precision: 2, supply: 1000, note: None };
     let bytes = a.to_strict_serialized::<0xFFFF>().unwrap();     // Confined<Vec<u8>, 0, 0xFFFF>
+    println!("{:02x?}", bytes.as_slice());
     let back = Asset::from_strict_serialized::<0xFFFF>(Confined::try_from(bytes.release()).unwrap()).unwrap();
     assert_eq!(a, back);
+    let b = Asset { note: Some(7), ..a };
+    println!("{:02x?}", b.to_strict_serialized::<0xFFFF>().unwrap().as_slice());
 }
 ```
 
-It prints these bytes:
+It prints these bytes (annotated):
 
 ```text
 note: None     04 44 45 4d 4f | 02 | e8 03 00 00 00 00 00 00 | 00
@@ -96,7 +105,7 @@ data StateCell         : data StateValue
                        , auth AuthToken
                        , lock CellLock?
 
-@mnemonic(balance-sonata-unit)
+@mnemonic(storm-dragon-brain)
 data Opid              : [Byte ^ 32]
 
 @mnemonic(lima-anvil-karate)

@@ -5,7 +5,7 @@ description: How RGB prints identifiers (Baid64) and hashes data (tagged SHA-256
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 import Tabs from '@theme/Tabs';
@@ -82,27 +82,27 @@ The `utxob:` example is from the `rgb-ops` invoice tests.
 
 | Id | HRI | Shown with prefix | Chunked | Checksum | Example |
 |---|---|---|---|---|---|
-| Contract id | `contract` | yes | yes | no | `contract:XgHwkqS4-RcYeRtr-Mizxpov-FobureK-sx0~AD5-xAt5jV4` |
+| Contract id | `contract` | yes | yes | no | `contract:nztjpjRX-_NVDDgd-EHENsqL-AKsGsyV-F6LzljB-X4WTv0Y` |
 | Codex id | `codex` | no | yes | mnemonic | `7C15w3W1-L0T~zXw-Aeh5~kV-Zquz729-HXQFKQW-_5lX9O8#heavy-cactus-quiet` |
-| Operation id (`Opid`) | `usop` | no | no | no | `rtVWyitimkZyM4bDei2AcftvX0HKur8kfdf~0Ku2Ry8` |
-| Auth token (30 bytes) | `at` | yes | 8 + 8 | embedded | `at:ra2tra2t-ra2tra2t-ra2tra2t-ra2tra2t-ra2tra2t-HURE_w` |
+| Operation id (`Opid`) | `usop` | no | no | no | `FDqnQ~ReMcfI2N69Y1kMiLrrEIWnPzUvENfgqGbfw5M` |
+| Auth token (30 bytes) | `at` | yes | 8 + 8 | embedded | `at:VbJYsl3B-FccP_ZkJ-Yi49U0M6-DLNra14f-SyXj7URN-pmdnfQ` |
 | Witness output seal | `wout` | yes | | | in invoices |
 | AluVM library | `alu` | yes | yes | mnemonic | |
 
 Sources: `ultrasonic` 0.12.0 `src/issue.rs`, `src/codex.rs`, `src/operation.rs`, `src/state.rs`; `rgb-invoice` 0.12.0-rc.3 `src/bp.rs` (`WITNESS_OUT_HRI`); `aluvm` 0.12.0 `src/library/lib.rs`.
 
-The contract, codex and operation ids above are real output from `rgb-wallet` 0.12.0-rc.3, from issuing the `DemoToken` example in `RGB-WG/rgb` offline. The `at:` example is an upstream test vector.
+These are real output from `rgb-wallet` 0.12.0-rc.3, run offline on 2026-10-21: the contract and operation ids from issuing the unmodified `examples/DemoToken.yaml` of `RGB-WG/rgb` (the id is the same on every run, because the file fixes the timestamp and seal), the codex id from importing `examples/RGB20-FNA.issuer`, and the `at:` token from `rgb invoice -w alice --nonce 0 --seal-only DemoToken` on the example `alice` wallet. The operation id is the one `rgb state -g` prints before `:0`, `:1`, … .
 
 In invoices, `rgb invoice` (rc.3) prints the contract id after a network prefix, as `contract:tb@contract:<id>/10@at:<token>/`, with the `contract:` HRI appearing twice. See [Invoices](./invoices.md) and the [CLI reference (v0.12)](./cli.md).
 
 </TabItem>
 </Tabs>
 
-Strict-types ids use Baid64 too: `semid:` (a type's semantic id), `stl:` (type library) and `sts:` (type system), all chunked with a mnemonic (`strict_types` 2.9.0 `src/ast/id.rs`, `src/typelib/id.rs`, `src/typesys/id.rs`).
+Strict-types ids use Baid64 too: `semid:` (a type's semantic id), `stl:` (type library) and `sts:` (type system), all chunked with a mnemonic (`src/ast/id.rs`, `src/typelib/id.rs`, `src/typesys/id.rs` in both `strict_types` 2.9.0 for Line A and `rgb-strict-types` 1.0.4 for Line B).
 
 ### Reference implementation
 
-This Python sketch follows `baid64` 0.4.x. It reproduces the real ids above, including the embedded checksums of the `utxob:` and `at:` examples:
+This Python sketch follows `baid64` 0.4.x. It reproduces the real ids above, including the embedded checksums of the `utxob:` and `at:` examples (checked on 2026-10-21; for `at:` use `embed=True, first=8, size=8` on the 30-byte payload):
 
 ```python
 import base64, hashlib
@@ -150,6 +150,6 @@ tH(tag, data) = SHA-256( SHA-256(tag) ‖ SHA-256(tag) ‖ data )
 | `urn:ubideco:mpc:commitment#2024-01-31` | MPC commitment | both |
 | `urn:ubideco:merkle:node#2024-01-31` | Merkle nodes and MPC leaves | both |
 
-Sources: `const TAG` in `rgb-consensus` 0.11.1, `ultrasonic` 0.12.0, `bp-core` 0.12.0 and `commit_verify` 0.12.0. Merkle nodes commit to their branching, depth and width as well as the two children, and children are **not** sorted ([MPC](/core-concepts/bitcoin/multi-protocol-commitments)).
+Sources: `const TAG` in `rgb-consensus` 0.11.1, `ultrasonic` 0.12.0, `bp-seals` 0.12.0 (`src/txout.rs`, in the `bp-core` repo) and `commit_verify` 0.12.0. Merkle nodes commit to their branching, depth and width as well as the two children, and children are **not** sorted ([MPC](/core-concepts/bitcoin/multi-protocol-commitments)).
 
 RGB never uses Bitcoin's double SHA-256 for its own ids. That appears only in Bitcoin's txids and block hashes.
