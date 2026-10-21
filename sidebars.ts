@@ -13,7 +13,6 @@ const sidebars: SidebarsConfig = {
         'getting-started/two-rgbs',
         'getting-started/installation',
         'getting-started/quick-start',
-        'getting-started/whats-new-0-12',
       ],
     },
     {
@@ -71,7 +70,6 @@ const sidebars: SidebarsConfig = {
             'guides/contracts/genesis',
             'guides/contracts/state-transitions',
             'guides/contracts/bundles',
-            'guides/contracts/contractum',
           ],
         },
         {
@@ -123,14 +121,16 @@ const sidebars: SidebarsConfig = {
       label: 'Reference',
       collapsed: true,
       items: [
-        'technical-reference/cli',
         'technical-reference/cli-v011',
+        'technical-reference/cli',
         'technical-reference/invoices',
         'technical-reference/consignments',
         'technical-reference/interfaces',
         'technical-reference/strict-types',
         'technical-reference/encodings',
         'technical-reference/ecosystem',
+        'getting-started/whats-new-0-12',
+        'guides/contracts/contractum',
         'technical-reference/troubleshooting',
         'technical-reference/faq',
         'technical-reference/glossary',
