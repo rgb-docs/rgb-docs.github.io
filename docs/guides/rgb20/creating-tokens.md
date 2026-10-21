@@ -141,7 +141,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 - `issue_asset_nia` is offline. Each entry in `amounts` becomes a separate allocation on a separate UTXO, which must already exist (`create_utxos`).
 - rgb-lib puts empty terms in genesis. To set your own terms or details, use the Rust builder below.
 - The [RGB Lightning Node](/guides/lightning/overview) exposes the same call as `POST /issueassetnia` with `{"ticker", "name", "precision", "amounts"}`.
-- Bindings for Kotlin, Swift, Python and Node.js (npm `rgb-lib`) have the same functions.
+- The Kotlin, Swift, Python and Node.js (npm `rgb-lib`) bindings expose `issue_asset_nia` too (as `issueAssetNIA` in Node.js). The Node.js bindings lack the IFA calls (`issueAssetIFA`, `inflate`, `burn`); see [JavaScript and TypeScript](/guides/development/rgbjs).
 
 ### With the Rust contract builder
 
