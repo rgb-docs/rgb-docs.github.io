@@ -5,7 +5,7 @@ description: The deterministic virtual machine that runs RGB contract scripts. W
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 import Tabs from '@theme/Tabs';
@@ -25,12 +25,12 @@ Both lines run contract scripts in AluVM, but in two very different versions: zk
 |---|---|---|
 | Crates | [`aluvm`](https://github.com/AluVM/aluvm) 0.12.0, [`zk-aluvm`](https://github.com/AluVM/zk-aluvm) 0.12.0, [`ultrasonic`](https://github.com/AluVM/ultrasonic) 0.12.0 | [`rgb-aluvm`](https://github.com/rgb-protocol/rgb-aluvm) 0.11.1, a fork of AluVM 0.11 |
 | Design | A rewrite: a minimal control-flow core plus ISA extensions, aimed at future zk-STARK proving | The classic AluVM 0.11 with a large ALU instruction set |
-| Data registers | 16 field-element registers `E1`–`E8`, `EA`–`EH` (each an `fe256`), plus the field-order register `FQ` | Integer `a8`…`a1024`, float `f16b`…`f512`, byte `r128`…`r8192` (32 of each size), and 16 string registers `s16` (up to 64 KiB each) |
+| Data registers | 16 field-element registers `E1`–`E8`, `EA`–`EH` (each an `fe256`), plus the field-order register `FQ`; USONIC adds four `u16` iterator registers `UI1`–`UI4` | Integer `a8`…`a1024`, float `f16b`…`f512`, byte `r128`…`r8192` (32 of each size), and 16 string registers `s16` (up to 64 KiB each) |
 | Status registers | `CK` (check, ok/fail), `CO` (test result), `CH` (halt on failure), `CF` (failure count) | One flag, `st0` |
-| Call stack | At most 255 frames | At most 65,536 frames |
-| Loop bound | Complexity limit only (`CA`/`CL`); `CY` exists but nothing increments it | Jump counter `cy0` (u16, max 2^16 jumps) plus optional complexity limit `cl0` |
+| Call stack | At most 255 frames | A 65,536-entry `cs0`, but in 0.11.1 `ret` always stops the program (see the [instruction set](./instruction-set.md)) |
+| Loop bound | Complexity limit only (`CA`/`CL`); `CY` exists but nothing increments it | Jump counter `cy0` (u16, at most 2^16 − 1 jumps) plus optional complexity limit `cl0` |
 | Arithmetic | Field arithmetic only: `add`, `mul`, `neg`, `eq`, … | Integer and float arithmetic, bit operations, byte strings |
-| Crypto | None | Hashes `ripemd`, `sha2`, `blake3`; secp256k1 point ops `secpgen`, `secpmul`, `secpadd`, `secpneg`; `vts` checks a transition's signature |
+| Crypto | None | Hashes `ripemd`, `sha2`, `blake3`; secp256k1 point ops only behind a feature that `rgb-cmd` 0.11.1 doesn't enable; `vts` checks a transition's signature |
 | RGB state access | USONIC ISA: `cknxi`, `cknxo`, `ldw`, `ldi`, `ldo`, `rsti`, `rsto` | RGB ISA: `cnp`, `cns`, `cng`, `cnc`, `ldp`, `lds`, `ldf`, `ldg`, `ldc`, `ldm`, `svs`, `sas`, `sps`, `vts` |
 | Assembler macro | `uasm!` / `zk_aluasm!` | `rgbasm!` / `aluasm!` |
 
@@ -47,15 +47,15 @@ Sources: `aluvm-0.12.0/src/core/core.rs`, `zk-aluvm-0.12.0/src/core/core.rs`, `u
 | ISAE | Names of the instruction-set extensions the code uses | 255 (A), 64 (B) |
 | code | Bytecode | 65,535 bytes |
 | data | Read-only constants that instructions reference | 65,535 bytes |
-| libs | Ids of other libraries this one may call | 255 (B also caps a whole program at 1,024 libraries) |
+| libs | Ids of other libraries this one may call | 255 (B also declares a 1,024-library program limit, `LIBS_MAX_TOTAL`, which nothing enforces) |
 
 A library is identified by a hash of all four segments, its `LibId`. An entry point is a `LibSite`: library id plus code offset. Changing any constant in the data segment therefore changes the `LibId`, and the schema or codex that references it.
 
 There is no RAM, heap, stack segment, or input or output area. The only data comes from registers, the data segment, and the RGB-specific load instructions that read the operation being validated.
 
-**Complexity metering.** Each instruction has a complexity cost that is added to an accumulator (`CA` in A, `ca0` in B). If a limit is set (`CL`, `cl0`) and reached, execution stops with failure. Nobody pays a fee, but a contract can't make validators run forever. Line A codices set the limit in `verification_config`. The `ultrasonic` test codex uses 10,000,000.
+**Complexity metering.** Each instruction has a complexity cost that is added to an accumulator (`CA` in A, `ca0` in B). If a limit is set (`CL`, `cl0`) and reached, execution stops with failure. Nobody pays a fee, but a contract can't make validators run forever. Line A codices can set the limit in `verification_config`. The `ultrasonic` test codex uses 10,000,000. `CoreConfig::default()` sets no limit (`complexity_lim: None`).
 
-**The only output is pass or fail.** A script can't produce new state. The operation declares its new state, and the script checks it. Line B also reads an error code from `a8[0]` when a script fails.
+**The only output is pass or fail.** A script can't produce new state. The operation declares its new state, and the script checks it. Both lines read an error code when a script fails: `a8[0]` in B, and in A `E1` for a verifier or `E8` for a lock script (`ultrasonic` `src/codex.rs`).
 
 ## Where AluVM sits in validation
 
@@ -64,9 +64,9 @@ Not all validation is AluVM. Seals, commitments, consignment structure and state
 <Tabs groupId="rgb-line">
 <TabItem value="b" label="v0.11 (rgb-cmd)">
 
-Each genesis or transition type in a schema can name a `validator: Option<LibSite>`. `rgb-consensus` runs it **last**, after checking the operation against the schema (`src/validation/logic.rs`). It puts the operation type in `a16[0]` and reads an error code from `a8[0]` on failure.
+Each genesis or transition type in a schema can name a `validator: Option<LibSite>`. `rgb-consensus` runs it **last**, after checking the operation against the schema (`src/validation/logic.rs`). For a transition it puts the transition type in `a16[0]` (genesis leaves it unset), and it reads an error code from `a8[0]` on failure.
 
-This is the real NIA script from `rgb-schemas` 0.11.1 (`src/nia.rs`):
+This is the NIA script from `rgb-schemas` 0.11.1 (`src/nia.rs`). The instructions are verbatim, and the comments are this site's own:
 
 ```rust
 rgbasm! {

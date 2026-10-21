@@ -5,7 +5,7 @@ description: The real AluVM instructions in each RGB line. The zk-AluVM 0.12 con
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 import Tabs from '@theme/Tabs';
@@ -34,13 +34,15 @@ Line B runs `rgb-aluvm` 0.11.1, a fork of AluVM 0.11, with the RGB ISA extension
 | 0x01 | `test` | Stop if `st0` is false, otherwise do nothing |
 | 0x02 | `jmp offset` | Jump; increments `cy0` |
 | 0x03 | `jif offset` | Jump if `st0` is true; increments `cy0` |
-| 0x04 | `routine offset` | Call a subroutine in the same library; increments `cy0`, pushes the return site to `cs0` |
-| 0x05 | `call lib:offset` | Call another library; increments `cy0` and `cp0`, pushes the return site |
-| 0x06 | `exec lib:offset` | Jump to another library with no return; doesn't touch `cy0` or the call stack |
-| 0x07 | `ret` | Return to the site on top of `cs0`; doesn't change `cy0` |
+| 0x04 | `routine offset` | Call a subroutine in the same library; increments `cy0` and writes `cs0` (see the note below) |
+| 0x05 | `call lib:offset` | Call another library; same call-stack handling as `routine` |
+| 0x06 | `exec lib:offset` | Jump to another library with no return; increments `cy0`, leaves the call stack alone |
+| 0x07 | `ret` | Return to the site on top of `cs0`; with an empty stack, stop; doesn't change `cy0` |
 | 0xFF | `nop` | Nothing |
 
-`cy0` is a `u16`. A script can make at most 2^16 jumps. Control-flow instructions cost complexity 2 each (`src/isa/exec.rs`).
+`cy0` is a `u16`, so a script can make at most 2^16 − 1 jumps (`checked_add`). Control-flow instructions cost complexity 2 each (`src/isa/exec.rs`).
+
+**Call-stack note (0.11.1).** `CoreRegs::call` writes the calling instruction's own site to `cs0[cp0]` and checks `cp0 + 1` for overflow, but never stores the incremented `cp0` (`src/reg/core_regs.rs:183-202`). `cp0` stays 0, so `ret` always finds an empty stack and stops the program. Nested subroutines therefore don't return in 0.11.1. The schemas in `rgb-schemas` 0.11.1 only use `ret` to end a script, which works.
 
 ### ALU (opcodes 0x08–0x3F)
 
@@ -51,7 +53,7 @@ Two-operand forms: the result goes into the **second** register, e.g. `add.{flag
 | Set / clear | `clr`, `put`, `putif` |
 | Move and convert | `mov`, `dup`, `swp`, `cpy`, `cnv`, `spy` |
 | Compare | `gt`, `lt`, `eq`, `ifz`, `ifn`, `st`, `inv` (these set `st0`) |
-| Arithmetic | `add`, `sub`, `mul`, `div`, `rem`, `stp`, `neg`, `abs` |
+| Arithmetic | `add`, `sub`, `mul`, `div`, `rem`, `inc`, `dec`, `neg`, `abs` (`inc`/`dec` and `add`/`sub` with an immediate are the `Stp` instruction) |
 | Bitwise | `and`, `or`, `xor`, `not`, `shl`, `shr`, `scl`, `scr`, `rev` |
 | Byte strings (`s16`) | `put`, `mov`, `swp`, `fill`, `len`, `cnt`, `eq`, `con`, `find`, `extr`, `inj`, `join`, `splt`, `ins`, `del`, `rev` |
 
@@ -64,7 +66,9 @@ Arithmetic overflow either wraps or leaves the result undefined, depending on th
 | 0x80 | `ripemd s16[x],r160[y]` | RIPEMD-160 of a string register |
 | 0x81 / 0x82 | `sha2 s16[x],r256[y]` / `r512[y]` | SHA-256 / SHA-512 |
 | 0x84 | `blake3 s16[x],r256[y]` | BLAKE3 |
-| 0x88–0x8B | `secpgen`, `secpmul`, `secpadd`, `secpneg` | secp256k1 point operations |
+| 0x88–0x8B | `secpgen`, `secpmul`, `secpadd`, `secpneg` | secp256k1 point operations, only with `rgb-aluvm`'s optional `secp256k1` feature |
+
+No crate in the `rgb-cmd` 0.11.1 chain enables that feature: `rgb-consensus` 0.11.1 asks for `rgb-ascii-armor` and `std` only (its `Cargo.toml`). In that build, the secp opcodes don't exist.
 
 None of these verifies a signature over arbitrary data. The only signature check is the RGB ISA's `vts`, which checks the operation's own `signature` field. The PFA (permissioned fungible asset) schema uses it to require the issuer's key on every transfer (`rgb-schemas` 0.11.1 `src/pfa.rs`).
 
@@ -96,7 +100,7 @@ The NIA script on the [overview](./overview.md#where-aluvm-sits-in-validation) p
 
 ## zk-AluVM 0.12
 
-Line A runs `aluvm` 0.12.0 (control flow), `zk-aluvm` 0.12.0 (GFA256 field arithmetic) and `ultrasonic` 0.12.0 (USONIC state access). Opcodes 0x00–0x10 are the core. Everything above belongs to ISA extensions (`aluvm` `src/isa/ctrl/bytecode.rs`).
+Line A runs `aluvm` 0.12.0 (control flow), `zk-aluvm` 0.12.0 (GFA256 field arithmetic) and `ultrasonic` 0.12.0 (USONIC state access). Opcodes 0x00–0x10 are the core (`aluvm` `src/isa/ctrl/bytecode.rs`). 0x11–0x3F are reserved, GFA256 uses 0x40–0x45 (`zk-aluvm` `src/gfa/bytecode.rs`) and USONIC uses 0x80–0x8F (`ultrasonic` `src/isa/bytecode.rs`).
 
 ### Control flow (core)
 
@@ -137,8 +141,8 @@ Field arithmetic over 256-bit elements in registers `E1`–`E8` and `EA`–`EH`,
 | `test src` | Set `CO` to ok if `src` holds a value, to failed if it is undefined |
 | `clr dst` | Make `dst` undefined |
 | `put dst, data` | Load a value from the data segment |
-| `put dst, 0` / `put dst, 2^n` | Load a constant |
-| `fits src, bits` | Check that `src` fits in 8, 16, 24, 32, 48, 64, 96 or 128 bits; sets `CO` |
+| `put dst, 0` / `put dst, <const>` | Load zero, or one of four built-in constants: 1, `u64::MAX`, `u128::MAX`, or the field order minus one (`ConstVal`). Other literals assemble to a data-segment load |
+| `fits src, bits` | Check that `src` fits in 8, 16, 24, 32, 48, 64, 96 or 128 bits; sets `CO`. In 0.12.0 the bytecode decoder turns 128 back into 96 (`src/gfa/instr.rs:296`) |
 | `mov dst, src` | Copy |
 | `eq src1, src2` | Compare; sets `CO` |
 | `neg dst, src` | Field negation |
