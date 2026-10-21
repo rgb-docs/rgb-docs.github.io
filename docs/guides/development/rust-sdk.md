@@ -5,7 +5,7 @@ description: The Rust crates for each RGB line, rgb-lib and rgb-ops/rgb-api for 
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 import Tabs from '@theme/Tabs';
@@ -19,12 +19,12 @@ Each line has its own crates, and they don't interoperate. See [Two RGB lines](/
 
 | | Line B: v0.11 | Line A: v0.12 |
 |---|---|---|
-| For wallets and apps | [`rgb-lib`](https://docs.rs/rgb-lib/0.3.0-beta.7) 0.3.0-beta.7 (2026-07-17), or 0.2.2 stable | [`rgb-runtime`](https://docs.rs/rgb-runtime/0.12.0-rc.3) 0.12.0-rc.3, imported as `rgbp` |
-| Lower level | [`rgb-api`](https://docs.rs/rgb-api/0.11.1) (imported as `rgb`), [`rgb-ops`](https://docs.rs/rgb-ops/0.11.1) (`rgbstd`), `rgb-consensus` (`rgbcore`), `rgb-schemas` (`schemata`), all 0.11.1 | [`rgb-std`](https://docs.rs/rgb-std/0.12.0-rc.3) 0.12.0-rc.3 (`rgb`), `rgb-core` 0.12.0 |
+| For wallets and apps | [`rgb-lib`](https://docs.rs/rgb-lib/0.3.0-beta.7) 0.3.0-beta.7 (2026-07-17). The last non-beta, 0.2.2 (2023), is built on RGB 0.10 and works with neither line. | [`rgb-runtime`](https://docs.rs/rgb-runtime/0.12.0-rc.3) 0.12.0-rc.3, imported as `rgbp` |
+| Lower level | [`rgb-api`](https://github.com/rgb-protocol/rgb-api/tree/0.11.1) (imported as `rgb`), [`rgb-ops`](https://github.com/rgb-protocol/rgb-ops/tree/0.11.1) (`rgbstd`), `rgb-consensus` (`rgbcore`), `rgb-schemas` (`schemata`), all 0.11.1 | [`rgb-std`](https://docs.rs/rgb-std/0.12.0-rc.3) 0.12.0-rc.3 (`rgb`), `rgb-core` 0.12.0 |
 | Minimum Rust | 1.85; rgb-lib needs 1.88 | 1.85 |
 | Chain access | Electrum or Esplora indexer | Electrum or Esplora indexer |
 
-Neither line needs a Bitcoin Core RPC connection. Pin every version exactly: Cargo never matches a pre-release such as `0.12.0-rc.3` from a plain `"0.12"`. The crate called `rgb` on crates.io is an unrelated pixel-colour library.
+docs.rs failed to build `rgb-api` and `rgb-ops` 0.11.1, so the links above go to the source. Neither line needs a Bitcoin Core RPC connection. Pin every version exactly: Cargo never matches a pre-release such as `0.12.0-rc.3` from a plain `"0.12"`. The crate called `rgb` on crates.io is an unrelated pixel-colour library.
 
 <Tabs groupId="rgb-line">
 <TabItem value="b" label="v0.11 (rgb-cmd)">
@@ -56,6 +56,7 @@ const PROXY: &str = "rpc://127.0.0.1:3000/json-rpc";
 fn demo(expiry: u64) -> Result<(), Error> {
     let keys = generate_keys(BitcoinNetwork::Regtest, WitnessVersion::Taproot);
     // Store keys.mnemonic securely. It is not enough to restore RGB assets on its own.
+    std::fs::create_dir_all("./data")?; // Wallet::new fails with InexistentDataDir otherwise
     let mut wallet = Wallet::new(
         WalletData {
             data_dir: "./data".to_string(),
@@ -100,7 +101,7 @@ fn demo(expiry: u64) -> Result<(), Error> {
 }
 ```
 
-The rest of the API: `list_assets`, `get_asset_balance`, `list_transfers`, `list_unspents`, `sync`, `send_begin`/`send_end` with `sign_psbt` (for external signers), `issue_asset_ifa`/`_uda`/`_cfa`, and `rgb_lib::wallet::restore_backup(path, password, target_dir)`. The [Kotlin](https://github.com/RGB-Tools/rgb-lib-kotlin), [Swift](https://github.com/RGB-Tools/rgb-lib-swift), [Python](https://github.com/RGB-Tools/rgb-lib-python) and [Node.js](./rgbjs.md) bindings expose the same calls.
+The rest of the API: `list_assets`, `get_asset_balance`, `list_transfers`, `list_unspents`, `sync`, `send_begin`/`send_end` with `sign_psbt` (for external signers), `issue_asset_ifa`/`_uda`/`_cfa`, and `rgb_lib::wallet::restore_backup(path, password, target_dir)`. The [Kotlin](https://github.com/RGB-Tools/rgb-lib-kotlin), [Swift](https://github.com/RGB-Tools/rgb-lib-swift) and [Python](https://github.com/RGB-Tools/rgb-lib-python) bindings expose the same calls. The [Node.js](./rgbjs.md) bindings cover a subset: at 0.3.0-beta.7 they have no `issueAssetIFA`, `inflate` or `burn`, and `AssetSchema` has no `Ifa`.
 
 :::danger Use each wallet on one device only
 The rgb-lib README warns that using the same mnemonic on more than one device "can lead to RGB asset loss due to improper UTXO management". rgb-lib expects to manage every UTXO of its wallet.
@@ -113,10 +114,13 @@ These are the crates `rgb-cmd` is built from. Use them for tooling, or for a wal
 ```toml
 [dependencies]
 rgb-ops = { version = "=0.11.1", features = ["fs"] }
-rgb-api = "=0.11.1"
+rgb-api = { version = "=0.11.1", features = ["bp", "fs"] } # or "bdk" for a BDK wallet
+rgb-schemas = "=0.11.1"
 ```
 
-- **`rgbstd::persistence::Stock`** holds contracts. Create it with `Stock::in_memory()` or `Stock::load(provider, autosave)`. It has `import_kit`, `import_contract`, `contract_builder(issuer, schema_id, chain_net)`, `transition_builder(contract_id, name)` and `contract_wrapper::<NonInflatableAsset>(id)`, which gives typed readers such as `spec()`, `total_issued_supply()` and `allocations(filter)` (`src/persistence/stock.rs`).
+`rgb-api` has no default features. Without `bp` or `bdk` it has no wallet backend for `RgbWallet`.
+
+- **`rgbstd::persistence::Stock`** holds contracts. Create it with `Stock::in_memory()` or `Stock::load(provider, autosave)`. It has `import_kit`, `import_contract`, `contract_builder(issuer, schema_id, chain_net)`, `transition_builder(contract_id, name)` and `contract_wrapper::<NonInflatableAsset>(id)` (the type is from `rgb-schemas`), which gives typed readers such as `spec()`, `total_issued_supply()` and `allocations(filter)` (`src/persistence/stock.rs`).
 - **`rgb::RgbWallet`** in `rgb-api` pairs a `Stock` with a bp-wallet or BDK wallet and provides `pay`, `construct_psbt`, `transfer` and `history` (`src/wallet.rs`).
 
 [Genesis](../contracts/genesis.md) has a complete `ContractBuilder` example that was compiled and run against `rgb-ops` 0.11.1. The [rgb-schemas examples](https://github.com/rgb-protocol/rgb-schemas/tree/0.11.1/examples) issue and read every schema. Line B 0.11.1 has no interfaces, valencies or state extensions.

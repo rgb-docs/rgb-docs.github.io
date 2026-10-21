@@ -5,7 +5,7 @@ description: Real test environments for each RGB line, regtest Docker stacks wit
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 import Tabs from '@theme/Tabs';
@@ -67,7 +67,7 @@ The ports are bound to `127.0.0.1` here. Don't publish regtest RPC or indexer po
   bash demo.sh
   ```
 
-- **rgb-lib's own suite** is the reference for library behaviour. From a clone of rgb-lib, `cargo test --workspace --all-features` starts bitcoind, three electrs nodes, esplora and three proxies, then runs the integration tests under `src/wallet/test/`. Stop the services with `docker compose -f tests/compose.yaml down`. Coverage uses `cargo llvm-cov` (`tests/coverage.sh`).
+- **rgb-lib's own suite** is the reference for library behaviour. From a clone of rgb-lib, `cargo test --workspace --all-features` runs `tests/regtest.sh prepare_tests_environment`, which builds two images and starts regtest and signet bitcoind, four electrs nodes, esplora, three proxies, a reject-list server and a multisig hub, then runs the integration tests under `src/wallet/test/`. The services keep running afterwards. Stop them with `tests/regtest.sh stop_services`, which runs `docker compose --profile '*' down`, so the services in the `tests` profile stop too. Coverage uses `cargo llvm-cov` (`tests/coverage.sh`).
 - **RGB Lightning Node** has `./regtest.sh start`, `mine <blocks>`, `sendtoaddress <address> <amount>` and `stop` in its repo ([README](https://github.com/RGB-Tools/rgb-lightning-node#run)).
 
 </TabItem>
@@ -75,7 +75,7 @@ The ports are bound to `127.0.0.1` here. Don't publish regtest RPC or indexer po
 
 ## Line A: offline demo, then regtest
 
-The `rgb` repo ships a demo with prepared wallets in `examples/data`. It issues `DemoToken`, makes an invoice, pays it and accepts the payment, with no node or indexer ([`examples/demo.sh`](https://github.com/RGB-WG/rgb/blob/v0.12.0-rc.3/examples/demo.sh)). It's the quickest regression test for the CLI. Run it in a fresh clone, because it rewrites `examples/data`:
+The `rgb` repo ships a demo with prepared wallets in `examples/data`. It issues `DemoToken`, makes an invoice, pays it and accepts the payment, with no node or indexer ([`examples/demo.sh`](https://github.com/RGB-WG/rgb/blob/v0.12.0-rc.3/examples/demo.sh)). It's the quickest regression test for the CLI. The script first builds the whole workspace with `cargo build --all-features` (Rust 1.85 or later) and runs `./target/debug/rgb`, not an installed binary. Run it in a fresh clone, because it rewrites `examples/data`:
 
 ```bash line=A
 git clone https://github.com/RGB-WG/rgb --branch v0.12.0-rc.3 --depth 1
@@ -100,7 +100,7 @@ The `.wallet` suffix works around an rc.3 naming bug ([CLI reference](/technical
 
 ## Public test networks
 
-Use **testnet4** (Bitcoin Core 28 or later) rather than testnet3. It's the default network of the Line A CLI, and Line B supports both (`ChainNet::BitcoinTestnet4` is its default). Faucets that responded on 2026-10-19: [mempool.space testnet4 faucet](https://mempool.space/testnet4/faucet) and [faucet.testnet4.dev](https://faucet.testnet4.dev/). Mempool's testnet4 Esplora API is `https://mempool.space/testnet4/api`.
+Use **testnet4** (Bitcoin Core 28 or later) rather than testnet3. It's the default network of the Line A CLI. The Line B CLI (`rgb-cmd` 0.11.1) still defaults to testnet3, so pass `-n testnet4`; `ChainNet::BitcoinTestnet4` is the default only in the `rgb-consensus` library. Faucets that responded on 2026-10-19: [mempool.space testnet4 faucet](https://mempool.space/testnet4/faucet) and [faucet.testnet4.dev](https://faucet.testnet4.dev/). Mempool's testnet4 Esplora API is `https://mempool.space/testnet4/api`.
 
 ## CI
 
@@ -128,4 +128,4 @@ jobs:
 - **Make IDs reproducible.** Line B's `issue_contract_raw(timestamp)` and a fixed `timestamp:` in a Line A params file give the same contract ID on every run. The CLI on Line B blinds genesis seals randomly, so its IDs change.
 - **Unit-test without a chain.** Line B's `Stock::in_memory()` and Line A's `Contracts` over a temporary `StockpileDir` let you issue and inspect contracts offline. See [Rust](./rust-sdk.md).
 - **Test the failure paths that lose money**: a consignment that never arrives, an expired invoice, a transfer the recipient NACKs (`refresh` should fail it), and a spend of a colored UTXO by another wallet (rgb-lib reports `Inconsistency` on `go_online`).
-- **Logs:** the Rust crates use the `log` facade. rgb-lib writes a log file into the wallet directory.
+- **Logs:** `rgb-api` and `rgb-runtime` (with its `log` feature) use the `log` facade. rgb-lib uses `slog` and writes a log file into the wallet directory.

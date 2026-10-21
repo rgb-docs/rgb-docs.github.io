@@ -5,7 +5,7 @@ description: Which guide to read for which RGB line, and the real tools each lin
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 # Guides Overview
@@ -44,8 +44,8 @@ If you're not sure, use Line B. Neither line can read the other's contracts, inv
 |---|---|
 | [Creating fungible tokens](./rgb20/creating-tokens.md) and [transferring them](./rgb20/transferring-assets.md) | both |
 | [Secondary issuance](./rgb20/secondary-issuance.md) (IFA) | B |
-| [Collectible fungible assets](./rgb25/overview.md) (CFA) | B |
-| [Unique digital assets](./rgb21/creating-nfts.md) (UDA): [metadata](./rgb21/metadata-attachments.md), [transfers](./rgb21/transferring-nfts.md) | B |
+| [Collectible fungible assets](./rgb25/overview.md) (CFA) | B, plus a note on a third-party v0.12 RGB25 issuer |
+| [Unique digital assets](./rgb21/creating-nfts.md) (UDA): [metadata](./rgb21/metadata-attachments.md), [transfers](./rgb21/transferring-nfts.md) | B, plus issuing with a third-party v0.12 RGB21 issuer |
 
 **Lightning:** [overview](./lightning/overview.md), [asset channels](./lightning/asset-channels.md) and [routing](./lightning/routing.md). Line B only, through RGB Lightning Node.
 
@@ -63,6 +63,6 @@ If you're not sure, use Line B. Neither line can read the other's contracts, inv
 These appear in older RGB material, but they aren't the tools of either current line:
 
 - **`rgb-cli`, `rgb-node`, `lnp-node`** (crates.io): 0.9.x releases from 2023.
-- **`rgb-sdk`**: no such crate on crates.io, and `RGB-WG/rgb-sdk` was archived in 2022.
+- **`rgb-sdk`**: no such crate on crates.io, and `RGB-WG/rgb-sdk` is archived (last pushed 2022-06-06).
 - **`rgb`** (crates.io): an unrelated pixel-colour crate. The v0.12 library crate is `rgb-std`, which you import as `rgb`.
 - **`@rgbjs/*`** (npm): never published, so anyone could register the names. Don't install them.

@@ -5,7 +5,7 @@ description: What an RGB state transition contains on each line, how it is commi
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 import Tabs from '@theme/Tabs';
@@ -65,7 +65,7 @@ There's no anchor or proof inside the transition. All transitions of one contrac
 | 1 | Recipient | `rgb invoice --amount 100 <CONTRACT_ID>` |
 | 2 | Sender | `rgb transfer <INVOICE> <CONSIGNMENT> <PSBT>` writes the consignment and a PSBT that already contains the commitment |
 | 3 | Recipient | `rgb validate <CONSIGNMENT>` |
-| 4 | Sender | Sign the PSBT with the key holder (for example `bp-hot sign`), then `rgb finalize -p <PSBT>` |
+| 4 | Sender | Sign the PSBT with the key holder (for example `bp-hot sign`), then `rgb finalize -p <PSBT>` (`-p` publishes the transaction) |
 | 5 | Recipient | After the transaction confirms, `rgb accept <CONSIGNMENT>` (`-f` accepts before confirmation) |
 
 ```bash line=B
@@ -83,6 +83,10 @@ Each command also needs `-n regtest --electrum=localhost:50001` or your own inde
 <TabItem value="a" label="v0.12 (rgb-wallet)">
 
 ## Line A
+
+:::danger Release candidate, test networks only
+`rgb-wallet` 0.12.0-rc.3 refuses mainnet. Use testnet4, signet or regtest.
+:::
 
 In v0.12 a transition is an `Operation` ([`ultrasonic` 0.12.0 `src/operation.rs`](https://github.com/AluVM/ultrasonic/blob/v0.12.0/src/operation.rs)):
 
@@ -107,7 +111,7 @@ pub struct Operation {
 
 | Step | Who | Command |
 |---|---|---|
-| 1 | Recipient | `rgb invoice -w bob DemoToken 10` |
+| 1 | Recipient | `rgb invoice -w bob --nonce 0 DemoToken 10` |
 | 2 | Sender | `rgb pay -w alice <INVOICE> transfer.rgb transfer.psbt` writes the consignment and an unsigned PSBT |
 | 3 | Sender | Sign the PSBT with the wallet that holds the keys (`rgb` doesn't sign) |
 | 4 | Recipient | `rgb accept -w bob transfer.rgb` |
@@ -120,7 +124,7 @@ rgb accept -w bob transfer.rgb
 rgb finalize -w alice --broadcast --esplora transfer.psbt
 ```
 
-`pay` already completes the PSBT. Don't run `rgb complete` on it: `complete` is for bundles made with `rgb exec`. This is the flow of [`examples/demo.sh`](https://github.com/RGB-WG/rgb/blob/v0.12.0-rc.3/examples/demo.sh) plus signing and broadcast. All flags are in the [v0.12 CLI reference](/technical-reference/cli#pay). It runs on test networks only.
+`pay` already completes the PSBT. Don't run `rgb complete` on it: `complete` is for bundles made with `rgb exec`. This is the flow of [`examples/demo.sh`](https://github.com/RGB-WG/rgb/blob/v0.12.0-rc.3/examples/demo.sh) plus signing and broadcast. All flags are in the [v0.12 CLI reference](/technical-reference/cli#pay).
 
 </TabItem>
 </Tabs>

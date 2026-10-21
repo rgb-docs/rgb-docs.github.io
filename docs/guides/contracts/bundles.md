@@ -5,7 +5,7 @@ description: In RGB v0.11, a transition bundle holds all of one contract's trans
 rgb_line: B
 verified_with: rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 # Transition bundles
@@ -18,13 +18,13 @@ A **transition bundle** is the set of all state transitions **of one contract** 
 
 ## Why bundles exist
 
-One Bitcoin transaction can close seals of several contracts and several transitions of the same contract. For example, a payer might merge two allocations, or send tokens and inflation rights together. The witness transaction carries a single commitment, so RGB arranges the data in two layers:
+One Bitcoin transaction can close seals of several contracts and several transitions of the same contract. For example, a payer might merge two allocations, or send tokens and inflation rights together. The witness transaction carries a single commitment, so RGB arranges the data in three levels:
 
 1. **Per contract:** all transitions of contract *C* in this transaction form one `TransitionBundle`. Its `BundleId` goes into the MPC tree.
 2. **Across contracts:** the [MPC](/core-concepts/bitcoin/multi-protocol-commitments) (multi-protocol commitment) tree has one leaf per contract, at a position set by the contract ID. Empty leaves are filled with random data.
 3. **On chain:** the MPC root goes into one tapret or opret output ([DBC](/core-concepts/bitcoin/deterministic-commitments)).
 
-So batching many contracts into one transaction is done by the MPC tree, not by the bundle. Source: [State Transitions](https://github.com/rgb-protocol/RGB-Documentation/blob/master/rgb-state-and-operations/state-transitions.md) in the official docs, and the glossary entry "Transition Bundle".
+So batching many contracts into one transaction is done by the MPC tree, not by the bundle. Source: [State Transitions](https://docs.rgb.info/rgb-state-and-operations/state-transitions) in the official docs, and the glossary entry "Transition Bundle".
 
 ## The structure
 

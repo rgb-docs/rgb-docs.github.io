@@ -5,7 +5,7 @@ description: Opening, checking and closing RGB asset channels with the RGB Light
 rgb_line: B
 verified_with: rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 # Asset channels
@@ -25,7 +25,7 @@ An RGB channel is a Lightning channel that also holds a balance of **one** RGB a
 | `peer_pubkey_and_opt_addr` | `<pubkey>@<host>:<port>` |
 | `capacity_sat` | Bitcoin capacity. An RGB channel needs at least **30,010 sats**. Every channel must be between 5,506 and 16,777,215 sats. |
 | `push_msat` | Bitcoin given to the peer at opening |
-| `asset_id`, `asset_amount` | The RGB contract and the amount you put in (at least 1). Give both or neither. |
+| `asset_id`, `asset_amount` | The RGB contract and the amount you put in (at least 1). Give both or neither. The units must already be spendable on chain in the node's RGB wallet. |
 | `push_asset_amount` | Asset units given to the peer at opening (at most `asset_amount`) |
 | `public` | Announce the channel in gossip |
 | `with_anchors` | Must be `true` for RGB channels |
@@ -61,7 +61,7 @@ curl -X POST -H "Content-type: application/json" \
 - **Force close** (`"force": true`): the latest commitment transaction is broadcast. It already anchors the RGB state of each output through its OP_RETURN commitment, so the assets settle on chain with it. Your own output stays timelocked as usual in Lightning.
 
 :::danger Alpha software
-RLN uses a fixed fee rate and has no CPFP or anchor fee bumping (maintainers, 2026-06-23). A force close can get stuck in a fee spike. Use only amounts you can afford to lose, on regtest or testnet.
+RLN uses a fixed fee rate (7 sat/vB, `FEE_RATE` in `src/ldk.rs`) and has no CPFP or anchor fee bumping ([maintainers, 2026-06-23](https://rgb.info/rgb-lightning-roadmap/)). A force close can get stuck in a fee spike, and its static blinding factor weakens privacy after a force close. A dynamic fee estimator is proposed in [RLN PR #177](https://github.com/RGB-Tools/rgb-lightning-node/pull/177) (open on 2026-10-21). Two open security fixes, [#180](https://github.com/RGB-Tools/rgb-lightning-node/pull/180) (invoice underpayment) and [#181](https://github.com/RGB-Tools/rgb-lightning-node/pull/181) (routing-node drain), aren't merged either; see [RGB on Lightning](/guides/lightning/overview). Use only amounts you can afford to lose, on regtest or testnet.
 :::
 
 There is no per-channel backup. `POST /backup` writes an encrypted backup of the whole node.

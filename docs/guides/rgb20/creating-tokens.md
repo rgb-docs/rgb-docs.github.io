@@ -5,7 +5,7 @@ description: Issue a fixed-supply fungible token as an NIA contract (v0.11, with
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 import Tabs from '@theme/Tabs';
@@ -100,7 +100,7 @@ rgb-lib = "=0.3.0-beta.7"
 ```rust
 use rgb_lib::keys::{generate_keys, WitnessVersion};
 use rgb_lib::wallet::{DatabaseType, OnlineOptions, SinglesigKeys, Wallet, WalletData};
-use rgb_lib::BitcoinNetwork;
+use rgb_lib::{AssetSchema, BitcoinNetwork};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let network = BitcoinNetwork::Regtest;
@@ -114,7 +114,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             bitcoin_network: network,
             database_type: DatabaseType::Sqlite,
             max_allocations_per_utxo: 5,
-            supported_schemas: vec![], // empty = every schema rgb-lib supports
+            // Must not be empty: an empty list fails with NoSupportedSchemas,
+            // despite the field's doc comment (src/wallet/core.rs).
+            supported_schemas: vec![AssetSchema::Nia],
         },
         SinglesigKeys::from_keys(&keys, None),
     )?;
@@ -139,11 +141,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 - `issue_asset_nia` is offline. Each entry in `amounts` becomes a separate allocation on a separate UTXO, which must already exist (`create_utxos`).
 - rgb-lib puts empty terms in genesis. To set your own terms or details, use the Rust builder below.
 - The [RGB Lightning Node](/guides/lightning/overview) exposes the same call as `POST /issueassetnia` with `{"ticker", "name", "precision", "amounts"}`.
-- Bindings for Kotlin, Swift, Python and Node.js (npm `rgb-lib`) have the same functions.
+- The Kotlin, Swift, Python and Node.js (npm `rgb-lib`) bindings expose `issue_asset_nia` too (as `issueAssetNIA` in Node.js). The Node.js bindings lack the IFA calls (`issueAssetIFA`, `inflate`, `burn`); see [JavaScript and TypeScript](/guides/development/rgbjs).
 
 ### With the Rust contract builder
 
-To control every field, build genesis with `rgb-ops` and `rgb-schemas` 0.11.1. This is the core of [`examples/nia.rs`](https://github.com/rgb-protocol/rgb-schemas/blob/0.11.1/examples/nia.rs) (`rgbstd` is the library name of the `rgb-ops` crate, and `schemata` that of `rgb-schemas`):
+To control every field, build genesis with `rgb-ops` and `rgb-schemas` 0.11.1:
+
+```toml
+[dependencies]
+rgb-ops = { version = "=0.11.1", features = ["fs"] }
+rgb-schemas = "=0.11.1"
+```
+
+Don't add these to a project that also uses `rgb-lib` 0.3.0-beta.7: rgb-lib pins `rgb-ops` and `rgb-schemas` to `=0.11.1-rc.11` (its `Cargo.toml`), so Cargo can't resolve both. This is the core of [`examples/nia.rs`](https://github.com/rgb-protocol/rgb-schemas/blob/0.11.1/examples/nia.rs) (`rgbstd` is the library name of the `rgb-ops` crate, and `schemata` that of `rgb-schemas`):
 
 ```rust
 use rgbstd::stl::{AssetSpec, ContractTerms, RicardianContract};
@@ -219,7 +229,7 @@ owned:
 
 To issue your own token, copy this file, give it a new `name`, and replace `seal` with an outpoint from `rgb seals -w <wallet>`. `rgb issue` with no file lists the issuers you have imported. The [Quick Start](/getting-started/quick-start) walks through setting up a testnet4 wallet, and the [CLI reference](/technical-reference/cli#issue) lists every option.
 
-There is no stable Rust issuing API to document for rc.3. The CLI calls `Contracts::issue` in `rgb-std` 0.12.0-rc.3.
+There is no stable Rust issuing API for rc.3. The CLI calls `RgbWallet::issue(CreateParams)` (`rgb-std` 0.12.0-rc.3 `src/popls/bp.rs`), which wraps `Contracts::issue` (`src/contracts.rs`).
 
 </TabItem>
 </Tabs>
