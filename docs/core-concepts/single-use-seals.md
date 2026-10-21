@@ -5,7 +5,7 @@ description: How RGB ties contract state to Bitcoin outputs. A seal is closed on
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 import Tabs from '@theme/Tabs';
@@ -92,7 +92,7 @@ pub struct TxoSeal {            // the resolved seal
 </TabItem>
 </Tabs>
 
-Neither line carries SPV Merkle proofs or block headers in the witness. Wallets look transactions up through an indexer (Electrum, Esplora) to check that they exist and are confirmed.
+At the pinned versions, neither line carries SPV Merkle proofs or block headers in the witness. Wallets look transactions up through an indexer (Electrum, Esplora) to check that they exist and are confirmed. Line B 0.11.2-rc.1 (release candidate, 2026-10-09) adds optional SPV proofs to consignments.
 
 ## Seals and contracts
 

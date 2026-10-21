@@ -5,7 +5,7 @@ description: The OP_RETURN commitment scheme. A 34-byte script holding the 32-by
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 # Opret
@@ -39,7 +39,7 @@ Sign and broadcast the transaction exactly as the RGB wallet produced it. If you
 
 ## Who uses it
 
-- **Line B.** `rgb-lib`, the library behind most Line B wallets, always builds opret commitments: it calls `set_rgb_close_method(CloseMethod::OpretFirst)` (`rgb-lib` `src/wallet/online.rs`). `rgb-cmd` uses opret for `--wpkh` wallets.
+- **Line B.** `rgb-lib`, Line B's wallet library, always builds opret commitments: it calls `set_rgb_close_method(CloseMethod::OpretFirst)` (`rgb-lib` `src/wallet/online.rs`). `rgb-cmd` uses opret for `--wpkh` wallets.
 - **Line A.** `rgb create --wpkh` makes an opret wallet. `--tapret-key-only` makes a tapret one.
 
 Opret has not been deprecated in either line.

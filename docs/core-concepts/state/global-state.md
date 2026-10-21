@@ -5,7 +5,7 @@ description: Append-only contract data that nobody owns, such as ticker, name, s
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 import Tabs from '@theme/Tabs';
@@ -23,7 +23,7 @@ Three things are often misunderstood:
 
 - **It is not public.** Like everything in RGB, it is client-side data. It is visible only to people who receive a consignment containing it. For example, everyone who receives the asset also receives its genesis, and with it the ticker and supply. Nobody else does.
 - **It is append-only.** An operation can add new global values. It can never change or delete existing ones. There are no global variables to update.
-- **There is no voting or consensus behind it.** An operation that adds global state is valid if it follows the contract's rules, which are the schema (B) or the codex (A). In Line B it must also spend at least one owned input. Its ordering comes from the Bitcoin transactions that anchor it. Two parties can't disagree about it, because the seals they spend are single-use.
+- **There is no voting or consensus behind it.** An operation that adds global state is valid if it follows the contract's rules, which are the schema (B) or the codex (A). In Line B it must also spend at least one owned input. Its ordering comes from the Bitcoin transactions that anchor it. Two parties who validate the same history get the same global state. But each holder only knows the global state on the branches of history they received: a holder may not know about a later issuance made on another branch.
 
 Typical pattern: the right to change something is an **owned** state (for example IFA's inflation allowance in Line B). Using that right emits new **global** data (the newly issued amount).
 
@@ -70,8 +70,8 @@ The CLI shows the field-element part as "verifiable state" and the raw part as "
 
 ```text
 Global: State name      	Conf. height	Verifiable state                	Unverifiable state              	RGB output
-	issued          	genesis     	10000                           	~                               	rtVWyitimkZyM4bDei2AcftvX0HKur8kfdf~0Ku2Ry8:3
-	ticker          	genesis     	"DEMO"                          	~                               	rtVWyitimkZyM4bDei2AcftvX0HKur8kfdf~0Ku2Ry8:0
+	issued          	genesis     	10000                           	~                               	FDqnQ~ReMcfI2N69Y1kMiLrrEIWnPzUvENfgqGbfw5M:3
+	ticker          	genesis     	"DEMO"                          	~                               	FDqnQ~ReMcfI2N69Y1kMiLrrEIWnPzUvENfgqGbfw5M:0
 ```
 
 `rgb-std` also derives **aggregated** state from global cells, e.g. total `supply`.

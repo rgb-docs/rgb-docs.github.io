@@ -5,7 +5,7 @@ description: How RGB anchors client-side data in a Bitcoin transaction, and the 
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 import Tabs from '@theme/Tabs';
@@ -80,7 +80,7 @@ Which one gets used depends on the wallet:
 <Tabs groupId="rgb-line">
 <TabItem value="b" label="v0.11 (rgb-cmd)">
 
-`rgb-lib`, the library behind most Line B wallets, always sets `CloseMethod::OpretFirst` (`rgb-lib` `src/wallet/online.rs`). `rgb-cmd` can also run a taproot wallet: `rgb create` takes `--tapret-key-only <KEY>` or `--wpkh <KEY>`.
+`rgb-lib`, Line B's wallet library, always sets `CloseMethod::OpretFirst` (`rgb-lib` `src/wallet/online.rs`). `rgb-cmd` can also run a taproot wallet: `rgb create` takes `--tapret-key-only <KEY>` or `--wpkh <KEY>`.
 
 </TabItem>
 <TabItem value="a" label="v0.12 (rgb-wallet)">

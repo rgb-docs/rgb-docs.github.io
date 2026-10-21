@@ -5,7 +5,7 @@ description: The taproot commitment scheme. The 64-byte leaf script, where it si
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 import Tabs from '@theme/Tabs';
@@ -72,9 +72,11 @@ Q = P + tH_TapTweak(P || script_root) · G
 | Commitment on the left, `R` is a leaf | leaf `C` | `TapBranch(T, C)` | `P` and the script of `C` |
 | Commitment on the left, `R` is a branch | branch `(X, Y)` | `TapBranch(T, R)` | `P` and the hashes of `X` and `Y` |
 
+These are the cases the verifier accepts. The wallet code at both pins only builds the first one: it commits into a taproot output with no existing script tree and fails with `TapTreeNonEmpty` otherwise ("TODO #10: support non-empty tap trees" in `rgb-psbt-utils` 0.11.1 `src/lib.rs` and `psbt` 0.12.0-rc.3 `src/csval/tapret.rs`).
+
 Revealing the right-hand partner shows that it can't hide a second commitment at depth 1. A leaf is shown as its script. A branch is shown as two child hashes, and branch and leaf hashes use different tags, so a branch can't pose as a 64-byte leaf.
 
-**The nonce.** The last byte of the leaf can be changed freely. Wallets "mine" it so the commitment hash `T` sorts to the right of `R`. Then the proof needs only `R`'s hash, and the scripts under `R` stay private.
+**The nonce.** The last byte of the leaf can be changed freely. The design lets a wallet "mine" it so the commitment hash `T` sorts to the right of `R`; then the proof needs only `R`'s hash, and the scripts under `R` stay private. The pinned wallet code always uses nonce 0, because it only commits into outputs with no script tree.
 
 This section follows the [docs.rgb.info tapret page](https://docs.rgb.info/commitment-layer/deterministic-bitcoin-commitments-dbc/tapret), which has full diagrams of each case.
 
@@ -102,7 +104,7 @@ The verifier rebuilds the leaf from the MPC commitment and the nonce. It combine
 :::danger Back up the tapret tweak
 A tapret output's key is `P` tweaked by a script tree only your RGB wallet knows. To spend the bitcoin later, the signer needs that tweak: the commitment and nonce, or the full `TapretProof`. A generic taproot wallet, hardware wallet or Bitcoin Core descriptor wallet that has only your seed **cannot** produce the signature. If you lose the RGB wallet data, the BTC in that output is unspendable, and so are the RGB assets assigned to it.
 
-- **Line B:** `rgb taprets` lists the tweaks a wallet knows. Back up the RGB data directory, not just the seed.
+- **Line B:** `rgb taprets` lists the tweaks a wallet knows (0.11.1; the command is removed in 0.11.2-rc.1). Back up the RGB data directory, not just the seed.
 - **Line A:** wallets made with `rgb create --tapret-key-only` keep the tweaks in the RGB data directory. Back it up the same way.
 :::
 

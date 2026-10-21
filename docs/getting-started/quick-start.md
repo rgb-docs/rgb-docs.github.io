@@ -5,7 +5,7 @@ description: Issue and transfer a test asset with rgb-cmd 0.11.1 on regtest, or 
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 import Tabs from '@theme/Tabs';
@@ -17,12 +17,12 @@ import TabItem from '@theme/TabItem';
 There are two separate walkthroughs, one per line. Their files, invoices and wallets can't be mixed. See [Two RGB lines](/getting-started/two-rgbs).
 :::
 
-Both walkthroughs issue a fungible asset and send part of it to a second wallet. Each follows its project's own demo: [rgb-sandbox](https://github.com/rgb-protocol/rgb-sandbox) for Line B, and [`examples/demo.sh`](https://github.com/RGB-WG/rgb/blob/v0.12.0-rc.3/examples/demo.sh) for Line A. Output shown as **real output** came from running the pinned binary offline on 2026-10-19. Steps that need a node or an indexer weren't run here. Their output is quoted from the upstream README, or left out.
+Both walkthroughs issue a fungible asset and send part of it to a second wallet. Each follows its project's own demo: [rgb-sandbox](https://github.com/rgb-protocol/rgb-sandbox) for Line B, and [`examples/demo.sh`](https://github.com/RGB-WG/rgb/blob/v0.12.0-rc.3/examples/demo.sh) for Line A. Output shown as **real output** came from running the pinned binary offline (2026-10-19, rechecked 2026-10-21). Steps that need a node or an indexer weren't run here. Their output is quoted from the upstream README, or left out.
 
 You need the CLI for your line installed first: see [Installation](/getting-started/installation).
 
 :::danger Before you move real value
-- **Send the consignment and get it accepted before you broadcast.** If the witness transaction is published and the recipient never gets the consignment, the assets are gone.
+- **Send the consignment, and have the recipient validate and approve it, before you broadcast.** Once the witness transaction is published, the consignment is the only proof of the new state. Keep your copy until the recipient has accepted it: if every copy is lost, the assets are gone.
 - **Let only the RGB tool spend the RGB wallet's coins.** A Bitcoin-only wallet that spends a UTXO holding RGB state destroys that state.
 - **Back up the RGB data directory**, not just the seed. A seed alone doesn't recover assets.
 :::
@@ -32,7 +32,7 @@ You need the CLI for your line installed first: see [Installation](/getting-star
 
 ## Line B: regtest with rgb-cmd 0.11.1
 
-This is the manual demo from the [rgb-sandbox README](https://github.com/rgb-protocol/rgb-sandbox#manual-demo), run with `rgb-cmd` 0.11.1. The sandbox itself pins 0.11.1-rc.6. `rgb-cmd` does the RGB work, and `bp-wallet` (`bp`, `bp-hot`) holds the keys and signs. For apps, [rgb-lib](https://github.com/RGB-Tools/rgb-lib) wraps all of this in one library.
+This is the manual demo from the [rgb-sandbox README](https://github.com/rgb-protocol/rgb-sandbox#manual-demo), run with `rgb-cmd` 0.11.1. The sandbox itself isn't on 0.11.1 final: its README installs 0.11.1-rc.6 and its `demo.sh` installs 0.11.1-rc.7. `rgb-cmd` does the RGB work, and `bp-wallet` (`bp`, `bp-hot`) holds the keys and signs. For apps, [rgb-lib](https://github.com/RGB-Tools/rgb-lib) wraps all of this in one library.
 
 ### 1. Start regtest and set up
 
@@ -40,7 +40,7 @@ This is the manual demo from the [rgb-sandbox README](https://github.com/rgb-pro
 git clone https://github.com/rgb-protocol/rgb-sandbox --recurse-submodules --shallow-submodules
 cd rgb-sandbox
 docker compose --profile electrum up -d
-cargo install bp-wallet --version 0.11.1-alpha.2 --root ./bp-wallet --features=cli,hot
+cargo install --locked bp-wallet --version 0.11.1-alpha.2 --root ./bp-wallet --features=cli,hot
 cargo install --locked rgb-cmd --version 0.11.1 --root ./rgb-cmd
 export PATH="$PWD/rgb-cmd/bin:$PWD/bp-wallet/bin:$PATH"
 export LNPBP_NETWORK=regtest
@@ -197,12 +197,12 @@ rgb -d data1 -w rcpt1 --electrum=localhost:50001 state "$contract_id"
 ## Line A: rgb-wallet 0.12.0-rc.3
 
 :::danger Release candidate, test networks only
-`rgb-wallet` 0.12.0-rc.3 refuses mainnet: it panics on `-n bitcoin`. Use testnet4 (the default), signet or regtest.
+`rgb-wallet` 0.12.0-rc.3 refuses mainnet: with `-n bitcoin` it panics on any command that loads contracts. Use testnet4 (the default), signet or regtest.
 :::
 
 ### 1. Offline demo with the upstream example data
 
-The `RGB-WG/rgb` repository ships two prepared wallets: `alice` in `examples/data` and `bob` in `examples/data2`. It also ships an issuer (codex) file, and a contract definition that allocates the supply to an output already in Alice's wallet. These steps follow `examples/demo.sh` and run without a network.
+The `RGB-WG/rgb` repository ships two prepared wallets: `alice` in `examples/data` and `bob` in `examples/data2`. It also ships an issuer (codex) file, and a contract definition that allocates the supply to an output already in Alice's wallet. These steps follow `examples/demo.sh`. Steps 1 to 3 run without a network. Step 4 (`pay`) needs an indexer.
 
 ```bash line=A
 git clone https://github.com/RGB-WG/rgb --branch v0.12.0-rc.3
@@ -261,13 +261,14 @@ rgb -d examples/data2 accept -w bob -u examples/DemoToken.rgb
 rgb -d examples/data state -go -w alice
 ```
 
-`-u` allows a contract Bob has never seen. `state` needs `-g` (global), `-o` (owned) or both.
+`-u` allows a contract Bob has never seen. In `backup`, `-f` only means "overwrite the file if it exists"; the contract is the positional `DemoToken`. `state` needs `-g` (global), `-o` (owned) or both.
 
 ### 3. Bob creates an invoice
 
 ```bash line=A
 rgb -d examples/data2 invoice -w bob --nonce 0 --seal-only DemoToken
-rgb -d examples/data2 invoice -w bob --nonce 0 DemoToken 10
+INVOICE=$(rgb -d examples/data2 invoice -w bob --nonce 0 DemoToken 10)
+echo "$INVOICE"
 ```
 
 The first command prints only Bob's seal, an auth token. Real output:
@@ -276,10 +277,10 @@ The first command prints only Bob's seal, an auth token. Real output:
 at:FWKMBVDc-NBk8dAZA-tYGt2HIP-MtzSRO17-8g3QvRIN-nuPjug
 ```
 
-The second prints the full invoice, `contract:tb@<contract id>/<value>@<seal>/`. When the same command is run for Alice's wallet, the real output is:
+The second prints the full invoice, `contract:tb@<contract id>/<value>@<seal>/`, and saves it in `INVOICE`. Real output:
 
 ```text
-contract:tb@contract:nztjpjRX-_NVDDgd-EHENsqL-AKsGsyV-F6LzljB-X4WTv0Y/10@at:VbJYsl3B-FccP_ZkJ-Yi49U0M6-DLNra14f-SyXj7URN-pmdnfQ/
+contract:tb@contract:nztjpjRX-_NVDDgd-EHENsqL-AKsGsyV-F6LzljB-X4WTv0Y/10@at:FWKMBVDc-NBk8dAZA-tYGt2HIP-MtzSRO17-8g3QvRIN-nuPjug/
 ```
 
 With `--wout`, the seal is a new output in the payer's transaction (`wout:…`) rather than one of Bob's UTXOs.
@@ -287,16 +288,22 @@ With `--wout`, the seal is a new output in the payer's transaction (`wout:…`) 
 ### 4. Alice pays, Bob accepts
 
 ```bash line=A
-rgb -d examples/data pay -w alice "$INVOICE" examples/transfer.rgb examples/transfer.psbt
+rgb -d examples/data pay -w alice --esplora "$INVOICE" examples/transfer.rgb examples/transfer.psbt
 rgb -d examples/data2 accept -w bob examples/transfer.rgb
 rgb -d examples/data2 state -go -w bob
 ```
 
-`pay` writes a consignment and a ready-to-sign binary PSBT, and prints nothing. The demo ends here, before anything is signed or broadcast. On a real network, Alice would sign the PSBT with whatever holds the wallet's keys (`rgb` doesn't sign), wait until Bob has accepted the consignment, and then run `rgb finalize -w alice --broadcast --esplora examples/transfer.psbt`. Don't run `complete` after `pay`. `complete` belongs to the `script` → `exec` workflow ([upstream Payments.md](https://github.com/RGB-WG/rgb/blob/v0.12.0-rc.3/doc/Payments.md)).
+`pay` writes a consignment and a ready-to-sign binary PSBT. It needs an indexer: `examples/demo.sh` calls it without one, and offline it stops with this real output:
+
+```text
+Error: no blockchain indexer specified; use either --esplora or --electrum argument
+```
+
+This page didn't run `pay` against a network, so its output isn't shown. The demo ends here, before anything is signed or broadcast. On a real network, Alice would sign the PSBT with whatever holds the wallet's keys (`rgb` doesn't sign), wait until Bob has accepted the consignment, and then run `rgb finalize -w alice --broadcast --esplora examples/transfer.psbt`. Don't run `complete` after `pay`. `complete` belongs to the `script` → `exec` workflow ([upstream Payments.md](https://github.com/RGB-WG/rgb/blob/v0.12.0-rc.3/doc/Payments.md)).
 
 ### 5. Your own testnet4 wallet
 
-To leave the demo data and use your own wallet, start from a BIP-32 account descriptor in the form `[fingerprint/84h/1h/0h]tpub…/<0;1>/*`. These steps weren't run for this page, because they need an indexer.
+To leave the demo data and use your own wallet, start from a BIP-32 account descriptor in the form `[fingerprint/84h/1h/0h]tpub…/<0;1>/*`. `init`, `create`, `fund` and `seals` were run offline for this page. `sync` needs an indexer and wasn't run.
 
 ```bash line=A
 rgb init

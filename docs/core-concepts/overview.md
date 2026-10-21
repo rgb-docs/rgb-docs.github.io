@@ -5,7 +5,7 @@ description: The ideas behind RGB, how they fit together, and where the two RGB 
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 # Core Concepts Overview
@@ -34,7 +34,8 @@ Alice owns 1000 on utxo_A.  Bob sends Alice an invoice naming a seal (his UTXO, 
 Alice writes a transition:  spend utxo_A → 600 to Bob's seal, 400 to her change seal.
 Alice builds a Bitcoin tx:  spends utxo_A; its first OP_RETURN or P2TR output commits to the transition.
 Alice sends Bob a consignment: the history from genesis to his 600, plus the anchors.
-Bob validates it, accepts it, and the Bitcoin tx confirms. The 600 is now Bob's.
+Bob validates it and tells Alice it's fine. Only then does Alice sign and broadcast.
+The Bitcoin tx confirms, Bob accepts the consignment, and the 600 is now Bob's.
 ```
 
 Nothing on chain says "RGB", shows amounts or names the contract. An observer sees an ordinary Bitcoin transaction with an `OP_RETURN` output (opret) or a taproot output (tapret).
@@ -44,7 +45,7 @@ Nothing on chain says "RGB", shows amounts or names the contract. An observer se
 | | Line B: v0.11 (rgb-cmd 0.11.1) | Line A: v0.12 (rgb-wallet 0.12.0-rc.3) |
 |---|---|---|
 | Contract rules | Schemas NIA, IFA, CFA, UDA, PFA (`rgb-schemas` 0.11.1); no separate interfaces | Codex plus API (SONIC / UltraSONIC), e.g. the `RGB20-FNA` codex |
-| State | Typed: owned `Declarative` / `Fungible` (u64) / `Structured`, global values, metadata | Memory cells of up to four 256-bit field elements, plus raw bytes the VM can't read; no metadata |
+| State | Typed: owned `Declarative` / `Fungible` (u64) / `Structured`, global values, metadata | Memory cells of up to four 256-bit field elements, plus raw bytes the VM can't read; no per-operation metadata (only contract-level `ContractMeta`) |
 | VM | `rgb-aluvm` 0.11.1 (a, f, r and s registers) | zk-AluVM 0.12 (field-element registers) |
 | Seals in invoices | `utxob:` (blinded UTXO), `wvout:` (witness output) | `at:` (auth token), `wout:` (witness output) |
 | Contract id | `rgb:Ca0d5l5K-Cr4Wm6I-…` | `contract:XgHwkqS4-RcYeRtr-…` |

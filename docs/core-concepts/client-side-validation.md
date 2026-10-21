@@ -5,7 +5,7 @@ description: Why RGB state is checked by the people who receive it, not by every
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 import Tabs from '@theme/Tabs';
@@ -109,7 +109,7 @@ Full flag lists: [CLI reference (v0.11)](/technical-reference/cli-v011) and [CLI
 ## Trust model
 
 - **You don't trust the sender.** Anything that fails validation is rejected, whatever the sender claims.
-- **You don't need a blockchain node for the contract**, only a Bitcoin indexer (your own or a third party's) to confirm that witness transactions exist and are mined. A dishonest indexer can hide or delay transactions, but it can't make invalid state look valid.
+- **You don't need a blockchain node for the contract**, only a Bitcoin indexer (your own or a third party's) to confirm that witness transactions exist and are mined. The indexer is trusted for that. It can't make a transition break the contract's rules, because the recipient checks the transaction against its txid and its commitment. But a dishonest or out-of-date indexer can report a witness as mined when it isn't, or miss a reorg, and the wallet would then accept state that Bitcoin doesn't back. Use an indexer you run or trust. Line B's 0.11.2-rc.1 notes say the same thing: they "document that the indexer is trusted" ([rgb-ops release notes](https://github.com/rgb-protocol/rgb-ops/releases/tag/0.11.2-rc.1)).
 - **Privacy.** Only the people a history passes through learn about it. Each recipient sees the history back to genesis for the state they receive, but nothing about other branches or other contracts.
 
 :::danger Back up RGB data, not just the seed
