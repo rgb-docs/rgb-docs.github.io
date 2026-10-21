@@ -128,6 +128,7 @@ assignments:
 ```bash line=B
 rgb -d data0 -w issuer issue "ssi:issuer" demo.yaml
 rgb -d data0 -w issuer contracts
+contract_id=$(rgb -d data0 -w issuer contracts 2>/dev/null | head -1 | cut -f1)
 ```
 
 Real output (the contract ID differs on every run, because genesis seals are blinded with random values):
@@ -140,12 +141,13 @@ rgb:7Wf1Rne9-BQWvPlL-P50XBTB-D1sZQlF-Wn7eRYV-3_wZZg8	BitcoinRegtest	2026-10-19	r
   Developer: ssi:issuer
 ```
 
-Save the contract ID for the next steps, for example `contract_id='rgb:7Wf1Rne9-…'` with your own ID (single quotes stop the shell expanding `~`). `rgb -d data0 -w issuer --electrum=localhost:50001 state "$contract_id"` shows the 1000 units on `outpoint_issue`.
+The last line saves the contract ID (the first column of `contracts`) in `contract_id` for the next steps. With several contracts, set it by hand instead, in single quotes so that the shell doesn't expand `~`: `contract_id='rgb:7Wf1Rne9-…'`. `rgb -d data0 -w issuer --electrum=localhost:50001 state "$contract_id"` shows the 1000 units on `outpoint_issue`.
 
 ### 6. Recipient: create an invoice
 
 ```bash line=B
-rgb -d data1 -w rcpt1 --electrum=localhost:50001 invoice --amount 100 "$contract_id"
+invoice=$(rgb -d data1 -w rcpt1 --electrum=localhost:50001 invoice --amount 100 "$contract_id")
+echo "$invoice"
 ```
 
 Example output, from the sandbox README:
@@ -154,7 +156,7 @@ Example output, from the sandbox README:
 rgb:Tk3d0h5w-8v4XYCg-7e~Sc0o-Lu6rp~X-~Jt7VHS-jqgzFD8/~/BF/bcrt:utxob:MSLQCKkW-w6caphB-12do1nJ-HNfgxvv-WE3zOOC-s8yZyHq-Ihoa5
 ```
 
-Save it as `invoice='rgb:…'` for the next step. The `utxob:` part is the recipient's outpoint, blinded so that the payer never learns it. Use the long option `--amount`: in 0.11.1, `invoice` gives the short flag `-a` to three different options.
+The invoice is saved in `invoice` for the next step. The `utxob:` part is the recipient's outpoint, blinded so that the payer never learns it. Use the long option `--amount`: in 0.11.1, `invoice` gives the short flag `-a` to three different options.
 
 ### 7. Sender: transfer
 
