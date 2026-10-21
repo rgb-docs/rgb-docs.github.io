@@ -66,7 +66,7 @@ There's no anchor or proof inside the transition. All transitions of one contrac
 | 2 | Sender | `rgb transfer <INVOICE> <CONSIGNMENT> <PSBT>` writes the consignment and a PSBT that already contains the commitment |
 | 3 | Recipient | `rgb validate <CONSIGNMENT>` |
 | 4 | Sender | Sign the PSBT with the key holder (for example `bp-hot sign`), then `rgb finalize -p <PSBT>` (`-p` publishes the transaction) |
-| 5 | Recipient | After the transaction confirms, `rgb accept <CONSIGNMENT>` (`-f` accepts before confirmation) |
+| 5 | Recipient | After the transaction confirms, `rgb accept <CONSIGNMENT>` (the `-f` flag is ignored in 0.11.1) |
 
 ```bash line=B
 rgb -d data1 -w rcpt1 invoice --amount 100 "$contract_id"
