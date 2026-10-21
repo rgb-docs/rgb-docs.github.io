@@ -64,7 +64,7 @@ An invoice looks like `rgb:<contract>/~/BF/bcrt:utxob:<blinded seal>`. Use `--ad
 
 rgb-lib does the whole exchange through an [RGB proxy server](https://github.com/RGB-Tools/rgb-proxy-server): the payer posts the consignment, the recipient fetches it, validates it and posts an ACK, and the payer then broadcasts. Both sides call `refresh` to move the transfer forward.
 
-This code is for `rgb-lib` 0.3.0-beta.7 (`src/wallet/singlesig.rs`, `src/wallet/online.rs`). It assumes two wallets set up and online as in [Issuing fungible tokens](/guides/rgb20/creating-tokens). It wasn't run for this page.
+This code is for `rgb-lib` 0.3.0-beta.7 (`src/wallet/singlesig.rs`, `src/wallet/online.rs`). It assumes two wallets, `alice` and `bob`, set up and online as in [Issuing fungible tokens](/guides/rgb20/creating-tokens) (`alice_online`, `bob_online`), and the `asset_id` String of an asset Alice holds. Inside a function returning `Result<_, Box<dyn std::error::Error>>` it passes `cargo check` (2026-10-21). It wasn't run.
 
 ```rust
 use std::collections::HashMap;
@@ -141,11 +141,11 @@ The invoice looks like `contract:tb@contract:<id>/10@at:<auth token>/`. Use `--w
 
 ### In Rust
 
-This is how rgb-wallet's own `pay` command does it, condensed from `cli/src/exec.rs` at v0.12.0-rc.3. `runtime` is an `rgbp::RgbRuntime` (crate `rgb-runtime`), built from a wallet and a contract stockpile with `RgbRuntime::with_components`. See `cli/src/opts.rs` for how the CLI builds one.
+This is how rgb-wallet's own `pay` command does it, condensed from `cli/src/exec.rs` at v0.12.0-rc.3. `runtime` is an `rgbp::RgbRuntime` (crate `rgb-runtime`), built from a wallet and a contract stockpile with `RgbRuntime::with_components`. See `cli/src/args.rs` for how the CLI builds one. The `fs` feature is required: it provides `consign_to_file` (through `rgb-std/binfile`) and the file-based `RgbpRuntimeDir`.
 
 ```toml
 [dependencies]
-rgb-runtime = "=0.12.0-rc.3"
+rgb-runtime = { version = "=0.12.0-rc.3", features = ["fs"] }
 rgb-std = "=0.12.0-rc.3"
 bp-std = "=0.12.0-rc.3"
 ```

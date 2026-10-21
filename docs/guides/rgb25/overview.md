@@ -74,7 +74,7 @@ To leave out an optional global, leave out its key. Writing `details: ~` makes `
 
 ### rgb-lib
 
-`issue_asset_cfa` in `rgb-lib` 0.3.0-beta.7 (`src/wallet/singlesig.rs`). Wallet setup is as in [Issuing fungible tokens](/guides/rgb20/creating-tokens).
+`issue_asset_cfa` in `rgb-lib` 0.3.0-beta.7 (`src/wallet/singlesig.rs`). Wallet setup is as in [Issuing fungible tokens](/guides/rgb20/creating-tokens), with `AssetSchema::Cfa` in `supported_schemas` (otherwise it fails with `UnsupportedSchema`). This passes `cargo check` (2026-10-21) but wasn't run.
 
 ```rust
 let asset = wallet.issue_asset_cfa(

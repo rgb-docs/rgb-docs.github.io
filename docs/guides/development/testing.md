@@ -111,7 +111,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: docker compose -f tests/compose.yaml up -d
       - run: |
           bcli="docker compose -f tests/compose.yaml exec -T -u blits bitcoind bitcoin-cli -regtest"

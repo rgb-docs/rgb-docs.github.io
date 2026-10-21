@@ -33,6 +33,7 @@ The owned state `assetOwner` is an `Allocation(TokenIndex, OwnedFraction)`. The 
 // the owned allocation's token index must equal the token's index
 put     a8[0],ERRNO_NON_EQUAL_IN_OUT;   // errno 0
 extr    s16[0],a32[0],a16[0];
+put     a16[1],0x00;
 lds     OS_ASSET,a16[1],s16[1];
 extr    s16[1],a32[1],a16[0];
 eq.n    a32[0],a32[1];
@@ -50,7 +51,7 @@ The script doesn't check `precision`, and rgb-lib accepts any value from 0 to 18
 
 ## With rgb-lib
 
-`issue_asset_uda` in `rgb-lib` 0.3.0-beta.7 (`src/wallet/singlesig.rs`). Wallet setup is as in [Issuing fungible tokens](/guides/rgb20/creating-tokens). This code wasn't run for this page.
+`issue_asset_uda` in `rgb-lib` 0.3.0-beta.7 (`src/wallet/singlesig.rs`). Wallet setup is as in [Issuing fungible tokens](/guides/rgb20/creating-tokens), with `AssetSchema::Uda` in `supported_schemas`. This code passes `cargo check` (2026-10-21) but wasn't run.
 
 ```rust
 let nft = wallet.issue_asset_uda(
@@ -78,6 +79,7 @@ To set the preview or other fields yourself, build genesis directly. This is the
 
 ```rust
 use amplify::Wrapper; // for TokenIndex::from_inner
+use rgbstd::contract::IssuerWrapper; // for UniqueDigitalAsset::schema()
 use rgbstd::stl::{AssetSpec, ContractTerms, EmbeddedMedia, MediaType, RicardianContract, TokenData};
 use rgbstd::invoice::Precision;
 use rgbstd::{Allocation, ChainNet, TokenIndex};

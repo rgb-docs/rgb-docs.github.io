@@ -38,7 +38,11 @@ docs.rs failed to build `rgb-api` and `rgb-ops` 0.11.1, so the links above go to
 rgb-lib = "=0.3.0-beta.7"
 ```
 
-The flow below uses only names that exist at the [0.3.0-beta.7 tag](https://github.com/RGB-Tools/rgb-lib/tree/0.3.0-beta.7). It wasn't compiled here, because the crate isn't in this site's offline build cache. The methods are on `Wallet` (`src/wallet/singlesig.rs`) and on the `RgbWalletOpsOffline` and `RgbWalletOpsOnline` traits.
+:::warning A new project doesn't resolve without rgb-lib's lock file
+As of 2026-10-21, a fresh `cargo build` stops with ``failed to select a version for the requirement `secp256k1 = "^0.32.0-beta.2"` ``: `rgb-consensus` 0.11.1-rc.11, which rgb-lib pins, needs that version, and it has been yanked from crates.io. Cargo still uses a yanked version that is already in `Cargo.lock`, so start from rgb-lib's lock file. In your project directory, run `curl -LO https://raw.githubusercontent.com/RGB-Tools/rgb-lib/0.3.0-beta.7/Cargo.lock` before the first build.
+:::
+
+The flow below uses only names that exist at the [0.3.0-beta.7 tag](https://github.com/RGB-Tools/rgb-lib/tree/0.3.0-beta.7). It passes `cargo check` (2026-10-21, with that lock file), but wasn't run, because it needs an indexer and a proxy. The methods are on `Wallet` (`src/wallet/singlesig.rs`) and on the `RgbWalletOpsOffline` and `RgbWalletOpsOnline` traits.
 
 ```rust
 // rgb-lib 0.3.0-beta.7

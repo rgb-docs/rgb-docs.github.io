@@ -82,7 +82,7 @@ This section follows the [docs.rgb.info tapret page](https://docs.rgb.info/commi
 
 ## The proof
 
-The same structure appears in both lines (`bp-core` 0.12.0 `dbc/src/tapret/mod.rs`; `rgb-consensus` 0.11.1 `src/dbc/tapret/mod.rs`):
+The same structure appears in both lines (`bp-core` 0.12.0 `dbc/src/tapret/mod.rs`; `rgb-consensus` 0.11.1 `src/dbc/tapret/mod.rs`). This is the 0.12 form; 0.11.1 uses rust-bitcoin types, `internal_pk: UntweakedPublicKey` and `RightLeaf(LeafScript<ScriptBuf>)`:
 
 ```rust
 pub struct TapretProof {

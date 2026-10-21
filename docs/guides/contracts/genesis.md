@@ -148,7 +148,7 @@ fn main() {
 [rgb-lib](https://github.com/RGB-Tools/rgb-lib) picks the issuer's UTXOs and blinds the seals for you. Each amount becomes a separate allocation on a UTXO the wallet already has, so create UTXOs first with `create_utxos`.
 
 ```rust
-// rgb-lib 0.3.0-beta.7, src/wallet/singlesig.rs. Checked against the source, not compiled.
+// rgb-lib 0.3.0-beta.7, src/wallet/singlesig.rs. `wallet` is a `Wallet`; this passes cargo check.
 let asset = wallet.issue_asset_nia(
     "DEMO".to_string(),       // ticker
     "Demo asset".to_string(), // name

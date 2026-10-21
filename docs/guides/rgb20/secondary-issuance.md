@@ -51,7 +51,7 @@ There is no inflation schedule and no signature-based issuance. Control comes fr
 
 ## With rgb-lib
 
-For `rgb-lib` 0.3.0-beta.7 (`src/wallet/singlesig.rs`). Wallet setup is as in [Issuing fungible tokens](/guides/rgb20/creating-tokens), except that `supported_schemas` must include `AssetSchema::Ifa`. rgb-lib refuses IFA on mainnet: `Wallet::new` fails with `CannotUseIfaOnMainnet` if a mainnet wallet lists it (`src/wallet/core.rs`). This code wasn't run for this page.
+For `rgb-lib` 0.3.0-beta.7 (`src/wallet/singlesig.rs`). Wallet setup is as in [Issuing fungible tokens](/guides/rgb20/creating-tokens), except that `supported_schemas` must include `AssetSchema::Ifa`. rgb-lib refuses IFA on mainnet: `Wallet::new` fails with `CannotUseIfaOnMainnet` if a mainnet wallet lists it (`src/wallet/core.rs`). `wallet` is a `&mut Wallet` and `online` the `Online` from `go_online`. This code passes `cargo check` (2026-10-21) but wasn't run.
 
 ```rust
 // Issue: 1,000 in circulation, plus inflation rights for 500 more (maxSupply = 1,500).
