@@ -90,7 +90,7 @@ rgb -n regtest -d data0 -w issuer contracts
 
 ### With rgb-lib (Rust)
 
-[rgb-lib](https://github.com/RGB-Tools/rgb-lib) is what Line B wallets use. It holds the keys, manages UTXOs and embeds the schemas. This code is for `rgb-lib` 0.3.0-beta.7, which needs Rust 1.88. It wasn't run for this page, because it needs an indexer. All functions used are in `src/keys.rs` and `src/wallet/singlesig.rs` at that tag.
+[rgb-lib](https://github.com/RGB-Tools/rgb-lib) is what Line B wallets use. It holds the keys, manages UTXOs and embeds the schemas. This code is for `rgb-lib` 0.3.0-beta.7, which needs Rust 1.88. It passes `cargo check` (2026-10-21) but wasn't run, because it needs an indexer. All functions used are in `src/keys.rs` and `src/wallet/singlesig.rs` at that tag. A new project needs rgb-lib's `Cargo.lock` to resolve: see [Installation](/getting-started/installation).
 
 ```toml
 [dependencies]
@@ -156,6 +156,7 @@ rgb-schemas = "=0.11.1"
 Don't add these to a project that also uses `rgb-lib` 0.3.0-beta.7: rgb-lib pins `rgb-ops` and `rgb-schemas` to `=0.11.1-rc.11` (its `Cargo.toml`), so Cargo can't resolve both. This is the core of [`examples/nia.rs`](https://github.com/rgb-protocol/rgb-schemas/blob/0.11.1/examples/nia.rs) (`rgbstd` is the library name of the `rgb-ops` crate, and `schemata` that of `rgb-schemas`):
 
 ```rust
+use rgbstd::contract::IssuerWrapper; // for NonInflatableAsset::schema()
 use rgbstd::stl::{AssetSpec, ContractTerms, RicardianContract};
 use rgbstd::invoice::Precision;
 use rgbstd::{Amount, ChainNet};

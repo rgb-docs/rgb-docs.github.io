@@ -110,6 +110,10 @@ bash demo.sh
 rgb-lib = "=0.3.0-beta.7"
 ```
 
+:::warning A new project doesn't resolve without rgb-lib's lock file
+As of 2026-10-21, a fresh `cargo build` stops with ``failed to select a version for the requirement `secp256k1 = "^0.32.0-beta.2"` ``: `rgb-consensus` 0.11.1-rc.11, which rgb-lib pins, needs that version, and it has been yanked from crates.io. Cargo still uses a yanked version that is already in `Cargo.lock`, so start from rgb-lib's lock file. In your project directory, run `curl -LO https://raw.githubusercontent.com/RGB-Tools/rgb-lib/0.3.0-beta.7/Cargo.lock` before the first build.
+:::
+
 :::danger Use each wallet on one device only
 The rgb-lib README warns that using the same mnemonic on more than one device "can lead to RGB asset loss due to improper UTXO management".
 :::
