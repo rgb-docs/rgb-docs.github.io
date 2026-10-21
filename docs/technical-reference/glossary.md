@@ -18,6 +18,8 @@ Most terms are shared. Terms tagged **(v0.11)** exist only in Line B and terms t
 
 **AluVM.** The register-based virtual machine that runs RGB validation scripts. Line B uses `rgb-aluvm`, a fork of AluVM 0.11. Line A uses zk-AluVM 0.12. See [AluVM](/core-concepts/aluvm/overview).
 
+**Asset id.** The name `rgb-lib` and the RGB Lightning Node use for a contract id (`asset_id`, the `rgb:…` string).
+
 **Anchor.** The proof that ties an RGB operation to a Bitcoin transaction: the MPC proof plus the tapret or opret proof.
 
 **API (v0.12).** The non-consensus part of a v0.12 contract type. It says how state is read and written, names the methods and computes derived values. See [Interfaces, schemas and codexes](./interfaces.md).
@@ -27,6 +29,8 @@ Most terms are shared. Terms tagged **(v0.11)** exist only in Line B and terms t
 **Baid64.** The text encoding for RGB ids: Base64 with the alphabet `A–Za–z0–9_~`, an optional prefix such as `rgb:` or `contract:`, `-` chunking and an optional checksum. See [Encoding formats](./encodings.md).
 
 **Blinded UTXO, `utxob` (v0.11).** A UTXO hidden behind a hash with a secret blinding factor, used as the seal in v0.11 invoices (`utxob:…`). Only the receiver knows which outpoint it is.
+
+**BFA (v0.11, 0.11.2 release candidate).** A fungible schema added in `rgb-schemas` 0.11.2-rc.1, which its README calls a "bridged fungible asset" with inflate, burn and link, "not production-ready". Utexo's documentation expands BFA as "Burnable Fungible Asset". Not in 0.11.1.
 
 **CFA (v0.11).** Collectible Fungible Asset, a [schema](/guides/contracts/schemas): a fungible token with an optional article string.
 
@@ -66,13 +70,33 @@ Most terms are shared. Terms tagged **(v0.11)** exist only in Line B and terms t
 
 **NIA (v0.11).** Non-Inflatable Asset, the fixed-supply fungible token schema.
 
+**Network.** Bitcoin mainnet, or a test network: `regtest` (a local chain you mine yourself), `signet`, `testnet3` or `testnet4`. The Line B CLI defaults to testnet3 and the Line A CLI to testnet4. Line A refuses mainnet.
+
+**Operation id.** The hash id of an operation (genesis or transition): `OpId` in v0.11, `Opid` in v0.12.
+
 **Opret.** A DBC in an `OP_RETURN` output: `OP_RETURN` followed by the 32-byte MPC commitment. See [Opret](/core-concepts/bitcoin/opret).
+
+**Pedersen commitments.** A way to hide amounts, used in older RGB versions. Both lines removed them, so amounts are visible to whoever receives the history.
 
 **Owned state.** State assigned to a seal and controlled by whoever can spend that seal, such as a token balance. See [Owned state](/core-concepts/state/owned-state).
 
 **PFA (v0.11).** Permissioned Fungible Asset: a fixed-supply token where the issuer signs every transfer. Not production-ready according to its README.
 
+**Precision.** The number of decimal places a fungible asset displays, 0 to 18. Amounts are always whole numbers of the smallest unit. See [Issuing fungible tokens](/guides/rgb20/creating-tokens#token-parameters).
+
+**PSBT.** A partially signed Bitcoin transaction (BIP 174). Both CLIs write the witness transaction as a PSBT that already holds the RGB commitment. The keys that sign it live in a separate Bitcoin wallet.
+
+**RGB20, RGB21, RGB25.** Interface names from RGB v0.10 and the v0.11 betas for fungible, NFT and collectible assets. Line B 0.11.1 uses the schema names NIA/IFA, UDA and CFA instead. Line A keeps the labels in issuer names such as `RGB20-FNA`. See [Interfaces, schemas and codexes](./interfaces.md).
+
+**RGB Lightning Node (RLN) (v0.11).** RGB-Tools' Lightning node with RGB asset channels, built on `rgb-lib` and a fork of LDK. Alpha. See [RGB on Lightning](/guides/lightning/overview).
+
+**RGB proxy (v0.11).** A server that relays consignments and other client-side data between wallets ([rgb-proxy-server](https://github.com/RGB-Tools/rgb-proxy-server)). `rgb-lib` wallets use one; invoices list it under `endpoints=rpc://…` or `rpcs://…`.
+
+**rgb-sandbox (v0.11).** The official Docker regtest demo of `rgb-cmd` ([rgb-protocol/rgb-sandbox](https://github.com/rgb-protocol/rgb-sandbox)). See [Installation](/getting-started/installation#line-b-regtest-sandbox).
+
 **Schema (v0.11).** The template a v0.11 contract follows: its state types, transitions and validation scripts. v0.12 has no schemas. See [Schemas](/guides/contracts/schemas).
+
+**SONIC (v0.12).** RGB-WG's contract API layer (`sonic-api`, "API for formally-verifiable distributed contracts") on top of UltraSONIC. **Prism** is another RGB-WG name in the v0.12 design. Line B uses none of these terms.
 
 **Seal, single-use seal.** A Bitcoin transaction output that owned state is assigned to. Spending the output closes the seal, and the spending transaction must commit to the operation that moves the state on. See [Single-use seals](/core-concepts/single-use-seals).
 
@@ -82,9 +106,15 @@ Most terms are shared. Terms tagged **(v0.11)** exist only in Line B and terms t
 
 **Strict encoding.** RGB's deterministic binary encoding, with no type tags and length prefixes whose width follows from each type's maximum size. See [Strict types](./strict-types.md).
 
+**State extension, valency.** Older RGB versions had state extensions, operations that used public rights called valencies. Neither line has them.
+
 **Tapret.** A DBC inside a taproot output, as a tapscript leaf of 29 padding opcodes, `OP_RETURN` and the commitment. The padding opcode differs between the lines, so a tapret made by one doesn't verify in the other. See [Tapret](/core-concepts/bitcoin/tapret).
 
+**Tapret tweak.** The change a tapret commitment makes to a taproot output key. The wallet must store it to spend the output: it can't be re-derived from the seed. Back it up with the RGB data.
+
 **Terminal.** A seal at the end of the history in a consignment: the seal the receiver now owns.
+
+**Type library (STL).** A strict-types library of type definitions with a `stl:` id. Schemas, codexes and APIs refer to types in these libraries. See [Strict types](./strict-types.md).
 
 **Transition.** An operation that spends existing seals and assigns state to new ones. In v0.11, transitions of one contract in one transaction are grouped into a **transition bundle**.
 
