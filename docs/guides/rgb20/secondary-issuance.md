@@ -19,6 +19,7 @@ A token whose supply can grow after genesis is a contract of the **IFA** (Inflat
 :::warning Not production-ready, and changing in 0.11.2
 - The `rgb-schemas` 0.11.1 README marks IFA **"Not production-ready"**.
 - **Coming next:** Line B 0.11.2 (release candidate since 2026-10-09) makes contracts issued with the old IFA schema invalid. Don't issue IFA assets you need to keep until 0.11.2 is final and your tools support it. See [Two RGB lines](/getting-started/two-rgbs).
+- rgb-lib's unreleased `next` branch moves to 0.11.2-rc.1 and adds a `burn_reason` to burns (commits of 2026-10-20 on [RGB-Tools/rgb-lib](https://github.com/RGB-Tools/rgb-lib/commits/next)). The API on this page is 0.3.0-beta.7's.
 :::
 
 ## How IFA works

@@ -25,6 +25,12 @@ The RLN README says the node "can be tested only in regtest or testnet environme
 - no re-org detection yet
 - no multi-asset channels, multi-asset payments, splicing, dual funding or BOLT12
 
+Open pull requests, checked 2026-10-21, describe further problems that aren't fixed in the 2026-09-17 code:
+
+- a receiver doesn't check the RGB amount against the invoice, so an invoice for 1,000 units can be settled with 1 unit, or with another asset ([PR #180](https://github.com/RGB-Tools/rgb-lightning-node/pull/180), opened 2026-10-08)
+- a routing node forwards the RGB amount the onion asks for without checking what the incoming HTLC carries, so an attacker can drain its asset channels ([PR #181](https://github.com/RGB-Tools/rgb-lightning-node/pull/181), opened 2026-10-09). Don't route RGB payments or run an LSP or swap service on RLN until it is merged.
+- a dynamic fee estimator to replace the fixed fee rate is proposed but not merged ([PR #177](https://github.com/RGB-Tools/rgb-lightning-node/pull/177), opened 2026-10-02)
+
 The same post planned to move consignments off the proxy and onto the Lightning peer link. At the 2026-09-17 commit, RLN already sends a channel's funding consignment to the peer over that link (`src/ldk.rs`), and a proxy is only used for on-chain transfers that name one in `transport_endpoints`.
 
 RLN's code doesn't block mainnet: the "test networks only" rule is the maintainers' advice, and following it is up to you. RLN has no tagged releases (Cargo version `0.1.0`). Pin a commit.
@@ -119,7 +125,7 @@ curl -X POST -H "Content-type: application/json" \
 
 ## Who uses it
 
-The RLN README lists Iris Wallet desktop, KaleidoSwap, Lnfi, Spectrum, Thunderstack and Tiramisu Wallet (2026-09-17). Utexo's `wdk-rgb-lightning` module for Tether's WDK, announced in beta on 2026-08-28, is described as an "RLN Community Module" ([rgb.info](https://rgb.info/rgb-lightning-tether-wdk/)).
+The RLN README lists Iris Wallet desktop, KaleidoSwap, Lnfi, Spectrum, Thunderstack and Tiramisu Wallet (2026-09-17). Utexo's `wdk-rgb-lightning` module for Tether's WDK, announced in beta on 2026-08-28, is described as an "RLN Community Module" ([rgb.info](https://rgb.info/rgb-lightning-tether-wdk/)). KaleidoSwap ships its own RLN fork ([v0.10.1](https://github.com/kaleidoswap/rgb-lightning-node/releases), 2026-10-14) in its desktop app v0.6.0.
 
 :::info RGB v0.12 has no Lightning implementation
 RGB-WG hasn't released a Lightning node for v0.12, and the old `lnp-node` (0.9, 2023) has no RGB support. Bitlight Labs develops its own v0.12 Lightning stack, which this site hasn't checked. As of 2026-10-21, there is nothing to document for Line A.

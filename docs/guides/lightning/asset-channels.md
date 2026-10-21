@@ -61,7 +61,7 @@ curl -X POST -H "Content-type: application/json" \
 - **Force close** (`"force": true`): the latest commitment transaction is broadcast. It already anchors the RGB state of each output through its OP_RETURN commitment, so the assets settle on chain with it. Your own output stays timelocked as usual in Lightning.
 
 :::danger Alpha software
-RLN uses a fixed fee rate (7 sat/vB, `FEE_RATE` in `src/ldk.rs`) and has no CPFP or anchor fee bumping ([maintainers, 2026-06-23](https://rgb.info/rgb-lightning-roadmap/)). A force close can get stuck in a fee spike, and its static blinding factor weakens privacy after a force close. Use only amounts you can afford to lose, on regtest or testnet.
+RLN uses a fixed fee rate (7 sat/vB, `FEE_RATE` in `src/ldk.rs`) and has no CPFP or anchor fee bumping ([maintainers, 2026-06-23](https://rgb.info/rgb-lightning-roadmap/)). A force close can get stuck in a fee spike, and its static blinding factor weakens privacy after a force close. A dynamic fee estimator is proposed in [RLN PR #177](https://github.com/RGB-Tools/rgb-lightning-node/pull/177) (open on 2026-10-21). Two open security fixes, [#180](https://github.com/RGB-Tools/rgb-lightning-node/pull/180) (invoice underpayment) and [#181](https://github.com/RGB-Tools/rgb-lightning-node/pull/181) (routing-node drain), aren't merged either; see [RGB on Lightning](/guides/lightning/overview). Use only amounts you can afford to lose, on regtest or testnet.
 :::
 
 There is no per-channel backup. `POST /backup` writes an encrypted backup of the whole node.
