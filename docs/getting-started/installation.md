@@ -128,7 +128,7 @@ Pin these exactly. 0.11.2 (release candidate since 2026-10-09) changes the consi
 
 rgb-lib 0.3.0-beta.7 still depends on `rgb-ops` 0.11.1-rc.11 and the strict libraries 1.0.2 (`rgb-lib` `Cargo.toml`), while `rgb-cmd` 0.11.1 uses 1.0.4 and 0.11.2-rc.1 uses 1.0.5 (release notes). rgb-lib's `next` branch moves to 0.11.2-rc.1, unreleased as of 2026-10-21.
 
-API docs: [docs.rs/rgb-lib](https://docs.rs/rgb-lib/0.3.0-beta.7/rgb_lib/) builds. As of 2026-10-21, docs.rs failed to build `rgb-api`, `rgb-ops` and `rgb-consensus` 0.11.1, so run `cargo doc --open` in your project, or read the source on GitHub.
+API docs: [docs.rs/rgb-lib](https://docs.rs/rgb-lib/0.3.0-beta.7/rgb_lib/) builds. As of 2026-10-21, docs.rs failed to build `rgb-api` and `rgb-ops` 0.11.1, so run `cargo doc --open` in your project or read the source on GitHub. [`rgb-consensus`](https://docs.rs/rgb-consensus/0.11.1/rgbcore/) and [`rgb-invoicing`](https://docs.rs/rgb-invoicing/0.11.1/rgbinvoice/) 0.11.1 do build.
 
 </TabItem>
 <TabItem value="a" label="v0.12 (rgb-wallet)">
