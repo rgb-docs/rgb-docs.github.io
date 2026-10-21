@@ -5,7 +5,7 @@ description: How a new RGB contract is issued on each line, with rgb issue, Cont
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 import Tabs from '@theme/Tabs';
@@ -97,7 +97,7 @@ rgb-ops = { version = "=0.11.1", features = ["fs"] }
 ```
 
 ```rust
-// rgb-ops 0.11.1 (library name `rgbstd`). Compiled and run on 2026-10-19.
+// rgb-ops 0.11.1 (library name `rgbstd`). Compiled and run on 2026-10-21.
 use std::str::FromStr;
 
 use rgbstd::containers::{ConsignmentExt, FileContent, Kit};
@@ -137,7 +137,7 @@ fn main() {
         .issue_contract()
         .expect("contract doesn't fit the schema");
 
-    println!("{}", contract.contract_id()); // rgb:AV3zvi8b-dnUCMju-…
+    println!("{}", contract.contract_id()); // rgb:…, different on each run (timestamp)
 }
 ```
 
@@ -158,7 +158,7 @@ let asset = wallet.issue_asset_nia(
 println!("{}", asset.asset_id);
 ```
 
-`issue_asset_ifa`, `issue_asset_uda` and `issue_asset_cfa` cover the other schemas. See [Rust](../development/rust-sdk.md) for setting up the wallet.
+`issue_asset_ifa`, `issue_asset_uda` and `issue_asset_cfa` cover the other schemas. A wallet can only issue schemas listed in its `supported_schemas`, and rgb-lib refuses IFA on mainnet (`CannotUseIfaOnMainnet`). See [Rust](../development/rust-sdk.md) for setting up the wallet.
 
 </TabItem>
 <TabItem value="a" label="v0.12 (rgb-wallet)">
@@ -179,7 +179,7 @@ pub struct Genesis {
 }
 ```
 
-The contract ID commits to the contract metadata, the codex ID and the genesis (`Issue` in `src/issue.rs`). It's shown as `contract:` plus Baid64.
+The contract ID commits to the contract metadata, the codex ID and the genesis (`Issue::commit_encode` in `ultrasonic` 0.12.0 `src/issue.rs`). It's shown as `contract:` plus Baid64.
 
 ### With the CLI
 

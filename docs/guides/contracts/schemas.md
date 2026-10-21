@@ -5,7 +5,7 @@ description: The five standard RGB v0.11 schemas (NIA, IFA, UDA, CFA, PFA), what
 rgb_line: B
 verified_with: rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 # Schemas (v0.11)
@@ -19,12 +19,12 @@ A **schema** is the template that every contract of one kind follows. It lists t
 Schemas are Rust code. The [`rgb-schemas`](https://github.com/rgb-protocol/rgb-schemas) crate (0.11.1, 2026-09-16) builds each one as a `Schema` value, and its `rgb-schemas` binary compiles them into strict-encoded `.rgb` kit files. There is no YAML or text format for schemas, no schema compiler CLI and no schema registry.
 
 :::note No interfaces in v0.11
-Line B has no RGB20/RGB21 interfaces: the `rgb-ops` 0.11.1 source has no `Iface` types. Line B treats the names "RGB20" and "RGB21" as deprecated and uses the schema names below. Code reads a contract through a schema-specific wrapper, using the `IssuerWrapper` and `SchemaWrapper` traits (`rgb-ops` `src/contract/schema.rs`).
+Line B has no RGB20/RGB21 interfaces: the `rgb-ops` 0.11.1 source has no `Iface` types. Line B's documentation calls the names "RGB20" and "RGB21" deprecated and uses the schema names below (`RGB-Documentation` `context7.json`). Code reads a contract through a schema-specific wrapper, using the `IssuerWrapper` and `SchemaWrapper` traits (`rgb-ops` `src/contract/schema.rs`).
 :::
 
 ## The five standard schemas
 
-Summarised from `rgb-schemas` 0.11.1 `src/*.rs` and the official [supported schemas](https://github.com/rgb-protocol/RGB-Documentation/blob/master/rgb-contract-implementation/schema/supported-schemas.md) page.
+Summarised from `rgb-schemas` 0.11.1 `src/*.rs` and the official [supported schemas](https://docs.rgb.info/rgb-contract-implementation/schema/supported-schemas) page.
 
 | Schema | What it is | Global state | Owned state | Transitions | 0.11.1 README |
 |---|---|---|---|---|---|
@@ -84,7 +84,7 @@ Schema {
 
 ## Using a schema
 
-A wallet needs the compiled kit before it can issue or accept contracts of that schema. `rgb-schemas` ships the kits in `schemata/`. The IDs below are real `rgb import` output (rgb-cmd 0.11.1, run offline on 2026-10-19):
+A wallet needs the compiled kit before it can issue a contract of that schema. `rgb-schemas` ships the kits in `schemata/`. The IDs below are real `rgb import` output (rgb-cmd 0.11.1, run offline on 2026-10-19):
 
 ```bash
 rgb -n regtest -d data0 import rgb-schemas/schemata/NonInflatableAsset.rgb
@@ -99,9 +99,9 @@ rgb -n regtest -d data0 schemata
 | CFA | `rgb:sch:JgqK5hJX9YBT4osCV7VcW_iLTcA5csUCnLzvaKTTrNY#mars-house-friend` |
 | PFA | `rgb:sch:YvvvQ4UsHuPQDT3nIQ9mnpsqMbrs5lYZRbyymHVrkY8#famous-process-eagle` |
 
-[rgb-lib](https://github.com/RGB-Tools/rgb-lib) 0.3.0-beta.7 embeds NIA, UDA, CFA and IFA (its `AssetSchema` enum), so apps built on it import nothing. It doesn't support PFA.
+[rgb-lib](https://github.com/RGB-Tools/rgb-lib) 0.3.0-beta.7 embeds NIA, UDA, CFA and IFA (its `AssetSchema` enum), so apps built on it import nothing. It doesn't support PFA. A wallet lists the schemas it accepts in `WalletData::supported_schemas`: an empty list is an error (`NoSupportedSchemas`), and listing IFA on mainnet is refused (`CannotUseIfaOnMainnet`, `src/wallet/core.rs`).
 
-To issue from Rust, pass a schema to `ContractBuilder::with(issuer, schema, types, scripts, chain_net)`, or call `stock.contract_builder(issuer, schema_id, chain_net)`. The [`examples/`](https://github.com/rgb-protocol/rgb-schemas/tree/0.11.1/examples) directory of rgb-schemas has one program per schema. A custom schema is a new Rust module built the same way. Wallets only accept contracts whose schema they have imported, so in practice apps use the five standard schemas.
+To issue from Rust, pass a schema to `ContractBuilder::with(issuer, schema, types, scripts, chain_net)`, or call `stock.contract_builder(issuer, schema_id, chain_net)`. The [`examples/`](https://github.com/rgb-protocol/rgb-schemas/tree/0.11.1/examples) directory of rgb-schemas has one program per schema. A custom schema is a new Rust module built the same way. A consignment carries its own schema, and `rgb-ops` stores it on accept (`Stash::consume_consignment`), so `rgb-cmd` can accept a custom-schema contract. rgb-lib wallets, which most apps use, reject any schema outside their `supported_schemas`, so in practice apps stick to the standard schemas.
 
 :::info RGB v0.12 has no schemas
 `rgb-core` 0.12 removed schema verification. In v0.12 (rgb-wallet 0.12.0-rc.3), a contract is issued from an **issuer** file, which holds a codex (the validation code) and an API, together with a YAML parameter file such as `DemoToken.yaml`. See [Genesis](/guides/contracts/genesis) and the [Quick Start](/getting-started/quick-start).
@@ -110,5 +110,5 @@ To issue from Rust, pass a schema to `ContractBuilder::with(issuer, schema, type
 ## Further reading
 
 - [rgb-schemas](https://github.com/rgb-protocol/rgb-schemas): source and compiled kits
-- Official docs ([docs.rgb.info](https://docs.rgb.info)): [Schema](https://github.com/rgb-protocol/RGB-Documentation/blob/master/rgb-contract-implementation/schema/README.md) and the [NIA schema walkthrough](https://github.com/rgb-protocol/RGB-Documentation/blob/master/rgb-contract-implementation/schema/non-inflatable-fungible-asset-schema.md)
+- Official docs ([docs.rgb.info](https://docs.rgb.info)): [Schema](https://docs.rgb.info/rgb-contract-implementation/schema) and the [NIA schema walkthrough](https://docs.rgb.info/rgb-contract-implementation/schema/non-inflatable-fungible-asset-schema)
 - [CLI reference (v0.11)](/technical-reference/cli-v011)
