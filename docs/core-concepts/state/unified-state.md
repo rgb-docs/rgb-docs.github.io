@@ -5,7 +5,7 @@ description: How each RGB line represents contract state. Typed owned, global an
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-19
+  date: 2026-10-21
 ---
 
 import Tabs from '@theme/Tabs';
@@ -98,25 +98,25 @@ data Operation  : version, contractId, callId U16, nonce Fe256, witness StateVal
 - Operations have **no metadata field**.
 - `rgb-std` presents the state to wallets as `immutable`, `owned` and `aggregated` (values computed from the others by the API, e.g. total supply) (`rgb-std` 0.12.0-rc.3 `src/contracts.rs`).
 
-Here is the real state of a demo `RGB20-FNA` contract issued offline with `rgb-wallet` 0.12.0-rc.3 from the examples in the `RGB-WG/rgb` repo:
+Here is the real state of the demo `RGB20-FNA` contract issued offline with `rgb-wallet` 0.12.0-rc.3 from the examples in the `RGB-WG/rgb` repo (steps 1 and 2 of the [quick start](/getting-started/quick-start), v0.12 tab). `state` needs a wallet: without `-w` it panics looking for `default.wallet`.
 
 ```bash line=A
-rgb -n testnet4 state -a -g -o
+rgb -d examples/data state -w alice -a -g -o
 ```
 
 ```text
-contract:XgHwkqS4-RcYeRtr-Mizxpov-FobureK-sx0~AD5-xAt5jV4	DemoToken
+contract:nztjpjRX-_NVDDgd-EHENsqL-AKsGsyV-F6LzljB-X4WTv0Y	DemoToken
 Global: State name      	Conf. height	Verifiable state                	Unverifiable state              	RGB output
-	issued          	genesis     	10000                           	~                               	rtVWyitimkZyM4bDei2AcftvX0HKur8kfdf~0Ku2Ry8:3
-	name            	genesis     	"Demo Token"                    	~                               	rtVWyitimkZyM4bDei2AcftvX0HKur8kfdf~0Ku2Ry8:1
-	precision       	genesis     	centiMilli                      	~                               	rtVWyitimkZyM4bDei2AcftvX0HKur8kfdf~0Ku2Ry8:2
-	ticker          	genesis     	"DEMO"                          	~                               	rtVWyitimkZyM4bDei2AcftvX0HKur8kfdf~0Ku2Ry8:0
+	issued          	genesis     	10000                           	~                               	FDqnQ~ReMcfI2N69Y1kMiLrrEIWnPzUvENfgqGbfw5M:3
+	name            	genesis     	"Demo Token"                    	~                               	FDqnQ~ReMcfI2N69Y1kMiLrrEIWnPzUvENfgqGbfw5M:1
+	precision       	genesis     	centiMilli                      	~                               	FDqnQ~ReMcfI2N69Y1kMiLrrEIWnPzUvENfgqGbfw5M:2
+	ticker          	genesis     	"DEMO"                          	~                               	FDqnQ~ReMcfI2N69Y1kMiLrrEIWnPzUvENfgqGbfw5M:0
 Aggr.:  State name      	Value                           	name            	"Demo Token"
 	precision       	centiMilli
 	supply          	10000
 	ticker          	"DEMO"
 Owned:  State name      	Conf. height	Value                           	RGB output                                    	Bitcoin outpoint
-	balance         	genesis     	10000                           	rtVWyitimkZyM4bDei2AcftvX0HKur8kfdf~0Ku2Ry8:0	b7116550736fbe5d3e234d0141c6bc8d1825f94da78514a3cede5674e9a5eae9:1
+	balance         	genesis     	10000                           	FDqnQ~ReMcfI2N69Y1kMiLrrEIWnPzUvENfgqGbfw5M:0	b7116550736fbe5d3e234d0141c6bc8d1825f94da78514a3cede5674e9a5eae9:1
 ```
 
 "Verifiable state" is what the VM can check. "Unverifiable state" is the raw data.
@@ -127,7 +127,7 @@ Owned:  State name      	Conf. height	Value                           	RGB outpu
 ## Removed in both lines
 
 - **State extensions and valencies** (public "anyone can claim" operations in RGB v0.10) exist in neither line. Every Line B transition must spend at least one owned input.
-- **Confidential amounts.** Pedersen commitments and bulletproofs are gone. Amounts are explicit to everyone who receives the history; privacy comes from client-side validation and blinded seals.
+- **Confidential amounts.** Pedersen commitments and bulletproofs are gone. Amounts are explicit to everyone who receives the history; privacy comes from client-side validation and from hiding seals: blinded `SecretSeal`s in Line B, noise-hidden `AuthToken`s in Line A (which has no secret-seal type).
 - **Zero-knowledge proofs** of state or history are not implemented in either line. Line A's zk-AluVM is designed to make them possible later.
 
 ## Where contract rules live
