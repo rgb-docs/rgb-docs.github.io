@@ -6,6 +6,7 @@ rgb_line: B
 verified_with: rgb-cmd 0.11.1; rgb-wallet 0.12.0-rc.3
 last_update:
   date: 2026-10-21
+image: /img/og/guides/rgb21/creating-nfts.png
 ---
 
 # Issuing NFTs (UDA)

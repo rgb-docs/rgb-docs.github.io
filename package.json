@@ -15,9 +15,15 @@
     "write-heading-ids": "docusaurus write-heading-ids",
     "typecheck": "tsc",
     "check": "node scripts/check-snippets.mjs --strict",
-    "release-watch": "node scripts/release-watch.mjs"
+    "release-watch": "node scripts/release-watch.mjs",
+    "og": "python3 scripts/og-cards.py"
   },
-  "keywords": ["rgb", "bitcoin", "smart-contracts", "documentation"],
+  "keywords": [
+    "rgb",
+    "bitcoin",
+    "smart-contracts",
+    "documentation"
+  ],
   "author": "RGB Community",
   "license": "CC-BY-SA-4.0",
   "dependencies": {

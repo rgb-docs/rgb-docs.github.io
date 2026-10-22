@@ -78,6 +78,7 @@ Contributions are welcome! To contribute:
 
   It checks `rgb` commands against the pinned CLIs' help trees (`scripts/cli-help/`), and install targets and crates against `scripts/install-allowlist.json`.
 - `npm run release-watch` reports newer releases of either line. A new stable means bump `scripts/rgb-lines.json` and regenerate `scripts/cli-help/`.
+- `npm run og` regenerates the 1200×630 social cards in `static/img/og/` (needs Python with Pillow) and sets `image:` in each page's front matter. Run it after adding a page or changing a title or description.
 - Date and source every version, status or ecosystem claim. Don't use numbers you can't source.
 
 ## Resources

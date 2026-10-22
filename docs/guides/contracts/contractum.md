@@ -6,6 +6,7 @@ rgb_line: A
 verified_with: rgb-wallet 0.12.0-rc.3
 last_update:
   date: 2026-10-21
+image: /img/og/guides/contracts/contractum.png
 ---
 
 # Contractum (proposed, not implemented)

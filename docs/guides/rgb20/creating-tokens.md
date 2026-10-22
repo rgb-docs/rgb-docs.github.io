@@ -6,6 +6,7 @@ rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
   date: 2026-10-21
+image: /img/og/guides/rgb20/creating-tokens.png
 ---
 
 import Tabs from '@theme/Tabs';
