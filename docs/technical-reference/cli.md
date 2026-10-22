@@ -54,7 +54,7 @@ Commands that can reach the chain also take these options:
 | `--sync` | — | off | Sync the wallet with the indexer before the command runs (not on `sync`) |
 
 - **The `=` is required.** `--electrum ssl://host:port` is parsed as a positional argument, so write `--electrum=ssl://host:port`.
-- **The environment variable is misspelt** `ELECRTUM_SERVER` in `cli/src/opts.rs:42`, and it is still misspelt on `master`. Setting `ELECTRUM_SERVER` does nothing.
+- **The environment variable is misspelt** `ELECRTUM_SERVER` in `cli/src/opts.rs:42`, and it is still misspelt on `master`. Setting `ELECTRUM_SERVER` does nothing. Reported upstream: [RGB-WG/rgb#322](https://github.com/RGB-WG/rgb/issues/322).
 - `RUST_LOG` has no effect, because the CLI installs no logger.
 
 ## Commands
@@ -107,7 +107,7 @@ Every other command fails until the directory exists, with: `the data directory 
 - `--wpkh` creates an opret-only P2WPKH wallet. `--tapret-key-only` creates a taproot key-only wallet that uses tapret commitments. You must pick one, or you get `Error: a type of wallet descriptor must be specified either with --tapret-key-only or --wpkh`.
 
 :::warning rc.3 bug: wallet name
-`create` writes `<data>/<NAME>` (`cli/src/exec.rs:104`), but every other command loads `<data>/<NAME>.wallet`. Give the suffix yourself:
+`create` writes `<data>/<NAME>` (`cli/src/exec.rs:104`), but every other command loads `<data>/<NAME>.wallet`. Give the suffix yourself: Reported upstream: [RGB-WG/rgb#323](https://github.com/RGB-WG/rgb/issues/323).
 
 ```bash
 rgb create --wpkh alice.wallet "[<fp>/84h/1h/0h]<tpub>/<0;1>/*"

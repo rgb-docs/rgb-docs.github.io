@@ -59,7 +59,7 @@ Source: `commit_verify` 0.12.0 `src/mpc/` (Line A) and `rgb-consensus` 0.11.1 `s
    ```text
    tH_merkle(0x11 || entropy || pos)
    ```
-   `entropy` is a `u64` (8 bytes) picked by whoever builds the tree, and `pos` is a little-endian `u32`. docs.rgb.info calls entropy "a 64-byte random value". In the code it is 64 *bits* (`Leaf::Entropy { entropy: u64, pos: u32 }`).
+   `entropy` is a `u64` (8 bytes) picked by whoever builds the tree, and `pos` is a little-endian `u32`. docs.rgb.info calls entropy "a 64-byte random value". In the code it is 64 *bits* (`Leaf::Entropy { entropy: u64, pos: u32 }`). Reported upstream: [RGB-Documentation#26](https://github.com/rgb-protocol/RGB-Documentation/issues/26).
 4. **Hash the nodes.** Each branch is
    ```text
    tH_merkle(branching || depth || width || left || right)
