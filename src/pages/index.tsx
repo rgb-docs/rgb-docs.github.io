@@ -327,7 +327,7 @@ export default function Home(): ReactNode {
   const {siteConfig} = useDocusaurusContext();
   return (
     <Layout
-      title="Home"
+      title="Documentation for both RGB lines"
       description={siteConfig.tagline}>
       <HomepageHeader />
       <StatsSection />
