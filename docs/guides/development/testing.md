@@ -94,7 +94,7 @@ rgb -n regtest sync alice --electrum=localhost:50001
 rgb -n regtest pay -w alice --electrum=localhost:50001 "$INVOICE" transfer.rgb transfer.psbt
 ```
 
-The `.wallet` suffix works around an rc.3 naming bug ([CLI reference](/technical-reference/cli#create)). `rgb` doesn't sign, so sign PSBTs in the test with whatever holds the keys. Other v0.12 test suites are RGB-WG's own repos and Bitlight Labs' [rgb-tests](https://github.com/BitlightLabs/rgb-tests).
+The `.wallet` suffix works around an rc.3 naming bug ([CLI reference](/technical-reference/cli#create)). `rgb` doesn't sign, so sign PSBTs in the test with whatever holds the keys. Other v0.12 test suites are RGB-WG's own repos and Bitlight Labs' [rgb-tests](https://github.com/BitlightLabs/rgb-tests). Reported upstream: [RGB-WG/rgb#323](https://github.com/RGB-WG/rgb/issues/323).
 
 </TabItem>
 </Tabs>

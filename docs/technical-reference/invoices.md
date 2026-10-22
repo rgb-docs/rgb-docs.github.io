@@ -77,7 +77,7 @@ contract:<layer1>@<contract-id>/[<api>/][<method>/[<state>/]][<value>@]<seal>/[?
 | Part | Meaning |
 |---|---|
 | `<layer1>` | `bc` (Bitcoin mainnet) or `tb` (any Bitcoin test network) |
-| `<contract-id>` | The contract id. rc.3 prints it with its own `contract:` HRI, so the prefix appears twice |
+| `<contract-id>` | The contract id. rc.3 prints it with its own `contract:` HRI, so the prefix appears twice ([AluVM/sonic#27](https://github.com/AluVM/sonic/issues/27)) |
 | `<api>/<method>/<state>` | Optional: the contract API, the method (such as `transfer`) and the owned-state name. If you leave them out, the contract's defaults apply |
 | `<value>` | The value, as a plain number |
 | `<seal>` | `at:…`, an **auth token** derived from a wallet UTXO; or `wout:…`, an output of the payer's witness transaction |

@@ -57,7 +57,7 @@ The consensus post also says that with consensus frozen, "contracts are now forw
 
 **Payments and storage**
 
-- Richer invoices with a new `contract:` URI scheme. An example of real rc.3 output is `contract:tb@contract:<id>/10@at:<token>/` (see [CLI reference](/technical-reference/cli#invoice)).
+- Richer invoices with a new `contract:` URI scheme. An example of real rc.3 output is `contract:tb@contract:<id>/10@at:<token>/` (see [CLI reference](/technical-reference/cli#invoice)). Reported upstream: [AluVM/sonic#27](https://github.com/AluVM/sonic/issues/27).
 - Contracts can expose several tokens.
 - *Payment scripts* for multi-party and batched payments: the `rgb script` → `exec` → `complete` workflow ([Payments.md](https://github.com/RGB-WG/rgb/blob/v0.12.0-rc.3/doc/Payments.md)).
 - Consignments are streamed and validated as they are read. RC1 says this takes "a few hundred bytes of memory".

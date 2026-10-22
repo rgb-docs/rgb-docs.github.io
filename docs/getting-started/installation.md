@@ -72,8 +72,8 @@ With `-n bitcoin`, `rgb-wallet` 0.12.0-rc.3 panics with "Non-testnet networks ar
 
 **Known rc.3 bugs**
 
-- `rgb create <name> …` writes the wallet to `<data>/<name>`, but every other command loads `<data>/<name>.wallet` (`cli/src/exec.rs:104` vs `cli/src/args.rs`). Name the wallet with the suffix, as in `rgb create --wpkh alice.wallet …`, and then refer to it as `-w alice`. The bug is still on `master`.
-- The Electrum environment variable is spelled `ELECRTUM_SERVER` (`cli/src/opts.rs:42`). Setting `ELECTRUM_SERVER` has no effect. Pass `--electrum=<URL>` instead.
+- `rgb create <name> …` writes the wallet to `<data>/<name>`, but every other command loads `<data>/<name>.wallet` (`cli/src/exec.rs:104` vs `cli/src/args.rs`). Name the wallet with the suffix, as in `rgb create --wpkh alice.wallet …`, and then refer to it as `-w alice`. The bug is still on `master`. Reported upstream: [RGB-WG/rgb#323](https://github.com/RGB-WG/rgb/issues/323).
+- The Electrum environment variable is spelled `ELECRTUM_SERVER` (`cli/src/opts.rs:42`). Setting `ELECTRUM_SERVER` has no effect. Pass `--electrum=<URL>` instead. Reported upstream: [RGB-WG/rgb#322](https://github.com/RGB-WG/rgb/issues/322).
 
 </TabItem>
 </Tabs>
@@ -83,7 +83,7 @@ With `-n bitcoin`, `rgb-wallet` 0.12.0-rc.3 panics with "Non-testnet networks ar
 Neither CLI talks to Bitcoin Core RPC. Both read the chain through an indexer that you choose per command: `--electrum=<URL>` or `--esplora=<URL>`, and on Line B also `--mempool=<URL>`. The `=` is required. Give a full URL with the network already in it.
 
 - **Line A:** a bare `--electrum` uses `mycitadel.io:50001`, and a bare `--esplora` uses `https://mempool.space/{network}/api`, with `{network}` replaced by the network name (`cli/src/args.rs`, `resolver`).
-- **Line B:** a bare `--electrum` uses the placeholder `example.com:50001`, so always give a URL. A bare `--esplora` uses `https://blockstream.info/{network}/api`. In 0.11.1, `{network}` is replaced only when the wallet syncs (`bp-wallet` 0.11.1-alpha.2 `src/cli/args.rs`, `indexer`). The RGB resolver used by `validate`, `accept` and contract `import` gets the URL unchanged (`rgb-cmd` `src/args.rs`, `resolver`), so a URL that still contains `{network}` breaks those commands. The Electrum environment variable in `bp-wallet` 0.11.1-alpha.2 has the same typo, `ELECRTUM_SERVER`.
+- **Line B:** a bare `--electrum` uses the placeholder `example.com:50001`, so always give a URL. A bare `--esplora` uses `https://blockstream.info/{network}/api`. In 0.11.1, `{network}` is replaced only when the wallet syncs (`bp-wallet` 0.11.1-alpha.2 `src/cli/args.rs`, `indexer`). The RGB resolver used by `validate`, `accept` and contract `import` gets the URL unchanged (`rgb-cmd` `src/args.rs`, `resolver`), so a URL that still contains `{network}` breaks those commands. The Electrum environment variable in `bp-wallet` 0.11.1-alpha.2 has the same typo, `ELECRTUM_SERVER`. Reported upstream: [rgb-api#14](https://github.com/rgb-protocol/rgb-api/issues/14).
 
 For local testing, run regtest with an Electrum server. [rgb-sandbox](https://github.com/rgb-protocol/rgb-sandbox) (below) packages `bitcoind` and `electrs` with Docker Compose.
 

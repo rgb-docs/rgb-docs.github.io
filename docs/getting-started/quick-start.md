@@ -316,7 +316,7 @@ rgb sync alice --esplora
 rgb seals -w alice
 ```
 
-- The `.wallet` suffix works around the rc.3 `create` bug: without it, `-w alice` can't find the wallet (`cli/src/exec.rs:104`).
+- The `.wallet` suffix works around the rc.3 `create` bug: without it, `-w alice` can't find the wallet (`cli/src/exec.rs:104`). Reported upstream: [RGB-WG/rgb#323](https://github.com/RGB-WG/rgb/issues/323).
 - `--wpkh` makes an opret-only wallet. Use `--tapret-key-only` with an 86h (taproot) account for tapret.
 - `rgb fund` prints a receive address. Send testnet4 coins to it, then sync. A bare `--esplora` uses `https://mempool.space/testnet4/api` (`cli/src/opts.rs`).
 - `rgb seals` lists outpoints. Put one in the `seal:` field of your copy of `DemoToken.yaml`, give it a new `name`, and `rgb issue -w alice` it.

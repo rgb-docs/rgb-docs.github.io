@@ -43,7 +43,7 @@ Line B runs `rgb-aluvm` 0.11.1, a fork of AluVM 0.11, with the RGB ISA extension
 
 `cy0` is a `u16`, so a script can make at most 2^16 − 1 jumps (`checked_add`). Control-flow instructions cost complexity 2 each (`src/isa/exec.rs`).
 
-**Call-stack note (0.11.1).** `CoreRegs::call` writes the calling instruction's own site to `cs0[cp0]` and checks `cp0 + 1` for overflow, but never stores the incremented `cp0` (`src/reg/core_regs.rs:183-202`). `cp0` stays 0, so `ret` always finds an empty stack and stops the program. Nested subroutines therefore don't return in 0.11.1. The schemas in `rgb-schemas` 0.11.1 only use `ret` to end a script, which works.
+**Call-stack note (0.11.1).** `CoreRegs::call` writes the calling instruction's own site to `cs0[cp0]` and checks `cp0 + 1` for overflow, but never stores the incremented `cp0` (`src/reg/core_regs.rs:183-202`). `cp0` stays 0, so `ret` always finds an empty stack and stops the program. Nested subroutines therefore don't return in 0.11.1. The schemas in `rgb-schemas` 0.11.1 only use `ret` to end a script, which works. Reported upstream: [rgb-aluvm#14](https://github.com/rgb-protocol/rgb-aluvm/issues/14).
 
 ### ALU (opcodes 0x08–0x3F)
 
