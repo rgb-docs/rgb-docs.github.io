@@ -5,7 +5,7 @@ description: Issue a fixed-supply fungible token as an NIA contract (v0.11, with
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-21
+  date: 2026-10-25
 image: /img/og/guides/rgb20/creating-tokens.png
 ---
 
@@ -22,6 +22,10 @@ Issuing a token means creating a contract **genesis**: the token's name and supp
 
 - **v0.11:** a fixed-supply token is a contract of the **NIA** (Non-Inflatable Asset) schema. For a supply you can increase later, use IFA ([Secondary issuance](/guides/rgb20/secondary-issuance)).
 - **v0.12:** a fixed-supply token is issued with the **RGB20-FNA** issuer ("Fungible Non-inflatable Asset").
+
+:::tip Try it in the browser first
+[rgbjs Create](https://rgbjs.com/create.html) issues a test-network contract of either line offline (NIA and the other v0.11 schemas, or RGB20-FNA and RGB25 for v0.12) and gives you the `.rgb` file to inspect on [Check](https://rgbjs.com/check.html). It's independent and early, and it doesn't hold keys or touch the network. For anything you'll use, issue with the wallet below.
+:::
 
 ## Token parameters
 
