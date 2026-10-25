@@ -50,9 +50,11 @@ rgb-wallet 0.12.0-rc.3 can't make tapret payments: its payment path always adds 
 1. **Make a wallet.** One random seed, kept in the tab, gives a BIP 86 taproot account (`m/86'/1'/0'`) and the secrets for RGB seals and invoices.
 2. **Get test coins.** Send txbt4 to the wallet's address.
 3. **Issue.** An RGB20 token (ticker, fixed supply) or an RGB25 asset (no ticker, with terms) on one of your coins. Issuing costs nothing on chain: the contract names the coin that holds the supply.
-4. **Make an invoice.** Bunting puts the payment on a coin with no other asset on it, and keeps the invoice's secret so it can recognize the payment later.
+4. **Make an invoice.** Bunting puts the payment on a coin with no other asset on it, and keeps the invoice's secret so it can recognize the payment later. The invoice can carry an expiry (the v0.12 `?expiry=` field, written in UTC with a `Z`: upstream `sonic-callreq` 0.12.0 writes a `+00:00` offset that its own parser rejects). An expired invoice stops holding its coin, and Bunting won't pay one.
 5. **Pay an invoice.** rgbjs builds the witness transaction as an unsigned PSBT with a tapret commitment. Bunting signs it (BIP 341, checked against the BIP's own test vectors), broadcasts it to the explorer and to Nostr relays, and gives you the transfer to hand to the payee, as a file or a link.
 6. **Take a transfer in.** The payee opens the link or loads the file. Bunting validates it with rgbjs and finds the state paid to its invoices.
+
+When the payer opened a pay link, the transfer also goes to the payee **over Nostr**. Each Bunting wallet has a Nostr key derived from its seed, and its pay links name it (`&to=<pubkey>`). The payer's wallet encrypts the transfer to that key with [NIP-44](https://github.com/nostr-protocol/nips/blob/master/44.md) version 2 and publishes it as a kind 1059 event signed by a throwaway key, so the event shows neither who paid nor what. The payee's wallet keeps a subscription open while its tab is open, and checks again when it refreshes; it takes each transfer in as it arrives.
 
 Links carry their data in the query string: `?pay=<invoice>` opens Bunting with the invoice ready to pay, and `?transfer=<gzip, base64url>` takes a transfer in (about 5 KB for a payment with two earlier payments in its history). The same works after `#`, which keeps the data out of the request to the web server. A transfer shows its payment history, so share its link only with the payee.
 
