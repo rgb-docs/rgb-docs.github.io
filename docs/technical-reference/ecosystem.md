@@ -4,7 +4,7 @@ description: Wallets, nodes, SDKs and companies building on each RGB line, with 
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-21
+  date: 2026-10-25
 image: /img/og/technical-reference/ecosystem.png
 ---
 
@@ -41,4 +41,5 @@ Checked on 2026-10-21 against each project's own pages, GitHub and the npm and c
 
 - **Line B:** [`rgb-lib`](https://www.npmjs.com/package/rgb-lib) (Node bindings, RGB-Tools). Utexo's [`@utexo/rgb-sdk-core`](https://www.npmjs.com/package/@utexo/rgb-sdk-core) and [`@utexo/rgb-lib-wasm`](https://www.npmjs.com/package/@utexo/rgb-lib-wasm) are third-party betas.
 - **Line A:** no JavaScript SDK.
+- **Both lines, read-only:** [rgbjs](https://github.com/rgbjs/rgbjs) is in early development and not on npm. It parses invoices and validates consignments offline from WebAssembly builds of each line's crates; its [conformance page](https://rgbjs.com/conformance.html) runs the test vectors in the browser.
 - The `@rgbjs/*` packages that this site once listed **don't exist**. Don't install anything under that name.
