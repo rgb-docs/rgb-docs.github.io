@@ -5,7 +5,7 @@ description: The taproot commitment scheme. The 64-byte leaf script, where it si
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-21
+  date: 2026-10-25
 image: /img/og/core-concepts/bitcoin/tapret.png
 ---
 
@@ -107,6 +107,10 @@ A tapret output's key is `P` tweaked by a script tree only your RGB wallet knows
 
 - **Line B:** `rgb taprets` lists the tweaks a wallet knows (0.11.1; the command is removed in 0.11.2-rc.1). Back up the RGB data directory, not just the seed.
 - **Line A:** wallets made with `rgb create --tapret-key-only` keep the tweaks in the RGB data directory. Back it up the same way.
+:::
+
+:::note rgb-wallet 0.12.0-rc.3 pays with opret
+Even a `--tapret-key-only` wallet commits its payments with [opret](./opret.md) at this pin: `rgb_resolve` in `rgb-psbt` 0.12.0-rc.3 (`src/bp.rs`) adds an `OP_RETURN` host output whenever none is marked, and nothing in the payment path marks a tapret host. The verifier accepts tapret commitments, and other code can build them: rgbjs's `payInvoice` with `commit: 'tapret'` does, and [RGB on the BLAKE2b testnet4](/guides/development/rgb-on-blake) lists mined examples.
 :::
 
 ```bash line=B

@@ -12,7 +12,7 @@ image: /img/og/guides/development/rgbjs.png
 # JavaScript and TypeScript
 
 :::info RGB v0.11 line (rgb-cmd 0.11.1)
-Every JavaScript SDK on this page is for Line B. Line A (v0.12) has no JavaScript SDK: use the [`rgb` CLI](/technical-reference/cli) or the Rust crate [`rgb-runtime`](./rust-sdk.md). The unpublished, read-only rgbjs (below) covers both lines. See [Two RGB lines](/getting-started/two-rgbs).
+Every JavaScript SDK on this page is for Line B. Line A (v0.12) has no JavaScript SDK: use the [`rgb` CLI](/technical-reference/cli) or the Rust crate [`rgb-runtime`](./rust-sdk.md). The unpublished rgbjs (below) covers both lines, and can pay v0.12 invoices. See [Two RGB lines](/getting-started/two-rgbs).
 :::
 
 :::danger `@rgbjs/*` packages don't exist
@@ -31,7 +31,7 @@ Versions are from `npm view` and GitHub on 2026-10-21.
 | [`@utexo/webrgb`](https://github.com/UTEXO-Protocol/webrgb) 0.1.3 (2026-10-13), `@utexo/webrgb-walletconnect` | Browser dApps | Utexo, a fork of [KaleidoSwap WebRGB](https://github.com/kaleidoswap/webrgb) | Third party, first published 2026-10-02. TypeScript declarations, discovery, a mock wallet and a conformance suite for a `window.rgb` provider that a wallet injects (`enable`, `blindReceive`, `witnessReceive`, `issueAsset` and more). The README names the KaleidoSwap browser extension as the reference wallet. It holds no keys itself. |
 | [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) REST API | Any language over HTTP | RGB-Tools | A daemon with an [OpenAPI spec](https://github.com/RGB-Tools/rgb-lightning-node/blob/master/openapi.yaml) (`/issueassetnia`, `/rgbinvoice`, `/sendrgb`, `/refreshtransfers`, `/backup` and more). Its README calls it "early alpha", for regtest and testnet. |
 
-The unscoped npm package `rgbjs` is still the 0.0.1 placeholder. The [rgbjs](https://github.com/rgbjs/rgbjs) project is in early development and not published to npm. It covers both lines read-only: it compiles each line's own Rust crates (v0.11.1 and v0.12.0-rc.3) to WebAssembly, and parses invoices and contract IDs and validates consignments offline. It holds no keys and doesn't send or receive. Its [conformance page](https://rgbjs.com/conformance.html) runs the upstream invoice test vectors and real CLI consignments for both lines in your browser.
+The unscoped npm package `rgbjs` is still the 0.0.1 placeholder. The [rgbjs](https://github.com/rgbjs/rgbjs) project is in early development and not published to npm. It compiles each line's own Rust crates (v0.11.1 and v0.12.0-rc.3) to WebAssembly and works offline: it parses invoices and contract IDs and validates consignments for both lines; issues contracts, makes invoices and checks what a transfer pays you, on test networks, for both lines; and, for v0.12 only, pays an invoice. A payment comes back as an unsigned PSBT for your own signer, with the transfer for the payee, committed with opret or with tapret (which rgb-wallet 0.12.0-rc.3 can't make). It holds no keys. Its [conformance page](https://rgbjs.com/conformance.html) runs the upstream invoice test vectors, real CLI consignments and payments mined on a test network, for both lines, in your browser. [RGB on the BLAKE2b testnet4](./rgb-on-blake.md) shows it paying in a browser wallet.
 
 Third-party packages hold your keys and RGB data. Read their code and pin exact versions before you trust them with funds.
 
