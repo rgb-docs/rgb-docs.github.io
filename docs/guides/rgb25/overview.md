@@ -5,7 +5,7 @@ description: The CFA schema of RGB v0.11, a fungible asset with an optional Arti
 rgb_line: B
 verified_with: rgb-cmd 0.11.1; rgb-wallet 0.12.0-rc.3
 last_update:
-  date: 2026-10-21
+  date: 2026-10-25
 image: /img/og/guides/rgb25/overview.png
 ---
 
@@ -105,4 +105,4 @@ A seed phrase doesn't recover RGB assets. Back up the RGB data directory, or use
 
 ## v0.12: third-party RGB25 issuer {#v012-rgb25}
 
-RGB-WG's `rgb` release ships no RGB25 issuer. [pandora-prime/rgb-issuers](https://github.com/pandora-prime/rgb-issuers) publishes `compiled/RGB25-UniquelyFungible-v0-aiRB3w.issuer` ("Uniquely Fungible Asset", UFA), unaudited according to its README. Like CFA it has `name`, `details`, `precision` and `issued` globals and a fungible `balance`, but no `art` field, and its contracts are incompatible with CFA. With rgb-wallet 0.12.0-rc.3 it imports and issues offline (tested 2026-10-21) from a parameter file shaped like [`templates/RGB25-UniquelyFungible.yaml`](https://github.com/pandora-prime/rgb-issuers/blob/master/templates/RGB25-UniquelyFungible.yaml), with the same commands as the [RGB20-FNA example](/guides/rgb20/creating-tokens). `rgb-wallet` 0.12.0-rc.3 refuses mainnet.
+RGB-WG's `rgb` release ships no RGB25 issuer. [pandora-prime/rgb-issuers](https://github.com/pandora-prime/rgb-issuers) publishes `compiled/RGB25-UniquelyFungible-v0-aiRB3w.issuer` ("Uniquely Fungible Asset", UFA), unaudited according to its README. Like CFA it has `name`, `details`, `precision` and `issued` globals and a fungible `balance`, but no `art` field, and its contracts are incompatible with CFA. With rgb-wallet 0.12.0-rc.3 it imports and issues offline (tested 2026-10-21) from a parameter file shaped like [`templates/RGB25-UniquelyFungible.yaml`](https://github.com/pandora-prime/rgb-issuers/blob/master/templates/RGB25-UniquelyFungible.yaml), with the same commands as the [RGB20-FNA example](/guides/rgb20/creating-tokens). `rgb-wallet` 0.12.0-rc.3 refuses mainnet. Transfers work as for RGB20: an amount invoice (`rgb invoice -w bob <contract> 10`), then `rgb pay`. A UFA transfer built offline with `rgb-runtime` 0.12.0-rc.3's `pay_invoice`, the library call behind `rgb pay`, was accepted by `rgb accept` (2026-10-25).

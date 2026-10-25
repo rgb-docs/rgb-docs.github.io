@@ -5,7 +5,7 @@ description: What an RGB consignment contains in v0.11 and v0.12, its file forma
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-21
+  date: 2026-10-25
 image: /img/og/technical-reference/consignments.png
 ---
 
@@ -44,6 +44,8 @@ Both formats are **binary [strict encoding](./strict-types.md)**, not JSON. Neit
 | `schema` | The contract's schema |
 | `types` | The strict type system used by the schema |
 | `scripts` | The AluVM libraries the schema calls |
+
+The `terminals` aren't validated: a transfer whose terminals were changed still validates. As the recipient, check that your own blinded seal (the `utxob:…` from your invoice) is among them. If it isn't, the transfer isn't addressed to you, and `accept` won't give you anything.
 
 The consignment id is a tagged hash, shown in Baid64 with the `rgb:csg` HRI.
 

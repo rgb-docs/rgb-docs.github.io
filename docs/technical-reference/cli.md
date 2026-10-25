@@ -5,7 +5,7 @@ description: Every command, flag, alias and environment variable of the rgb comm
 rgb_line: A
 verified_with: rgb-wallet 0.12.0-rc.3
 last_update:
-  date: 2026-10-21
+  date: 2026-10-25
 image: /img/og/technical-reference/cli.png
 ---
 
@@ -306,6 +306,10 @@ Verifies a contract or transfer consignment and adds it to the store. Use `-u, -
 rgb accept -w bob -u DemoToken.rgb
 rgb accept -w bob transfer.rgb
 ```
+
+:::warning A malformed consignment can crash `accept`
+In 0.12.0-rc.3, `accept` aborts with `Error: capacity overflow` (exit 101) on a consignment with a corrupted length field, instead of rejecting it. `strict_types` 2.9.1 allocates memory from lengths it reads out of the file before it checks them. Tested 2026-10-25 by changing one byte of a valid contract consignment. A crash accepts nothing, but a wallet or service that takes consignments from strangers can be stopped by one. Run `accept` where a crash is harmless, or check files first with a decoder that bounds its allocations, such as [rgbjs](https://rgbjs.com/check.html), which patches this.
+:::
 
 ## See also
 

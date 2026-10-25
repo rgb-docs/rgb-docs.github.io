@@ -5,7 +5,7 @@ description: Real error messages from the rgb CLIs of both RGB lines, what cause
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-21
+  date: 2026-10-25
 image: /img/og/technical-reference/troubleshooting.png
 ---
 
@@ -78,6 +78,7 @@ The full error list is in `rgb-api` 0.11.1 `src/errors.rs` and `rgb-ops` 0.11.1 
 | `Error: data directory at '…' is already initialized` | `init -q` fails on an existing directory, the opposite of what its help says. Run `init` without `-q` ([RGB-WG/rgb#324](https://github.com/RGB-WG/rgb/issues/324)) |
 | `Error: no xpub key origin information.` | The descriptor needs the key origin, as in `"[<fp>/84h/1h/0h]<tpub>/<0;1>/*"` |
 | ``a type of wallet descriptor must be specified either with `--tapret-key-only` or `--wpkh` `` | Add one of the two flags to `create` |
+| `Abnormal program termination through panic.` `Error: capacity overflow` (exit 101) on `accept` | The consignment is malformed, for example corrupted in transit. `strict_types` 2.9.1 crashes on it instead of rejecting it. Ask the sender for a fresh copy. See [`accept`](./cli.md#accept) |
 | `Unable to connect to the indexing server` (panic) | The indexer URL is wrong or unreachable. A bare `--electrum` uses `mycitadel.io:50001` |
 | `ELECTRUM_SERVER` has no effect | The variable is misspelt `ELECRTUM_SERVER` in `cli/src/opts.rs`. Pass `--electrum=<URL>` ([RGB-WG/rgb#322](https://github.com/RGB-WG/rgb/issues/322)) |
 | `Error: unknown contract '…'` | The wallet doesn't know that contract name or id. Check `rgb contracts` |

@@ -5,14 +5,14 @@ description: Send a UDA NFT in RGB v0.11 with rgb-cmd or rgb-lib. Same flow as a
 rgb_line: B
 verified_with: rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-21
+  date: 2026-10-25
 image: /img/og/guides/rgb21/transferring-nfts.png
 ---
 
 # Transferring NFTs
 
 :::info RGB v0.11 line (rgb-cmd 0.11.1)
-This covers UDA NFTs in v0.11. v0.12 has only a third-party NFT issuer, and a transfer with it failed when tested, so there is no v0.12 NFT transfer to document (see [Issuing NFTs](/guides/rgb21/creating-nfts#v012-rgb21)). See [Two RGB lines](/getting-started/two-rgbs).
+This covers UDA NFTs in v0.11. v0.12 has only a third-party NFT issuer, and rgb-wallet 0.12.0-rc.3 can't build a transfer for it, so there is no v0.12 NFT transfer to document (see [Issuing NFTs](/guides/rgb21/creating-nfts#v012-rgb21)). See [Two RGB lines](/getting-started/two-rgbs).
 :::
 
 A UDA NFT moves exactly like a fungible asset: invoice → transfer (consignment plus PSBT) → recipient validates → payer signs and broadcasts → recipient accepts. Read [Transferring fungible assets](/guides/rgb20/transferring-assets) first. This page covers only what is different.

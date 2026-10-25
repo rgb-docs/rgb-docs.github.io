@@ -5,7 +5,7 @@ description: Issue a non-fungible token as a Unique Digital Asset (UDA) contract
 rgb_line: B
 verified_with: rgb-cmd 0.11.1; rgb-wallet 0.12.0-rc.3
 last_update:
-  date: 2026-10-21
+  date: 2026-10-25
 image: /img/og/guides/rgb21/creating-nfts.png
 ---
 
@@ -168,7 +168,7 @@ Processing 'RGB21-UniqueNFT-v0-FtU80Q.issuer' ... codex id 1T9uRsVB-_A8owmV-mv9S
 A new contract issued with ID contract:f5cu3j2Z-F6cePQE-q~XV2td-BMQw6Lb-LoNmzq~-VPAx6VU
 ```
 
-Two things in the upstream template need changing. Its owned fields `tokenIndex` and `fraction` are rejected (`ExtraField(FieldName("tokenIndex"))`); the type uses `tokenNo` and `fractions`. And its comment says to paste hex for `data`, but a quoted hex string is stored as its ASCII characters, and an unquoted one can parse as a YAML number and fails with `data did not match any variant of untagged enum StrictVal`. Give the bytes as a list, as above. Transfers aren't documented here, because `rgb invoice <contract> 1` followed by `rgb pay` failed with `the state owned by the wallet is not enough to fulfill the invoice` (2026-10-21).
+Two things in the upstream template need changing. Its owned fields `tokenIndex` and `fraction` are rejected (`ExtraField(FieldName("tokenIndex"))`); the type uses `tokenNo` and `fractions`. And its comment says to paste hex for `data`, but a quoted hex string is stored as its ASCII characters, and an unquoted one can parse as a YAML number and fails with `data did not match any variant of untagged enum StrictVal`. Give the bytes as a list, as above. Transfers aren't documented here, because rgb-wallet 0.12.0-rc.3 can't build one for this issuer. `rgb invoice <contract> 1` followed by `rgb pay` fails with `the state owned by the wallet is not enough to fulfill the invoice` (2026-10-21). An invoice's value can only be a number or a string (`sonic-callreq` 0.12.0 `src/uri.rs`), not the `{tokenNo, fractions}` an NFT holds. Writing the payment script by hand, as `rgb script` would, fails as well, with `StateCalc(UncountableState)`. The bundler in `rgb-std` 0.12.0-rc.3 needs a countable state calculator to work out change, and this issuer's `balance` has none (tested with `rgb-runtime` 0.12.0-rc.3 on 2026-10-25).
 
 ## Next
 
