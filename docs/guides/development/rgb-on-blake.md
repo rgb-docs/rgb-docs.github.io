@@ -51,8 +51,10 @@ rgb-wallet 0.12.0-rc.3 can't make tapret payments: its payment path always adds 
 2. **Get test coins.** Send txbt4 to the wallet's address.
 3. **Issue.** An RGB20 token (ticker, fixed supply) or an RGB25 asset (no ticker, with terms) on one of your coins. Issuing costs nothing on chain: the contract names the coin that holds the supply.
 4. **Make an invoice.** Bunting puts the payment on a coin with no other asset on it, and keeps the invoice's secret so it can recognize the payment later.
-5. **Pay an invoice.** rgbjs builds the witness transaction as an unsigned PSBT with a tapret commitment. Bunting signs it (BIP 341, checked against the BIP's own test vectors), broadcasts it to the explorer and to Nostr relays, and gives you the transfer file to hand to the payee.
-6. **Take a transfer in.** The payee loads the file. Bunting validates it with rgbjs and finds the state paid to its invoices.
+5. **Pay an invoice.** rgbjs builds the witness transaction as an unsigned PSBT with a tapret commitment. Bunting signs it (BIP 341, checked against the BIP's own test vectors), broadcasts it to the explorer and to Nostr relays, and gives you the transfer to hand to the payee, as a file or a link.
+6. **Take a transfer in.** The payee opens the link or loads the file. Bunting validates it with rgbjs and finds the state paid to its invoices.
+
+Links carry their data in the query string: `?pay=<invoice>` opens Bunting with the invoice ready to pay, and `?transfer=<gzip, base64url>` takes a transfer in (about 5 KB for a payment with two earlier payments in its history). The same works after `#`, which keeps the data out of the request to the web server. A transfer shows its payment history, so share its link only with the payee.
 
 Each coin carries at most one asset, and Bunting won't sign a payment that would also spend a coin carrying another asset, which would lose it. Back up both the seed and the **asset backup** (contract files, invoice secrets and tapret records): the seed alone brings back the keys but not the assets.
 
@@ -63,11 +65,12 @@ To check a txbt4 transfer without a wallet, load it in the [rgbjs Check page](ht
 An RGB transfer is only final once its witness transactions are mined, so "is it mined?" matters. Bunting, and the rgbjs Check page when you pick the BLAKE2b testnet4, don't take the explorer's word for it. For each witness they check, in the browser:
 
 1. **The merkle proof.** The explorer's proof leads from the transaction ID to the merkle root in the block's header.
-2. **The header's proof of work.** The 164-byte v2 header hashes to the block hash under the chain's BLAKE2b construction, using the hasher from [bitcoin-desktop/schema](https://github.com/bitcoin-desktop/schema) (`codec/pow/knots-header-v2.js`, loaded pinned to a commit). The hash must meet the target in the header's `bits`, within testnet4's limit. The header's committed height must match.
-3. **The links.** Every header from that block up to the tip links to the one before it, with the same checks. The confirmations shown are counted this way, up to 30.
-4. **The signed tip.** The tip the chain's publisher signs on Nostr ([NIP-333](https://nip-333.github.io/) kind 33333 events, as [blaketestnode](https://github.com/bitcoin-blake/blaketestnode) follows) has its signature checked and is compared with the explorer's chain at that height.
+2. **The header's proof of work.** The 164-byte v2 header hashes to the block hash under the chain's BLAKE2b construction, using the hasher from [bitcoin-desktop/schema](https://github.com/bitcoin-desktop/schema) (`codec/pow/knots-header-v2.js`, loaded pinned to a commit). The hash must meet the target in the header's `bits`, within testnet4's limit; the header's committed height must match; and its time may be at most two hours ahead.
+3. **The difficulty.** Each header's `bits` must follow the testnet4 rules the fork keeps: the minimum difficulty only when the block comes more than 20 minutes after the previous one, otherwise the period's difficulty, and at each 2016-block boundary the BIP 94 retarget. (The check reproduces txbt4's real retarget at block 153,216.)
+4. **The links.** Every header from that block up links to the one before it, with the same checks. Only headers walked this way count as confirmations.
+5. **The signed tip.** The tip the chain's publisher signs on Nostr ([NIP-333](https://nip-333.github.io/) kind 33333 events, as [blaketestnode](https://github.com/bitcoin-blake/blaketestnode) follows) has its signature checked, and the walk from each witness's block must reach that tip's exact hash. Only then does the page call the witness part of the signed chain.
 
-An explorer that serves a wrong header, proof or link fails these checks, and the page says so. Two gaps remain: each header's target is checked against its own `bits`, not against the difficulty-adjustment rules, and the explorer is still trusted for the current tip height and for what is in the mempool. A full node validating in the tab, as [Reef](https://bitcoin-blake.github.io/reef/) runs, closes both.
+The last check carries the most weight on txbt4. Every recent block there is mined under the 20-minute minimum-difficulty exception, so the difficulty rules alone don't stop an explorer from fabricating a branch of cheap blocks. They do limit how far ahead of real time such a branch can run: each block needs a 20-minute gap, and no block may be more than two hours ahead. A branch that doesn't lead to the publisher's signed tip is reported as such. The explorer is still trusted for the current tip height and for what is in the mempool; a full node validating in the tab, as [Reef](https://bitcoin-blake.github.io/reef/) runs, removes it altogether.
 
 ## Mined payments
 
