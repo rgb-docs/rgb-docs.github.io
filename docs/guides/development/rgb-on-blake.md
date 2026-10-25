@@ -58,6 +58,17 @@ Each coin carries at most one asset, and Bunting won't sign a payment that would
 
 To check a txbt4 transfer without a wallet, load it in the [rgbjs Check page](https://rgbjs.com/check.html) and look its witnesses up on "BLAKE2b testnet4, txbt4 (mempool.guide)".
 
+## Checking confirmations in the tab
+
+An RGB transfer is only final once its witness transactions are mined, so "is it mined?" matters. Bunting, and the rgbjs Check page when you pick the BLAKE2b testnet4, don't take the explorer's word for it. For each witness they check, in the browser:
+
+1. **The merkle proof.** The explorer's proof leads from the transaction ID to the merkle root in the block's header.
+2. **The header's proof of work.** The 164-byte v2 header hashes to the block hash under the chain's BLAKE2b construction, using the hasher from [bitcoin-desktop/schema](https://github.com/bitcoin-desktop/schema) (`codec/pow/knots-header-v2.js`, loaded pinned to a commit). The hash must meet the target in the header's `bits`, within testnet4's limit. The header's committed height must match.
+3. **The links.** Every header from that block up to the tip links to the one before it, with the same checks. The confirmations shown are counted this way, up to 30.
+4. **The signed tip.** The tip the chain's publisher signs on Nostr ([NIP-333](https://nip-333.github.io/) kind 33333 events, as [blaketestnode](https://github.com/bitcoin-blake/blaketestnode) follows) has its signature checked and is compared with the explorer's chain at that height.
+
+An explorer that serves a wrong header, proof or link fails these checks, and the page says so. Two gaps remain: each header's target is checked against its own `bits`, not against the difficulty-adjustment rules, and the explorer is still trusted for the current tip height and for what is in the mempool. A full node validating in the tab, as [Reef](https://bitcoin-blake.github.io/reef/) runs, closes both.
+
 ## Mined payments
 
 These three transfers are in the rgbjs test vectors (`test/vectors/v012/mined-*.transfer.rgb`) and the [conformance suite](https://rgbjs.com/conformance.html). The pinned rgb-wallet accepts all three (`accept -u`, exit 0).
