@@ -5,7 +5,7 @@ description: The invoice formats of RGB v0.11 (rgb:…) and RGB v0.12 (contract:
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-21
+  date: 2026-10-25
 image: /img/og/technical-reference/invoices.png
 ---
 
@@ -21,6 +21,10 @@ Both lines use URI-style invoices, but the formats differ and neither line can p
 An RGB invoice is a string the receiver gives the payer. It names the contract, the amount (or token), and the **seal** that should receive the state. That seal is either a UTXO of the receiver's wallet (blinded with a secret in v0.11, referenced by an auth token in v0.12, which has no blinded seals) or an output of the payer's own transaction. The payer's wallet reads the invoice, builds the transfer and writes a [consignment](./consignments.md) for the receiver.
 
 An invoice is only a request. It doesn't carry bitcoin or any proof of payment.
+
+:::tip Try it
+[rgbjs](https://rgbjs.com/check.html) reads an invoice of either line in your browser and shows its contract, network, amount and seal. Its [Create](https://rgbjs.com/create.html) page makes test-network invoices. It is an independent project in early development, offline, and not for real funds.
+:::
 
 <Tabs groupId="rgb-line">
 <TabItem value="b" label="v0.11 (rgb-cmd)">
@@ -115,3 +119,4 @@ An invoice from one line can't be paid from the other, and a `tb` or `bcrt` invo
 - Line B: `rgb-invoicing` on [docs.rs](https://docs.rs/rgb-invoicing/0.11.1)
 - Line A: `rgb-invoice` on [docs.rs](https://docs.rs/rgb-invoice/0.12.0-rc.3) and `sonic-callreq` on [docs.rs](https://docs.rs/sonic-callreq/0.12.0)
 - [Encoding formats](./encodings.md): the Baid64 ids used in both formats
+- [rgbjs Check](https://rgbjs.com/check.html): parse an invoice of either line in the browser

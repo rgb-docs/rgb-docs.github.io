@@ -5,7 +5,7 @@ description: Issue and transfer a test asset with rgb-cmd 0.11.1 on regtest, or 
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-21
+  date: 2026-10-25
 image: /img/og/getting-started/quick-start.png
 ---
 
@@ -327,6 +327,7 @@ rgb seals -w alice
 ## Next steps
 
 - [Guides](/guides/overview): issuing, transfers, Lightning and app development, by line.
+- [rgbjs](https://rgbjs.com/check.html): drop the invoice or `.rgb` file from either walkthrough into the browser to see what it contains. It also [creates](https://rgbjs.com/create.html) test-network contracts and invoices. Independent and early.
 - [Core concepts](/core-concepts/overview): what the commands above did, from seals to consignments.
 - CLI references: [v0.11 (rgb-cmd)](/technical-reference/cli-v011) and [v0.12 (rgb-wallet)](/technical-reference/cli).
 - Line B: [docs.rgb.info](https://docs.rgb.info), [rgb-lib](https://github.com/RGB-Tools/rgb-lib), and [RGB Lightning Node](https://github.com/RGB-Tools/rgb-lightning-node) (alpha).

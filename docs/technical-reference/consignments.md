@@ -99,3 +99,4 @@ The transfer is final as soon as the Bitcoin transaction is mined. If the transa
 - Line B: [Contract transfers](https://docs.rgb.info/annexes/contract-transfers) in the official docs; `rgb-ops` 0.11.1 [source](https://github.com/rgb-protocol/rgb-ops/tree/0.11.1) (docs.rs failed to build this version)
 - Line A: `rgb-std` on [docs.rs](https://docs.rs/rgb-std/0.12.0-rc.3)
 - [Client-side validation](/core-concepts/client-side-validation)
+- [rgbjs Check](https://rgbjs.com/check.html): validate a consignment of either line offline in the browser, and, with the secret of your invoice, see what a transfer pays you. Independent and early: witnesses aren't looked up on chain.
