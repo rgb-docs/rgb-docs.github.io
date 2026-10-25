@@ -112,6 +112,7 @@ const sidebars: SidebarsConfig = {
             'guides/development/rgbjs',
             'guides/development/wallet-integration',
             'guides/development/testing',
+            'guides/development/rgb-on-blake',
           ],
         },
       ],

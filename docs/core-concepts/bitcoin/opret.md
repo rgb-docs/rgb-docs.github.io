@@ -5,7 +5,7 @@ description: The OP_RETURN commitment scheme. A 34-byte script holding the 32-by
 rgb_line: both
 verified_with: rgb-wallet 0.12.0-rc.3; rgb-cmd 0.11.1
 last_update:
-  date: 2026-10-21
+  date: 2026-10-25
 image: /img/og/core-concepts/bitcoin/opret.png
 ---
 
@@ -59,3 +59,5 @@ Opret has not been deprecated in either line.
 `OP_RETURN` outputs are unspendable and are never added to the UTXO set. Since Bitcoin Core 0.11.0 (July 2015) the default relay limit for data carrier scripts was 83 bytes, with one such output per transaction. **Bitcoin Core 30.0 (October 10, 2025)** raised the default `-datacarriersize` to 100,000 and allows several `OP_RETURN` outputs per transaction ([release notes](https://bitcoincore.org/en/releases/30.0/)). A 34-byte opret script fits under both the old and new policy. These are relay-policy defaults, not consensus rules. Background: [OP_RETURN on the Bitcoin wiki](https://en.bitcoin.it/wiki/OP_RETURN).
 
 Even when a transaction has several `OP_RETURN` outputs, RGB looks only at the first `OP_RETURN`-or-P2TR output.
+
+Some nodes relay less than the default. Bitcoin Knots lets an operator turn `datacarrier` off or lower `datacarriersize`, and such a node refuses an opret payment it would otherwise accept. On the BLAKE2b testnet4 an explorer's node refused an opret payment that a Knots node with default settings accepted; a [tapret](./tapret.md) payment, which has no `OP_RETURN` output, went through. See [RGB on the BLAKE2b testnet4](/guides/development/rgb-on-blake).
